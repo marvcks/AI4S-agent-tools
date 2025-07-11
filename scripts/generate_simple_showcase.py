@@ -815,7 +815,7 @@ cd servers/&lt;toolname&gt;
 uv sync
 
 # Run the server
-python server.py --port <port> &lt;port&gt;</div>
+python server.py --port &lt;port&gt;</div>
                 </div>
                 <div class="quick-start-card">
                     <h3>🛠️ Add Your Tool</h3>
@@ -829,7 +829,7 @@ cd servers/my_tool
 
 # Install and run
 uv sync
-python server.py --port <port> </div>
+python server.py --port &lt;port&gt;</div>
                 </div>
             </div>
         </div>
