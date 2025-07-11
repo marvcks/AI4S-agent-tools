@@ -15,6 +15,7 @@ from mcp.server.fastmcp import FastMCP
 PAPER_DIR = "papers"
 
 
+
 @mcp_server("research", "Scientific literature search tool for arXiv papers", author="@Demo", category="research")
 def create_server(host="0.0.0.0", port=50001):
     """Create and configure the MCP server instance."""

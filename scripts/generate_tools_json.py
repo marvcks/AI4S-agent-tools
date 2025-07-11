@@ -142,7 +142,7 @@ def extract_tools_from_server(server_dir: Path) -> List[str]:
     """Extract tool names from server implementation."""
     tools = []
     
-    # Find server files
+    # First, try to find tools in server files
     for pattern in ['server.py', '*_server.py', '*_mcp_server.py']:
         for server_file in server_dir.glob(pattern):
             try:
@@ -180,6 +180,39 @@ def extract_tools_from_server(server_dir: Path) -> List[str]:
                                                 tools.append(inner_node.name)
             except Exception as e:
                 logger.debug(f"Failed to extract tools from {server_file}: {e}")
+    
+    # Special handling for servers that load tools dynamically (like ABACUS)
+    # Check if there's a modules directory with tool definitions
+    for mod_dir in server_dir.glob("src/*/modules"):
+        if mod_dir.is_dir():
+            # Scan all Python files in modules directory
+            for py_file in mod_dir.glob("*.py"):
+                if py_file.name.startswith("_") or py_file.name in ["utils.py", "comm.py"]:
+                    continue
+                
+                try:
+                    with open(py_file, 'r', encoding='utf-8') as f:
+                        tree = ast.parse(f.read())
+                    
+                    # Look for @mcp.tool() decorated functions
+                    for node in ast.walk(tree):
+                        if isinstance(node, ast.FunctionDef):
+                            for decorator in node.decorator_list:
+                                # Check for @mcp.tool() pattern
+                                if isinstance(decorator, ast.Call):
+                                    if (isinstance(decorator.func, ast.Attribute) and 
+                                        decorator.func.attr == 'tool' and
+                                        isinstance(decorator.func.value, ast.Name) and
+                                        decorator.func.value.id == 'mcp'):
+                                        tools.append(node.name)
+                                # Also check for @mcp.tool without parentheses
+                                elif isinstance(decorator, ast.Attribute):
+                                    if (decorator.attr == 'tool' and
+                                        isinstance(decorator.value, ast.Name) and
+                                        decorator.value.id == 'mcp'):
+                                        tools.append(node.name)
+                except Exception as e:
+                    logger.debug(f"Failed to extract tools from module {py_file}: {e}")
     
     return list(set(tools))  # Remove duplicates
 
