@@ -106,16 +106,9 @@ servers/
 
 ### Running with Debug
 ```bash
-python server.py --port 50001 --log-level DEBUG
+python server.py --port <port> --log-level DEBUG
 ```
 
-### Check Logs
-```bash
-tail -f ~/.your_tool_name/*.log
-```
-
-### Avoid Port Conflicts
-Check `TOOLS.json` for used ports (50001-50100 range)
 
 ## 🎯 PR Checklist
 
