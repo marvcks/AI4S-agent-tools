@@ -15,7 +15,7 @@ cd servers/your_tool_name
 from servers.server_utils import mcp_server, setup_server
 from mcp.server.fastmcp import FastMCP
 
-@mcp_server("YourToolName", "One-line description", author="@your-github", category="Chemistry")
+@mcp_server("YourToolName", "One-line description", author="@your-github", category="choose one category")
 def create_server(host="0.0.0.0", port=50001):
     mcp = FastMCP("your_tool", host=host, port=port)
     
