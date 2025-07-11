@@ -53,19 +53,37 @@ def generate_showcase():
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI4S Agent Tools</title>
+    <title>AI4S Agent Tools - Scientific Computing Tools for Intelligent Agents</title>
     <style>
         :root {{
-            --primary: #007AFF;
-            --secondary: #5856D6;
-            --success: #34C759;
-            --warning: #FF9500;
-            --danger: #FF3B30;
-            --dark: #1C1C1E;
-            --light: #F2F2F7;
-            --gray: #8E8E93;
+            --primary: #3B82F6;
+            --primary-dark: #1E40AF;
+            --secondary: #8B5CF6;
+            --accent: #06B6D4;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --dark: #0F172A;
+            --dark-secondary: #1E293B;
+            --light: #F8FAFC;
+            --light-secondary: #F1F5F9;
+            --gray: #64748B;
+            --gray-light: #94A3B8;
             --bg: #FFFFFF;
-            --card-bg: #F7F7F7;
+            --card-bg: #FFFFFF;
+            --border: #E2E8F0;
+            --text: #334155;
+            --text-light: #64748B;
+        }}
+        
+        [data-theme="dark"] {{
+            --bg: #0F172A;
+            --card-bg: #1E293B;
+            --border: #334155;
+            --text: #F1F5F9;
+            --text-light: #94A3B8;
+            --light: #1E293B;
+            --light-secondary: #334155;
         }}
         
         * {{
@@ -75,10 +93,11 @@ def generate_showcase():
         }}
         
         body {{
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif;
             background: var(--bg);
-            color: var(--dark);
+            color: var(--text);
             line-height: 1.6;
+            transition: all 0.3s ease;
         }}
         
         .container {{
@@ -87,51 +106,164 @@ def generate_showcase():
             padding: 0 20px;
         }}
         
-        header {{
-            padding: 60px 0 40px;
+        .theme-toggle {{
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 50px;
+            padding: 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }}
+        
+        .theme-toggle:hover {{
+            transform: scale(1.05);
+        }}
+        
+        .hero {{
+            background: linear-gradient(135deg, 
+                rgba(59, 130, 246, 0.1) 0%, 
+                rgba(139, 92, 246, 0.1) 25%,
+                rgba(6, 182, 212, 0.1) 50%,
+                rgba(16, 185, 129, 0.1) 100%);
+            padding: 120px 0 80px;
             text-align: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            position: relative;
+            overflow: hidden;
+        }}
+        
+        .hero::before {{
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 80%, rgba(6, 182, 212, 0.1) 0%, transparent 50%);
+            animation: pulse 4s ease-in-out infinite;
+        }}
+        
+        @keyframes pulse {{
+            0%, 100% {{ opacity: 1; }}
+            50% {{ opacity: 0.8; }}
+        }}
+        
+        .hero-content {{
+            position: relative;
+            z-index: 1;
         }}
         
         h1 {{
-            font-size: 48px;
-            font-weight: 600;
-            margin-bottom: 10px;
-            letter-spacing: -0.5px;
+            font-size: 4rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }}
         
         .subtitle {{
-            font-size: 20px;
+            font-size: 1.5rem;
+            font-weight: 400;
+            color: var(--text-light);
+            margin-bottom: 2rem;
+        }}
+        
+        .mission {{
+            font-size: 1.25rem;
             font-weight: 300;
-            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto 3rem;
+            color: var(--text);
+            line-height: 1.8;
+            letter-spacing: 0.01em;
         }}
         
         .stats {{
             display: flex;
             justify-content: center;
-            gap: 40px;
-            margin-top: 30px;
+            gap: 3rem;
+            margin-top: 3rem;
         }}
         
         .stat {{
             text-align: center;
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }}
+        
+        .stat:hover {{
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
         }}
         
         .stat-value {{
-            font-size: 36px;
-            font-weight: 600;
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }}
         
         .stat-label {{
-            font-size: 14px;
-            opacity: 0.8;
+            font-size: 0.9rem;
+            color: var(--text-light);
             text-transform: uppercase;
             letter-spacing: 1px;
+            margin-top: 0.5rem;
+        }}
+        
+        .cta-buttons {{
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }}
+        
+        .btn {{
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }}
+        
+        .btn-primary {{
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }}
+        
+        .btn-primary:hover {{
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+        }}
+        
+        .btn-secondary {{
+            border: 2px solid var(--border);
+            color: var(--text);
+        }}
+        
+        .btn-secondary:hover {{
+            border-color: var(--primary);
+            color: var(--primary);
         }}
         
         .search-container {{
-            padding: 40px 0;
+            padding: 4rem 0;
             background: var(--light);
         }}
         
@@ -143,145 +275,334 @@ def generate_showcase():
         
         .search-input {{
             width: 100%;
-            padding: 15px 20px 15px 50px;
-            font-size: 16px;
-            border: none;
-            border-radius: 10px;
-            background: white;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 1rem 1.25rem 1rem 3.5rem;
+            font-size: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 50px;
+            background: var(--card-bg);
+            color: var(--text);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }}
+        
+        .search-input:focus {{
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.2);
         }}
         
         .search-icon {{
             position: absolute;
-            left: 20px;
+            left: 1.25rem;
             top: 50%;
             transform: translateY(-50%);
             opacity: 0.5;
+            font-size: 1.2rem;
         }}
         
         .categories {{
             display: flex;
-            gap: 10px;
+            gap: 0.75rem;
             flex-wrap: wrap;
             justify-content: center;
-            margin-top: 20px;
+            margin-top: 2rem;
         }}
         
         .category-tag {{
-            padding: 8px 16px;
-            border-radius: 20px;
-            background: white;
-            color: var(--dark);
-            font-size: 14px;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            background: var(--card-bg);
+            color: var(--text);
+            font-size: 0.875rem;
             cursor: pointer;
-            transition: all 0.3s;
-            border: 1px solid transparent;
+            transition: all 0.3s ease;
+            border: 2px solid var(--border);
+            font-weight: 500;
         }}
         
         .category-tag:hover {{
             border-color: var(--primary);
             color: var(--primary);
+            transform: translateY(-2px);
         }}
         
         .category-tag.active {{
             background: var(--primary);
             color: white;
+            border-color: var(--primary);
+        }}
+        
+        .quick-start {{
+            padding: 4rem 0;
+            background: var(--card-bg);
+        }}
+        
+        .section-title {{
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 1rem;
+            color: var(--text);
+        }}
+        
+        .section-subtitle {{
+            font-size: 1.2rem;
+            text-align: center;
+            color: var(--text-light);
+            margin-bottom: 3rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }}
+        
+        .quick-start-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }}
+        
+        .quick-start-card {{
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }}
+        
+        .quick-start-card:hover {{
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }}
+        
+        .quick-start-card h3 {{
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text);
+        }}
+        
+        .code-snippet {{
+            background: var(--dark);
+            color: #E2E8F0;
+            padding: 1.5rem;
+            border-radius: 12px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }}
+        
+        .coming-soon {{
+            padding: 4rem 0;
+            background: var(--light);
+        }}
+        
+        .coming-soon-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 3rem;
+        }}
+        
+        .coming-soon-item {{
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }}
+        
+        .coming-soon-item:hover {{
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }}
+        
+        .coming-soon-icon {{
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }}
+        
+        .coming-soon-title {{
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text);
         }}
         
         .tools-grid {{
-            padding: 60px 0;
+            padding: 4rem 0;
         }}
         
         .category-section {{
-            margin-bottom: 60px;
+            margin-bottom: 4rem;
         }}
         
         .category-header {{
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 1rem;
+            margin-bottom: 2rem;
         }}
         
         .category-icon {{
-            font-size: 28px;
+            font-size: 2rem;
         }}
         
         .category-title {{
-            font-size: 28px;
-            font-weight: 600;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text);
         }}
         
         .tools-row {{
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 20px;
+            gap: 1.5rem;
         }}
         
         .tool-card {{
             background: var(--card-bg);
-            border-radius: 12px;
-            padding: 24px;
-            transition: all 0.3s;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.3s ease;
             cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }}
+        
+        .tool-card::before {{
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }}
         
         .tool-card:hover {{
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }}
+        
+        .tool-card:hover::before {{
+            opacity: 1;
         }}
         
         .tool-header {{
             display: flex;
             justify-content: space-between;
             align-items: start;
-            margin-bottom: 12px;
+            margin-bottom: 1rem;
         }}
         
         .tool-name {{
-            font-size: 20px;
+            font-size: 1.25rem;
             font-weight: 600;
-            color: var(--dark);
+            color: var(--text);
         }}
         
         .tool-author {{
-            font-size: 14px;
-            color: var(--gray);
+            font-size: 0.875rem;
+            color: var(--text-light);
         }}
         
         .tool-description {{
-            color: var(--gray);
-            font-size: 15px;
-            margin-bottom: 16px;
-            line-height: 1.5;
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
         }}
         
         .tool-features {{
             display: flex;
-            gap: 8px;
+            gap: 0.5rem;
             flex-wrap: wrap;
         }}
         
         .tool-feature {{
-            padding: 4px 10px;
-            background: white;
-            border-radius: 6px;
-            font-size: 12px;
-            color: var(--dark);
+            padding: 0.25rem 0.75rem;
+            background: var(--light);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            color: var(--text);
+            font-weight: 500;
         }}
         
         .tool-count {{
-            font-size: 12px;
-            color: var(--gray);
-            margin-left: 4px;
+            font-size: 0.75rem;
+            color: var(--text-light);
+            margin-left: 0.5rem;
+            font-style: italic;
+        }}
+        
+        .community {{
+            padding: 4rem 0;
+            background: var(--card-bg);
+            text-align: center;
+        }}
+        
+        .community-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }}
+        
+        .community-item {{
+            padding: 1.5rem;
+        }}
+        
+        .community-icon {{
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }}
+        
+        .community-title {{
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }}
+        
+        .community-desc {{
+            color: var(--text-light);
+            font-size: 0.9rem;
         }}
         
         footer {{
-            padding: 40px 0;
+            padding: 3rem 0;
             text-align: center;
-            background: var(--light);
-            color: var(--gray);
-            font-size: 14px;
+            background: var(--dark);
+            color: #94A3B8;
+        }}
+        
+        .footer-content {{
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }}
+        
+        .footer-links {{
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }}
+        
+        .footer-links a {{
+            color: #94A3B8;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }}
+        
+        .footer-links a:hover {{
+            color: var(--primary);
         }}
         
         .modal {{
@@ -291,9 +612,9 @@ def generate_showcase():
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(15, 23, 42, 0.8);
             z-index: 1000;
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(8px);
         }}
         
         .modal-content {{
@@ -301,89 +622,210 @@ def generate_showcase():
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            max-width: 600px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 3rem;
+            max-width: 700px;
             width: 90%;
-            max-height: 80vh;
+            max-height: 85vh;
             overflow-y: auto;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.25);
         }}
         
         .modal-close {{
             position: absolute;
-            top: 20px;
-            right: 20px;
-            font-size: 24px;
-            color: var(--gray);
+            top: 1.5rem;
+            right: 1.5rem;
+            font-size: 1.5rem;
+            color: var(--text-light);
             cursor: pointer;
+            transition: color 0.3s ease;
+        }}
+        
+        .modal-close:hover {{
+            color: var(--text);
         }}
         
         .modal-title {{
-            font-size: 32px;
-            font-weight: 600;
-            margin-bottom: 20px;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--text);
         }}
         
         .modal-section {{
-            margin-bottom: 24px;
+            margin-bottom: 2rem;
         }}
         
         .modal-section-title {{
-            font-size: 18px;
+            font-size: 1.2rem;
             font-weight: 600;
-            margin-bottom: 8px;
+            margin-bottom: 0.75rem;
+            color: var(--text);
         }}
         
         .code-block {{
-            background: var(--light);
-            padding: 16px;
-            border-radius: 8px;
-            font-family: 'SF Mono', Monaco, monospace;
-            font-size: 14px;
+            background: var(--dark);
+            color: #E2E8F0;
+            padding: 1.5rem;
+            border-radius: 12px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            font-size: 0.875rem;
             overflow-x: auto;
+            line-height: 1.5;
         }}
         
         @media (max-width: 768px) {{
             h1 {{
-                font-size: 36px;
+                font-size: 2.5rem;
+            }}
+            
+            .hero {{
+                padding: 80px 0 60px;
             }}
             
             .stats {{
-                gap: 20px;
+                gap: 1.5rem;
+                flex-direction: column;
+                align-items: center;
+            }}
+            
+            .stat {{
+                min-width: 200px;
             }}
             
             .stat-value {{
-                font-size: 28px;
+                font-size: 2.5rem;
             }}
             
             .tools-row {{
                 grid-template-columns: 1fr;
             }}
+            
+            .quick-start-grid {{
+                grid-template-columns: 1fr;
+            }}
+            
+            .coming-soon-grid {{
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }}
+            
+            .cta-buttons {{
+                flex-direction: column;
+                align-items: center;
+            }}
+            
+            .modal-content {{
+                padding: 2rem;
+                margin: 1rem;
+            }}
+            
+            .footer-links {{
+                flex-direction: column;
+                gap: 1rem;
+            }}
         }}
     </style>
 </head>
 <body>
-    <header>
+    <div class="theme-toggle" onclick="toggleTheme()">
+        <span id="theme-icon">🌙</span>
+    </div>
+    
+    <section class="hero">
         <div class="container">
-            <h1>AI4S Agent Tools</h1>
-            <p class="subtitle">Scientific Computing Tools for Intelligent Agents</p>
-            <div class="stats">
-                <div class="stat">
-                    <div class="stat-value">{len(tools_data['tools'])}</div>
-                    <div class="stat-label">Tools</div>
+            <div class="hero-content">
+                <h1>AI4S Agent Tools</h1>
+                <p class="subtitle">Building intelligent tools for scientific research</p>
+                <p class="mission">
+                    We're building a comprehensive "scientific capability library" - agent-ready tools that cover the full spectrum of AI for Science tasks. An open project by the DeepModeling community.
+                </p>
+                <div class="cta-buttons">
+                    <a href="https://github.com/lhhhappy/AI4S-agent-tools" class="btn btn-primary">🚀 Get Started</a>
+                    <a href="https://github.com/lhhhappy/AI4S-agent-tools/blob/main/CONTRIBUTING.md" class="btn btn-secondary">🤝 Contribute</a>
                 </div>
-                <div class="stat">
-                    <div class="stat-value">{sum(len(tool.get('tools', [])) for tool in tools_data['tools'])}</div>
-                    <div class="stat-label">Functions</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-value">{len(set(tool.get('author', '@unknown') for tool in tools_data['tools']))}</div>
-                    <div class="stat-label">Contributors</div>
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-value">{len(tools_data['tools'])}</div>
+                        <div class="stat-label">Tools</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">{sum(len(tool.get('tools', [])) for tool in tools_data['tools'])}</div>
+                        <div class="stat-label">Functions</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">{len(set(tool.get('author', '@unknown') for tool in tools_data['tools']))}</div>
+                        <div class="stat-label">Contributors</div>
+                    </div>
                 </div>
             </div>
         </div>
-    </header>
+    </section>
+    
+    <section class="quick-start">
+        <div class="container">
+            <h2 class="section-title">Quick Start</h2>
+            <p class="section-subtitle">Get up and running with AI4S tools in minutes</p>
+            <div class="quick-start-grid">
+                <div class="quick-start-card">
+                    <h3>🔬 Use a Tool</h3>
+                    <p>Install and run any scientific tool server</p>
+                    <div class="code-snippet">cd servers/pubchem
+uv sync
+python server.py --port 50001</div>
+                </div>
+                <div class="quick-start-card">
+                    <h3>🛠️ Add Your Tool</h3>
+                    <p>Create your own scientific capability</p>
+                    <div class="code-snippet"># Copy template
+cp -r servers/_example servers/my_tool
+
+# Edit and customize
+cd servers/my_tool
+# ... edit server.py ...
+
+# Install and run
+uv sync
+python server.py --port 50002</div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <section class="coming-soon">
+        <div class="container">
+            <h2 class="section-title">Coming Soon</h2>
+            <p class="section-subtitle">Exciting new capabilities in development</p>
+            <div class="coming-soon-grid">
+                <div class="coming-soon-item">
+                    <div class="coming-soon-icon">📊</div>
+                    <div class="coming-soon-title">Spectral Analysis</div>
+                    <p>XRD, NMR, Raman analysis tools</p>
+                </div>
+                <div class="coming-soon-item">
+                    <div class="coming-soon-icon">🧬</div>
+                    <div class="coming-soon-title">Protein Structure</div>
+                    <p>Prediction and analysis</p>
+                </div>
+                <div class="coming-soon-item">
+                    <div class="coming-soon-icon">🔭</div>
+                    <div class="coming-soon-title">3D Visualization</div>
+                    <p>Molecular visualization tools</p>
+                </div>
+                <div class="coming-soon-item">
+                    <div class="coming-soon-icon">📈</div>
+                    <div class="coming-soon-title">Experimental Design</div>
+                    <p>Optimization algorithms</p>
+                </div>
+                <div class="coming-soon-item">
+                    <div class="coming-soon-icon">🧫</div>
+                    <div class="coming-soon-title">Bayesian Optimization</div>
+                    <p>Multi-objective optimization</p>
+                </div>
+            </div>
+        </div>
+    </section>
     
     <div class="search-container">
         <div class="container">
@@ -454,9 +896,44 @@ def generate_showcase():
     html += f"""        </div>
     </div>
     
-    <footer>
+    <section class="community">
         <div class="container">
-            <p>Generated on {datetime.now().strftime('%Y-%m-%d')} • Part of the DeepModeling Community</p>
+            <h2 class="section-title">Join Our Community</h2>
+            <p class="section-subtitle">We welcome contributions from scientists, developers, and AI researchers</p>
+            <div class="community-grid">
+                <div class="community-item">
+                    <div class="community-icon">🧑‍🔬</div>
+                    <div class="community-title">Domain Scientists</div>
+                    <div class="community-desc">With computational needs</div>
+                </div>
+                <div class="community-item">
+                    <div class="community-icon">💻</div>
+                    <div class="community-title">Developers</div>
+                    <div class="community-desc">Scientific computing enthusiasts</div>
+                </div>
+                <div class="community-item">
+                    <div class="community-icon">🤖</div>
+                    <div class="community-title">AI Researchers</div>
+                    <div class="community-desc">Building science agents</div>
+                </div>
+                <div class="community-item">
+                    <div class="community-icon">📚</div>
+                    <div class="community-title">Open Science</div>
+                    <div class="community-desc">Passionate about collaboration</div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <footer>
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="https://github.com/lhhhappy/AI4S-agent-tools">GitHub</a>
+                <a href="https://github.com/lhhhappy/AI4S-agent-tools/blob/main/CONTRIBUTING.md">Contributing</a>
+                <a href="https://github.com/deepmodeling">DeepModeling</a>
+                <a href="https://github.com/lhhhappy/AI4S-agent-tools/blob/main/LICENSE">License</a>
+            </div>
+            <p>Generated on {datetime.now().strftime('%Y-%m-%d')} • Built with ❤️ by the <a href="https://github.com/deepmodeling" style="color: var(--primary);">DeepModeling</a> community</p>
         </div>
     </footer>
     
@@ -471,6 +948,36 @@ def generate_showcase():
     
     <script>
         const toolsData = {json.dumps(tools_data['tools'], indent=4)};
+        
+        // Theme toggle functionality
+        function toggleTheme() {{
+            const body = document.body;
+            const themeIcon = document.getElementById('theme-icon');
+            const currentTheme = body.getAttribute('data-theme');
+            
+            if (currentTheme === 'dark') {{
+                body.removeAttribute('data-theme');
+                themeIcon.textContent = '🌙';
+                localStorage.setItem('theme', 'light');
+            }} else {{
+                body.setAttribute('data-theme', 'dark');
+                themeIcon.textContent = '☀️';
+                localStorage.setItem('theme', 'dark');
+            }}
+        }}
+        
+        // Initialize theme from localStorage
+        document.addEventListener('DOMContentLoaded', function() {{
+            const savedTheme = localStorage.getItem('theme');
+            const themeIcon = document.getElementById('theme-icon');
+            
+            if (savedTheme === 'dark') {{
+                document.body.setAttribute('data-theme', 'dark');
+                themeIcon.textContent = '☀️';
+            }} else {{
+                themeIcon.textContent = '🌙';
+            }}
+        }});
         
         // Search functionality
         document.getElementById('searchInput').addEventListener('input', function(e) {{
