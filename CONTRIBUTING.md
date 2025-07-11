@@ -109,11 +109,6 @@ servers/
 python server.py --port <port> --log-level DEBUG
 ```
 
-### Check Logs
-```bash
-tail -f ~/.your_tool_name/*.log
-```
-
 
 ## 🎯 PR Checklist
 
