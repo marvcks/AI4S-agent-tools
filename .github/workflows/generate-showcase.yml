@@ -1,5 +1,4 @@
 name: Generate and Deploy Showcase
-# Workflow for generating TOOLS.json and showcase page
 
 on:
   push:
