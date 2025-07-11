@@ -5,6 +5,8 @@ on:
     branches:
       - main
       - master
+      - dev/showcase-improvements  # 添加开发分支
+      - 'dev/**'  # 支持所有dev开头的分支
     paths:
       - 'servers/**'
       - 'config/categories.json'
@@ -14,7 +16,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write  # 改为write以允许提交
   pages: write
   id-token: write
 
@@ -38,14 +40,26 @@ jobs:
         run: |
           python scripts/generate_simple_showcase.py
           
+      - name: Commit generated files (dev branches only)
+        if: startsWith(github.ref, 'refs/heads/dev/')
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add TOOLS.json showcase/index.html || true
+          git commit -m "chore: update generated files [skip ci]" || echo "No changes to commit"
+          git push || echo "No changes to push"
+          
       - name: Setup Pages
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         uses: actions/configure-pages@v4
         
       - name: Upload artifact
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         uses: actions/upload-pages-artifact@v3
         with:
           path: './showcase'
           
       - name: Deploy to GitHub Pages
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         id: deployment
         uses: actions/deploy-pages@v4

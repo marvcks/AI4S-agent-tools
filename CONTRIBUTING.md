@@ -179,7 +179,7 @@ AI4S-agent-tools 是一个由 DeepModeling 社区维护的开源项目，旨在�
 - **依赖管理**：使用 UV 管理依赖，不要直接修改 uv.lock
 - **安全性**：不要提交密钥或敏感信息
 - **兼容性**：确保 Python >= 3.8
-- **展示页面**：你的工具会自动出现在 [项目展示页面](https://deepmodeling.github.io/AI4S-agent-tools/)
+- **展示页面**：你的工具会自动出现在 [项目展示页面](https://lhhhappy.github.io/AI4S-agent-tools/)
 
 ### 🎯 PR 检查清单
 
@@ -369,7 +369,7 @@ AI4S-agent-tools is an open-source project maintained by the DeepModeling commun
 - **Dependency management**: Use UV, don't modify uv.lock directly
 - **Security**: Never commit keys or sensitive information
 - **Compatibility**: Ensure Python >= 3.8
-- **Showcase page**: Your tool will automatically appear on the [project showcase](https://deepmodeling.github.io/AI4S-agent-tools/)
+- **Showcase page**: Your tool will automatically appear on the [project showcase](https://lhhhappy.github.io/AI4S-agent-tools/)
 
 ### 🎯 PR Checklist
 
