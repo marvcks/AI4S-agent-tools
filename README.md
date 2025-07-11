@@ -3,7 +3,6 @@
 An open project by the DeepModeling community - Building intelligent tools for scientific research.
 
 🌐 **[View Tool Showcase](https://lhhhappy.github.io/AI4S-agent-tools/)** | 
-📚 **[Browse Tools](TOOLS.json)** | 
 🤝 **[Contribute](CONTRIBUTING.md)**
 
 ## 🎯 Mission

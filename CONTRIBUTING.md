@@ -29,7 +29,7 @@ def create_server(host="0.0.0.0", port=50001):
     return mcp
 
 if __name__ == "__main__":
-    setup_server().run()
+    setup_server().run("sse")
 ```
 
 ### 3. Update Dependencies
@@ -46,6 +46,11 @@ dependencies = [
 ]
 ```
 
+Generate lock file:
+```bash
+uv sync  # This creates uv.lock automatically
+```
+
 ### 4. Test Your Tool
 ```bash
 # Install dependencies
@@ -55,16 +60,10 @@ uv sync
 python server.py --port 50001
 
 # Check it works
-use myinspector
+use myinspector tool to Check it works
 ```
 
-### 5. Register Your Tool
-```bash
-# Generate tool registry
-python scripts/generate_tools_json.py
-```
-
-### 6. Submit PR
+### 5. Submit PR
 ```bash
 git add .
 git commit -m "feat: add YourToolName for molecular calculations"
@@ -73,17 +72,17 @@ git push origin your-branch
 
 ## 📦 Available Categories
 
-Choose one when creating your tool:
+Choose one when creating your tool (use exact string in `category` parameter):
 
-- **Materials Science** - Crystal structures, DFT, MD simulations
-- **Chemistry** - Molecular properties, reactions, spectroscopy  
-- **Biology** - Protein structures, genomics, bioinformatics
-- **Physics** - Quantum mechanics, statistical physics
-- **Research Tools** - Literature search, data management
-- **Simulation** - Molecular dynamics, Monte Carlo
-- **Data & Analysis** - Processing, visualization, statistics
-- **Machine Learning** - AI models for science
-- **General Tools** - Utilities, converters
+- `"Materials Science"` - Crystal structures, DFT, MD simulations
+- `"Chemistry"` - Molecular properties, reactions, spectroscopy  
+- `"Biology"` - Protein structures, genomics, bioinformatics
+- `"Physics"` - Quantum mechanics, statistical physics
+- `"Research Tools"` - Literature search, data management
+- `"Simulation"` - Molecular dynamics, Monte Carlo
+- `"Data & Analysis"` - Processing, visualization, statistics
+- `"Machine Learning"` - AI models for science
+- `"General Tools"` - Utilities, converters
 
 ## 🏗️ Project Structure
 
@@ -125,7 +124,6 @@ Check `TOOLS.json` for used ports (50001-50100 range)
 - [ ] Added to correct category
 - [ ] README includes usage example
 - [ ] Dependencies in pyproject.toml
-- [ ] Ran `generate_tools_json.py`
 
 ## 💡 Examples
 
