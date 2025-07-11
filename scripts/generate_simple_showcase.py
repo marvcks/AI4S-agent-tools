@@ -829,7 +829,7 @@ cd servers/my_tool
 
 # Install and run
 uv sync
-python server.py --port 50002</div>
+python server.py --port <port></div>
                 </div>
             </div>
         </div>
