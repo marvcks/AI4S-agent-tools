@@ -9,7 +9,6 @@ Welcome to the DeepModeling community! 🎉
 cp -r servers/_example servers/your_tool_name
 cd servers/your_tool_name
 ```
-
 ### 2. Write Your Tool
 ```python
 # server.py
