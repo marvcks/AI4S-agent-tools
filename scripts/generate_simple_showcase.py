@@ -154,6 +154,21 @@ def generate_showcase():
             50% {{ opacity: 0.8; }}
         }}
         
+        @keyframes fadeInUp {{
+            from {{
+                opacity: 0;
+                transform: translateY(20px);
+            }}
+            to {{
+                opacity: 1;
+                transform: translateY(0);
+            }}
+        }}
+        
+        .mission {{
+            animation: fadeInUp 1s ease-out 0.5s both;
+        }}
+        
         .hero-content {{
             position: relative;
             z-index: 1;
@@ -178,13 +193,30 @@ def generate_showcase():
         }}
         
         .mission {{
-            font-size: 1.25rem;
+            font-size: 1.35rem;
             font-weight: 300;
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto 3rem;
             color: var(--text);
-            line-height: 1.8;
-            letter-spacing: 0.01em;
+            line-height: 2;
+            letter-spacing: 0.02em;
+            text-align: center;
+            position: relative;
+        }}
+        
+        .mission::before {{
+            content: '"';
+            position: absolute;
+            left: -30px;
+            top: -10px;
+            font-size: 4rem;
+            opacity: 0.1;
+            font-family: Georgia, serif;
+        }}
+        
+        .mission-highlight {{
+            color: var(--primary);
+            font-weight: 400;
         }}
         
         .stats {{
@@ -741,9 +773,11 @@ def generate_showcase():
             <div class="hero-content">
                 <h1>AI4S Agent Tools</h1>
                 <p class="subtitle">Building intelligent tools for scientific research</p>
-                <p class="mission">
-                    We're building a comprehensive "scientific capability library" - agent-ready tools that cover the full spectrum of AI for Science tasks. An open project by the DeepModeling community.
-                </p>
+                <div class="mission">
+                    We're building a comprehensive <span class="mission-highlight">scientific capability library</span><br>
+                    Agent-ready tools that cover the full spectrum of AI for Science<br>
+                    <em style="font-size: 1.1rem; opacity: 0.8;">An open project by the DeepModeling community</em>
+                </div>
                 <div class="cta-buttons">
                     <a href="https://github.com/deepmodeling/AI4S-agent-tools" class="btn btn-primary">🚀 Get Started</a>
                     <a href="https://github.com/deepmodeling/AI4S-agent-tools/blob/main/CONTRIBUTING.md" class="btn btn-secondary">🤝 Contribute</a>
