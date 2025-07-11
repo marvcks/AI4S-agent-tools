@@ -96,3 +96,6 @@ local_config/
 
 # Generated files (keep TOOLS.json and showcase/)
 # TOOLS.json and showcase/ are tracked in git
+
+# Claude configuration (local only)
+CLAUDE.md
