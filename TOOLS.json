@@ -61,37 +61,37 @@
     {
       "name": "ABACUS",
       "description": "First principles calculations bridge for AI models - ABACUS computational jobs",
-      "author": "@dyzheng",
+      "author": "@ahxbcn",
       "category": "materials",
       "path": "servers/ABACUS-tool",
       "start_command": "cd servers/ABACUS-tool && python server.py --port <PORT>",
       "tools": [
+        "generate_deeptb_config",
+        "abacus_prepare",
+        "abacus_badercharge_run",
         "abacus_collect_data",
-        "abacus_prepare_inputs_from_relax_results",
-        "abacus_modify_input",
-        "abacus_cal_band",
         "abacus_do_relax",
         "abacus_modify_stru",
-        "abacus_dos_run",
-        "abacus_badercharge_run",
-        "generate_deeptb_config",
+        "abacus_cal_elastic",
         "run_abacus_onejob",
-        "abacus_prepare",
+        "abacus_dos_run",
+        "abacus_cal_band",
+        "abacus_modify_input",
         "generate_bulk_structure",
-        "abacus_cal_elastic"
+        "abacus_prepare_inputs_from_relax_results"
       ]
     },
     {
       "name": "CatalysisMCP",
       "description": "Catalysis reaction calculations based on ADSEC workflow",
-      "author": "@Hui Zhou",
+      "author": "@Rasic2",
       "category": "chemistry",
       "path": "servers/catalysis",
       "start_command": "cd servers/catalysis && python server.py --port <PORT>",
       "tools": [
         "cal_ads_energy",
-        "cal_surface_energy",
-        "cal_vacancy_formation_energy"
+        "cal_vacancy_formation_energy",
+        "cal_surface_energy"
       ]
     },
     {
@@ -102,16 +102,16 @@
       "path": "servers/DPACalculator",
       "start_command": "cd servers/DPACalculator && python server.py --port <PORT>",
       "tools": [
-        "run_neb",
-        "build_surface_slab",
         "optimize_crystal_structure",
-        "build_surface_adsorbate",
-        "build_bulk_structure",
         "calculate_elastic_constants",
-        "build_molecule_structure",
+        "build_surface_slab",
+        "build_bulk_structure",
         "run_molecular_dynamics",
         "build_surface_interface",
-        "calculate_phonon"
+        "build_surface_adsorbate",
+        "calculate_phonon",
+        "build_molecule_structure",
+        "run_neb"
       ]
     },
     {
@@ -124,8 +124,8 @@
       "tools": [
         "screen_thermoelectric_candidate",
         "generate_calypso_structure",
-        "predict_thermoelectric_properties",
-        "calculate_enthalpy"
+        "calculate_enthalpy",
+        "predict_thermoelectric_properties"
       ]
     },
     {

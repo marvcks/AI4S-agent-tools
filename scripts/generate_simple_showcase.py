@@ -745,8 +745,8 @@ def generate_showcase():
                     We're building a comprehensive "scientific capability library" - agent-ready tools that cover the full spectrum of AI for Science tasks. An open project by the DeepModeling community.
                 </p>
                 <div class="cta-buttons">
-                    <a href="https://github.com/lhhhappy/AI4S-agent-tools" class="btn btn-primary">🚀 Get Started</a>
-                    <a href="https://github.com/lhhhappy/AI4S-agent-tools/blob/main/CONTRIBUTING.md" class="btn btn-secondary">🤝 Contribute</a>
+                    <a href="https://github.com/deepmodeling/AI4S-agent-tools" class="btn btn-primary">🚀 Get Started</a>
+                    <a href="https://github.com/deepmodeling/AI4S-agent-tools/blob/main/CONTRIBUTING.md" class="btn btn-secondary">🤝 Contribute</a>
                 </div>
                 <div class="stats">
                     <div class="stat">
@@ -936,10 +936,10 @@ python server.py --port 50002</div>
     <footer>
         <div class="footer-content">
             <div class="footer-links">
-                <a href="https://github.com/lhhhappy/AI4S-agent-tools">GitHub</a>
-                <a href="https://github.com/lhhhappy/AI4S-agent-tools/blob/main/CONTRIBUTING.md">Contributing</a>
+                <a href="https://github.com/deepmodeling/AI4S-agent-tools">GitHub</a>
+                <a href="https://github.com/deepmodeling/AI4S-agent-tools/blob/main/CONTRIBUTING.md">Contributing</a>
                 <a href="https://github.com/deepmodeling">DeepModeling</a>
-                <a href="https://github.com/lhhhappy/AI4S-agent-tools/blob/main/LICENSE">License</a>
+                <a href="https://github.com/deepmodeling/AI4S-agent-tools/blob/main/LICENSE">License</a>
             </div>
             <p>Generated on {datetime.now().strftime('%Y-%m-%d')} • Built with ❤️ by the <a href="https://github.com/deepmodeling" style="color: var(--primary);">DeepModeling</a> community</p>
         </div>
