@@ -142,7 +142,7 @@
     {
       "name": "pubchem",
       "description": "PubChem compound data retrieval",
-      "author": "@NyankoDev",
+      "author": "@PhelanShao",
       "category": "chemistry",
       "path": "servers/pubchem",
       "start_command": "cd servers/pubchem && python server.py --port <PORT>",

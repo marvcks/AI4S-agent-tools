@@ -18,7 +18,7 @@ from src.abacusagent.main import load_tools
 from src.abacusagent.env import set_envs
 
 
-@mcp_server("ABACUS", "First principles calculations bridge for AI models - ABACUS computational jobs", author="@dyzheng", category="Materials Science")
+@mcp_server("ABACUS", "First principles calculations bridge for AI models - ABACUS computational jobs", author="@ahxbcn", category="Materials Science")
 def create_server(host="0.0.0.0", port=50001):
     """Create and configure the ABACUS MCP server instance."""
     # Set ABACUS environment variables

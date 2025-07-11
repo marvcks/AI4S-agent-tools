@@ -341,6 +341,9 @@
             font-size: 0.875rem;
             overflow-x: auto;
             margin: 1rem 0;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
         }
         
         .coming-soon {
@@ -721,9 +724,14 @@
                 <div class="quick-start-card">
                     <h3>🔬 Use a Tool</h3>
                     <p>Install and run any scientific tool server</p>
-                    <div class="code-snippet">cd servers/pubchem
+                    <div class="code-snippet"># Navigate to tool directory
+cd servers/&lt;toolname&gt;
+
+# Install dependencies
 uv sync
-python server.py --port 50001</div>
+
+# Run the server
+python server.py --port &lt;port&gt;</div>
                 </div>
                 <div class="quick-start-card">
                     <h3>🛠️ Add Your Tool</h3>
@@ -883,7 +891,7 @@ python server.py --port 50002</div>
                         <div class="tool-header">
                             <div>
                                 <div class="tool-name">pubchem</div>
-                                <div class="tool-author">@NyankoDev</div>
+                                <div class="tool-author">@PhelanShao</div>
                             </div>
                         </div>
                         <p class="tool-description">PubChem compound data retrieval</p>
@@ -1054,7 +1062,7 @@ python server.py --port 50002</div>
     {
         "name": "pubchem",
         "description": "PubChem compound data retrieval",
-        "author": "@NyankoDev",
+        "author": "@PhelanShao",
         "category": "chemistry",
         "path": "servers/pubchem",
         "start_command": "cd servers/pubchem && python server.py --port <PORT>",

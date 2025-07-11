@@ -15,7 +15,7 @@ from adsec.core.workflow import ADSECFlow
 from adsec.utils.utils import config_workflow
 
 
-@mcp_server("CatalysisMCP", "Catalysis reaction calculations based on ADSEC workflow", author="@Hui Zhou", category="chemistry")
+@mcp_server("CatalysisMCP", "Catalysis reaction calculations based on ADSEC workflow", author="@Rasic2", category="chemistry")
 
 def create_server(host="0.0.0.0", port=50001):
     """Create and configure the MCP server instance."""

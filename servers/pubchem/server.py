@@ -10,7 +10,7 @@ from mcp.server.fastmcp import FastMCP
 from python_version.mcp_server import handle_tool_call
 
 
-@mcp_server("pubchem", "PubChem compound data retrieval", author="@NyankoDev", category="chemistry")
+@mcp_server("pubchem", "PubChem compound data retrieval", author="@PhelanShao", category="chemistry")
 def create_server(host="0.0.0.0", port=50001):
     """Create and configure the MCP server instance."""
     mcp = FastMCP("pubchem", host=host, port=port)

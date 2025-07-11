@@ -391,6 +391,9 @@ def generate_showcase():
             font-size: 0.875rem;
             overflow-x: auto;
             margin: 1rem 0;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
         }}
         
         .coming-soon {{
@@ -771,9 +774,14 @@ def generate_showcase():
                 <div class="quick-start-card">
                     <h3>🔬 Use a Tool</h3>
                     <p>Install and run any scientific tool server</p>
-                    <div class="code-snippet">cd servers/pubchem
+                    <div class="code-snippet"># Navigate to tool directory
+cd servers/&lt;toolname&gt;
+
+# Install dependencies
 uv sync
-python server.py --port 50001</div>
+
+# Run the server
+python server.py --port &lt;port&gt;</div>
                 </div>
                 <div class="quick-start-card">
                     <h3>🛠️ Add Your Tool</h3>
