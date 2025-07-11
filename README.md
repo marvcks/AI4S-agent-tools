@@ -2,6 +2,8 @@
 
 An open project initiated by the DeepModeling community focused on collecting agentic tools  for scientific research.
 
+🌐 **[View our Tool Showcase](https://lhhhappy.github.io/AI4S-agent-tools/)** | 📊 **[Browse Available Tools](https://lhhhappy.github.io/AI4S-agent-tools/)**
+
 We will collaboratively adapt and integrate a suite of "Agent-Ready tool modules" tailored for scientific research scenarios, building a dynamic "scientific capability library" that can be invoked by intelligent agents. These tools cover key tasks in AI for Science, including but not limited to:
 
 - 📘 Multimodal literature parsing (structured extraction of text, figures, and formulas)
