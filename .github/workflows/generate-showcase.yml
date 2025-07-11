@@ -5,7 +5,7 @@ on:
     branches:
       - main
       - master
-      - dev/showcase-improvements  # 添加开发分支
+      - dev/showcase-improvements  
       - 'dev/**'  # 支持所有dev开头的分支
   pull_request:
     branches:
