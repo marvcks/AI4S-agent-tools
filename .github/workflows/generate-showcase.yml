@@ -1,4 +1,5 @@
 name: Generate and Deploy Showcase
+# Workflow for generating TOOLS.json and showcase page
 
 on:
   push:
@@ -7,12 +8,10 @@ on:
       - master
       - dev/showcase-improvements  # 添加开发分支
       - 'dev/**'  # 支持所有dev开头的分支
-    paths:
-      - 'servers/**'
-      - 'config/categories.json'
-      - 'scripts/generate_simple_showcase.py'
-      - 'scripts/generate_tools_json.py'
-      - '.github/workflows/generate-showcase.yml'
+  pull_request:
+    branches:
+      - main
+      - master
   workflow_dispatch:
 
 permissions:
