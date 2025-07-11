@@ -1,5 +1,0 @@
-exclude:
-  - claude
-  - claude-ai
-  - dependabot[bot]
-  - github-actions[bot]
