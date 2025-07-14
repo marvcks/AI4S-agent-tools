@@ -1,39 +1,47 @@
 import sys
 from pathlib import Path
 
-# Add parent directory to import server_utils
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from server_utils import mcp_server, setup_server
-
+import argparse
 from mcp.server.fastmcp import FastMCP
 from python_version.mcp_server import handle_tool_call
 
+def parse_args():
+    """Parse command line arguments for MCP server."""
+    parser = argparse.ArgumentParser(description="DPA Calculator MCP Server")
+    parser.add_argument('--port', type=int, default=50001, help='Server port (default: 50001)')
+    parser.add_argument('--host', default='0.0.0.0', help='Server host (default: 0.0.0.0)')
+    parser.add_argument('--log-level', default='INFO', 
+                       choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
+                       help='Logging level (default: INFO)')
+    try:
+        args = parser.parse_args()
+    except SystemExit:
+        class Args:
+            port = 50001
+            host = '0.0.0.0'
+            log_level = 'INFO'
+        args = Args()
+    return args
 
-@mcp_server("pubchem", "PubChem compound data retrieval", author="@PhelanShao", category="chemistry")
-def create_server(host="0.0.0.0", port=50001):
-    """Create and configure the MCP server instance."""
-    mcp = FastMCP("pubchem", host=host, port=port)
+args = parse_args()
+mcp = FastMCP("pubchem", host=args.host, port=args.port)
 
-    @mcp.tool()
-    def get_pubchem_data(query: str, format: str = 'JSON', include_3d: bool = False) -> str:
-        """
-        Get PubChem data for a given query.
-        """
-        return handle_tool_call("get_pubchem_data", {"query": query, "format": format, "include_3d": include_3d})
+@mcp.tool()
+def get_pubchem_data(query: str, format: str = 'JSON', include_3d: bool = False) -> str:
+    """
+    Get PubChem data for a given query.
+    """
+    return handle_tool_call("get_pubchem_data", {"query": query, "format": format, "include_3d": include_3d})
 
-    @mcp.tool()
-    def download_structure(cid: str, format: str = 'sdf') -> str:
-        """
-        Download a structure from PubChem.
-        """
-        return handle_tool_call("download_structure", {"cid": cid, "format": format})
+@mcp.tool()
+def download_structure(cid: str, format: str = 'sdf') -> str:
+    """
+    Download a structure from PubChem.
+    """
+    return handle_tool_call("download_structure", {"cid": cid, "format": format})
 
-    return mcp
-
-_default_server = create_server()
 if __name__ == "__main__":
-    setup_server().run("sse")
+    mcp.run(transport="sse")
 
 
 
