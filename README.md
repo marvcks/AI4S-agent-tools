@@ -14,6 +14,7 @@ We're building a comprehensive "scientific capability library" - agent-ready too
 - **Materials Science** 
   - [DPACalculator](servers/DPACalculator/) - Deep learning atomistic simulations with universal potentials
   - [Thermoelectric](servers/thermoelectric/) - Materials screening with CALYPSO
+  - [ABACUS-tools](servers/ABACUS-tools/) - First-principles calculations with ABACUS
 
 - **Chemistry**
   - [PubChem](servers/pubchem/) - Compound data retrieval and structure download
@@ -37,7 +38,7 @@ We're building a comprehensive "scientific capability library" - agent-ready too
 
 ```bash
 # Install dependencies
-cd servers/pubchem
+cd servers/<tool-name>
 uv sync
 
 # Run the server

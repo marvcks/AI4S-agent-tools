@@ -1,58 +1,67 @@
 #!/usr/bin/env python3
 """
-Example MCP Server using the minimal @mcp_server decorator pattern.
-This demonstrates how to create a new AI4S tool with minimal code.
+Example MCP Server using the new simplified pattern.
+This demonstrates how to create a new AI4S tool with tools defined at module level.
 """
-import sys
-from pathlib import Path
+import argparse
 
-# Add parent directory to import server_utils
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from server_utils import mcp_server, setup_server
 from mcp.server.fastmcp import FastMCP
 
+def parse_args():
+    """Parse command line arguments for MCP server."""
+    parser = argparse.ArgumentParser(description="DPA Calculator MCP Server")
+    parser.add_argument('--port', type=int, default=50001, help='Server port (default: 50001)')
+    parser.add_argument('--host', default='0.0.0.0', help='Server host (default: 0.0.0.0)')
+    parser.add_argument('--log-level', default='INFO', 
+                       choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
+                       help='Logging level (default: INFO)')
+    try:
+        args = parser.parse_args()
+    except SystemExit:
+        class Args:
+            port = 50001
+            host = '0.0.0.0'
+            log_level = 'INFO'
+        args = Args()
+    return args
 
-@mcp_server("ExampleTool", "Example AI4S tool demonstrating the minimal pattern", author="@example-author", category="General Tools")
-def create_server(host="0.0.0.0", port=50001):
-    """Create and configure the MCP server instance."""
-    mcp = FastMCP("example", host=host, port=port) #or CalculationMCPServer("example", host=host, port=port)
+
+args = parse_args()
+mcp = FastMCP("example",host=args.host,port=args.port)
+
+# Define tools at module level
+@mcp.tool()
+def example_calculation(x: float, y: float) -> dict:
+    """
+    Perform an example calculation.
     
-    @mcp.tool()
-    def example_calculation(x: float, y: float) -> dict:
-        """
-        Perform an example calculation.
+    Args:
+        x: First number
+        y: Second number
         
-        Args:
-            x: First number
-            y: Second number
-            
-        Returns:
-            Dictionary with sum, product, and ratio
-        """
-        return {
-            "sum": x + y,
-            "product": x * y,
-            "ratio": x / y if y != 0 else "undefined"
-        }
+    Returns:
+        Dictionary with sum, product, and ratio
+    """
+    return {
+        "sum": x + y,
+        "product": x * y,
+        "ratio": x / y if y != 0 else "undefined"
+    }
+
+@mcp.tool()
+def demo_function(message: str) -> str:
+    """
+    A demo function that echoes the input message.
     
-    @mcp.tool()
-    def demo_function(message: str) -> str:
-        """
-        A demo function that echoes the input message.
+    Args:
+        message: The message to echo
         
-        Args:
-            message: The message to echo
-            
-        Returns:
-            The echoed message with a prefix
-        """
-        return f"Echo: {message}"
-    
-    return mcp
+    Returns:
+        The echoed message with a prefix
+    """
+    return f"Echo: {message}"
 
 
-
-_default_server = create_server() # This is required for the server to be registered
 if __name__ == "__main__":
-    setup_server().run(transport="sse")
+    mcp.run(transport="sse")

@@ -12,27 +12,58 @@ cd servers/your_tool_name
 ### 2. Write Your Tool
 ```python
 # server.py
-from servers.server_utils import mcp_server, setup_server
+#!/usr/bin/env python3
+"""
+Example MCP Server using the new simplified pattern.
+This demonstrates how to create a new AI4S tool with tools defined at module level.
+"""
+import argparse
+
 from mcp.server.fastmcp import FastMCP
 
-@mcp_server("YourToolName", "One-line description", author="@your-github", category="choose one category")
-def create_server(host="0.0.0.0", port=50001):
-    mcp = FastMCP("your_tool", host=host, port=port)
-    
-    @mcp.tool()
-    def calculate_something(molecule: str) -> dict:
-        """Calculate properties of a molecule."""
-        # Your scientific logic here
-        return {"result": "value"}
-    
-    return mcp
+def parse_args():
+    """Parse command line arguments for MCP server."""
+    parser = argparse.ArgumentParser(description="DPA Calculator MCP Server")
+    parser.add_argument('--port', type=int, default=50001, help='Server port (default: 50001)')
+    parser.add_argument('--host', default='0.0.0.0', help='Server host (default: 0.0.0.0)')
+    parser.add_argument('--log-level', default='INFO', 
+                       choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
+                       help='Logging level (default: INFO)')
+    try:
+        args = parser.parse_args()
+    except SystemExit:
+        class Args:
+            port = 50001
+            host = '0.0.0.0'
+            log_level = 'INFO'
+        args = Args()
+    return args
 
-_default_server = create_server() # This is required for the server to be registered
+
+args = parse_args()
+mcp = FastMCP("example",host=args.host,port=args.port)
+
+@mcp.tool()
+def demo_function(message: str) -> str:
+    return f"Echo: {message}"
+
+
 if __name__ == "__main__":
-    setup_server().run("sse")
+    mcp.run(transport="sse")
 ```
 
-### 3. Update Dependencies
+### 3. Create Metadata File
+```json
+# metadata.json
+{
+    "name": "YourToolName",
+    "description": "Brief description of what your tool does",
+    "author": "@your-github-username",
+    "category": "chemistry"
+}
+```
+
+### 4. Update Dependencies
 ```toml
 # pyproject.toml
 [project]
@@ -51,7 +82,7 @@ Generate lock file:
 uv sync  # This creates uv.lock automatically
 ```
 
-### 4. Test Your Tool
+### 5. Test Your Tool
 ```bash
 # Install dependencies
 uv sync
@@ -63,8 +94,7 @@ python server.py --port 50001
 use myinspector tool to Check it works
 ```
 
-
-### 5. Submit PR
+### 6. Submit PR
 ```bash
 git add .
 git commit -m "feat: add YourToolName for molecular calculations"
@@ -73,34 +103,34 @@ git push origin your-branch
 
 ## 📦 Available Categories
 
-Choose one when creating your tool (use exact string in `category` parameter):
+Choose one when creating your tool (use exact string in metadata.json):
 
-- `"Materials Science"` - Crystal structures, DFT, MD simulations
-- `"Chemistry"` - Molecular properties, reactions, spectroscopy  
-- `"Biology"` - Protein structures, genomics, bioinformatics
-- `"Physics"` - Quantum mechanics, statistical physics
-- `"Research Tools"` - Literature search, data management
-- `"Simulation"` - Molecular dynamics, Monte Carlo
-- `"Data & Analysis"` - Processing, visualization, statistics
-- `"Machine Learning"` - AI models for science
-- `"General Tools"` - Utilities, converters
+- `materials` - Crystal structures, DFT, MD simulations
+- `chemistry` - Molecular properties, reactions, spectroscopy  
+- `biology` - Protein structures, genomics, bioinformatics
+- `physics` - Quantum mechanics, statistical physics
+- `research` - Literature search, data management
+- `simulation` - Molecular dynamics, Monte Carlo
+- `data` - Processing, visualization, statistics
+- `machine-learning` - AI models for science
 
 ## 🏗️ Project Structure
 
 ```
 servers/
 ├── your_tool/ 
-│   ├── utils             # Utils 
+│   ├── utils/            # Utility functions (optional)
 │   ├── server.py         # Your MCP server
+│   ├── metadata.json     # Tool metadata
 │   ├── pyproject.toml    # Dependencies
-│   ├── README.md         # Documentation
+│   ├── README.md         # Documentation (optional)
 │   └── uv.lock          # Lock file (auto-generated)
 ```
 
 ## 📝 Minimal Requirements
 
 1. **Working Code** - Test before submitting
-2. **Clear Purpose** - One-line description in decorator
+2. **Clear Metadata** - Complete metadata.json file
 3. **Basic Docs** - README with usage example
 4. **Error Handling** - Wrap logic in try-except
 
