@@ -1125,7 +1125,7 @@ def create_server(host="0.0.0.0", port=50001):
 
     return mcp
 
-
+_default_server = create_server()
 if __name__ == "__main__":
     logging.info("Starting Unified MCP Server with all tools...")
     setup_server().run(transport="sse")
