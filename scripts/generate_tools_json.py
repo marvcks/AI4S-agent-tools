@@ -21,90 +21,6 @@ logger = logging.getLogger(__name__)
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
-def extract_server_metadata_from_ast(filepath: Path) -> Optional[Dict[str, Any]]:
-    """Extract @mcp_server decorator metadata using AST parsing."""
-    try:
-        with open(filepath, 'r', encoding='utf-8') as f:
-            tree = ast.parse(f.read())
-        
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef):
-                for decorator in node.decorator_list:
-                    if isinstance(decorator, ast.Call):
-                        if (isinstance(decorator.func, ast.Name) and 
-                            decorator.func.id == 'mcp_server'):
-                            # Extract positional arguments (name, description, author)
-                            metadata = {}
-                            if len(decorator.args) >= 2:
-                                if isinstance(decorator.args[0], ast.Constant):
-                                    metadata['name'] = decorator.args[0].value
-                                if isinstance(decorator.args[1], ast.Constant):
-                                    metadata['description'] = decorator.args[1].value
-                            
-                            # Extract keyword arguments
-                            for keyword in decorator.keywords:
-                                if keyword.arg == 'author':
-                                    if isinstance(keyword.value, ast.Constant):
-                                        metadata['author'] = keyword.value.value
-                                elif keyword.arg == 'category':
-                                    if isinstance(keyword.value, ast.Constant):
-                                        # Map human-readable category names to category keys
-                                        category_map = {
-                                            'materials science': 'materials',
-                                            'material science': 'materials',
-                                            'material': 'materials',
-                                            'chemistry': 'chemistry',
-                                            'biology': 'biology',
-                                            'physics': 'physics',
-                                            'research tools': 'research',
-                                            'research': 'research',
-                                            'simulation': 'simulation',
-                                            'data & analysis': 'data',
-                                            'data analysis': 'data',
-                                            'data': 'data',
-                                            'machine learning': 'machine-learning',
-                                            'ml': 'machine-learning',
-                                            'general tools': 'general',
-                                            'general': 'general'
-                                        }
-                                        raw_category = keyword.value.value.lower()
-                                        metadata['category'] = category_map.get(raw_category, raw_category)
-                            
-                            if 'name' in metadata:
-                                return metadata
-    except Exception as e:
-        logger.debug(f"Failed to parse {filepath}: {e}")
-    
-    return None
-
-
-def extract_legacy_server_info(filepath: Path) -> Optional[Dict[str, Any]]:
-    """Extract information from legacy servers without @mcp_server decorator."""
-    try:
-        with open(filepath, 'r', encoding='utf-8') as f:
-            content = f.read()
-        
-        # Look for common patterns
-        metadata = {}
-        
-        # Extract server name and port
-        import re
-        
-        # Try to find server initialization
-        mcp_pattern = r'(?:FastMCP|CalculationMCPServer)\s*\(\s*["\']([^"\']+)["\']'
-        match = re.search(mcp_pattern, content)
-        if match:
-            metadata['name'] = match.group(1)
-        
-        # Extract author from pyproject.toml if available
-        metadata['author'] = '@unknown'
-        
-        return metadata if 'name' in metadata else None
-        
-    except Exception as e:
-        logger.debug(f"Failed to extract legacy info from {filepath}: {e}")
-    
-    return None
 
 
 def read_pyproject_toml(server_dir: Path) -> Dict[str, Any]:
@@ -149,7 +65,11 @@ def extract_tools_from_server(server_dir: Path) -> List[str]:
                 with open(server_file, 'r', encoding='utf-8') as f:
                     tree = ast.parse(f.read())
                 
-                # Find functions decorated with @mcp_server
+                # Two patterns to look for:
+                # 1. Legacy: Functions decorated with @mcp_server containing @mcp.tool() inside
+                # 2. New: Module-level functions decorated with @mcp.tool()
+                
+                # Pattern 1: Legacy - Find functions decorated with @mcp_server
                 for node in ast.walk(tree):
                     if isinstance(node, ast.FunctionDef):
                         # Check if this function has @mcp_server decorator
@@ -178,6 +98,28 @@ def extract_tools_from_server(server_dir: Path) -> List[str]:
                                             if (decorator.attr == 'tool' and
                                                 isinstance(decorator.value, ast.Name)):
                                                 tools.append(inner_node.name)
+                
+                # Pattern 2: New - Module-level @mcp.tool() decorated functions
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.FunctionDef):
+                        # Skip if this is inside another function
+                        parent_funcs = [n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and node in ast.walk(n) and n != node]
+                        if not parent_funcs:  # This is a module-level function
+                            for decorator in node.decorator_list:
+                                # Check for @mcp.tool() pattern
+                                if isinstance(decorator, ast.Call):
+                                    if (isinstance(decorator.func, ast.Attribute) and 
+                                        decorator.func.attr == 'tool' and
+                                        isinstance(decorator.func.value, ast.Name) and
+                                        decorator.func.value.id == 'mcp'):
+                                        tools.append(node.name)
+                                # Also check for @mcp.tool without parentheses
+                                elif isinstance(decorator, ast.Attribute):
+                                    if (decorator.attr == 'tool' and
+                                        isinstance(decorator.value, ast.Name) and
+                                        decorator.value.id == 'mcp'):
+                                        tools.append(node.name)
+                        
             except Exception as e:
                 logger.debug(f"Failed to extract tools from {server_file}: {e}")
     
@@ -219,31 +161,23 @@ def extract_tools_from_server(server_dir: Path) -> List[str]:
 
 def scan_server_directory(server_dir: Path) -> Optional[Dict[str, Any]]:
     """Scan a server directory and extract all metadata."""
-    # Find server.py or similar files
-    server_files = []
-    for pattern in ['server.py', '*_server.py', '*_mcp_server.py']:
-        server_files.extend(server_dir.glob(pattern))
+    # Only read from metadata.json
+    metadata_file = server_dir / "metadata.json"
     
-    if not server_files:
-        logger.warning(f"No server files found in {server_dir}")
+    if not metadata_file.exists():
+        logger.warning(f"No metadata.json found in {server_dir}")
         return None
     
-    # Try to extract metadata from each file
-    metadata = None
-    for server_file in server_files:
-        # First try @mcp_server decorator
-        metadata = extract_server_metadata_from_ast(server_file)
-        
-        # If not found, try legacy extraction
-        if not metadata:
-            metadata = extract_legacy_server_info(server_file)
-        
-        if metadata:
-            metadata['path'] = f"servers/{server_dir.name}"
-            break
-    
-    if not metadata:
+    try:
+        with open(metadata_file, 'r', encoding='utf-8') as f:
+            metadata = json.load(f)
+        logger.debug(f"  Loaded metadata from {metadata_file}")
+    except Exception as e:
+        logger.error(f"  Failed to read {metadata_file}: {e}")
         return None
+    
+    # Add path information
+    metadata['path'] = f"servers/{server_dir.name}"
     
     # Enhance with pyproject.toml data
     pyproject_data = read_pyproject_toml(server_dir)
