@@ -33,7 +33,6 @@ from pymatgen.analysis.elasticity import (DeformedStructureSet, ElasticTensor,
 from pymatgen.analysis.elasticity.elastic import get_strain_state_dict
 from pymatgen.io.ase import AseAtomsAdaptor
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
-from server_utils import mcp_server, setup_server
 
 ### CONSTANTS
 THz_TO_K = 47.9924  # 1 THz ≈ 47.9924 K
