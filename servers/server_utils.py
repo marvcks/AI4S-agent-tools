@@ -58,8 +58,18 @@ def mcp_server(name: str, description: str, author: str, category: Optional[str]
             try:
                 tools_to_export = {}
                 
-                # Check for FastMCP-style tool manager first
-                if hasattr(mcp_instance, '_tool_manager') and hasattr(mcp_instance._tool_manager, '_tools'):
+                # Check for CalculationMCPServer first (it wraps FastMCP)
+                if hasattr(mcp_instance, 'mcp') and hasattr(mcp_instance.mcp, '_tool_manager'):
+                    # CalculationMCPServer stores inner FastMCP instance in 'mcp' attribute
+                    inner_mcp = mcp_instance.mcp
+                    if hasattr(inner_mcp._tool_manager, '_tools'):
+                        tools_dict = inner_mcp._tool_manager._tools
+                        for tool_name, tool_obj in tools_dict.items():
+                            # Get the wrapped function (not the original)
+                            if hasattr(tool_obj, 'fn') and callable(tool_obj.fn):
+                                tools_to_export[tool_name] = tool_obj.fn
+                # Check for FastMCP-style tool manager
+                elif hasattr(mcp_instance, '_tool_manager') and hasattr(mcp_instance._tool_manager, '_tools'):
                     tools_dict = mcp_instance._tool_manager._tools
                     for tool_name, tool_obj in tools_dict.items():
                         # FastMCP stores the function in the 'fn' attribute of Tool objects
