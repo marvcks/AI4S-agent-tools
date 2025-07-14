@@ -923,7 +923,7 @@ FixCell = F
 
 
 # ====== Run Server ======
-
+_default_server = create_server()
 if __name__ == "__main__":
     logging.info("Starting ThermoelectricMaterialsServer...")
     setup_server().run(transport="sse")

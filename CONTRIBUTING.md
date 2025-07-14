@@ -27,6 +27,7 @@ def create_server(host="0.0.0.0", port=50001):
     
     return mcp
 
+_default_server = create_server() # This is required for the server to be registered
 if __name__ == "__main__":
     setup_server().run("sse")
 ```
@@ -61,6 +62,7 @@ python server.py --port 50001
 # Check it works
 use myinspector tool to Check it works
 ```
+
 
 ### 5. Submit PR
 ```bash
