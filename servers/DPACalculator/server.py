@@ -1,6 +1,7 @@
+import glob
 import logging
 import os
-import glob
+import sys
 from pathlib import Path
 from typing import Literal, Optional, Tuple, TypedDict, List, Dict, Union
 import sys
@@ -8,25 +9,30 @@ import argparse
 
 import numpy as np
 from ase import Atoms, io, units
-from ase.build import bulk, surface, molecule, add_vacuum, add_adsorbate
+from ase.build import add_adsorbate, add_vacuum, bulk, molecule, surface
+from ase.constraints import ExpCellFilter
 from ase.io import read, write
-from ase.optimize import BFGS
+from ase.md.andersen import Andersen
+from ase.md.langevin import Langevin
+from ase.md.nose_hoover_chain import NoseHooverChainNVT
 from ase.md.npt import NPT
 from ase.md.nvtberendsen import NVTBerendsen
 from ase.md.velocitydistribution import (MaxwellBoltzmannDistribution,
                                          Stationary, ZeroRotation)
 from ase.md.verlet import VelocityVerlet
+from ase.mep import NEB, NEBTools
+from ase.optimize import BFGS
+from ase.optimize.precon import Exp
 from deepmd.calculator import DP
 from dp.agent.server import CalculationMCPServer
 from phonopy import Phonopy
 from phonopy.harmonic.dynmat_to_fc import get_commensurate_points
 from phonopy.structure.atoms import PhonopyAtoms
+from pymatgen.analysis.elasticity import (DeformedStructureSet, ElasticTensor,
+                                          Strain)
+from pymatgen.analysis.elasticity.elastic import get_strain_state_dict
 from pymatgen.io.ase import AseAtomsAdaptor
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
-
-from pymatgen.analysis.elasticity import DeformedStructureSet, ElasticTensor, Strain
-from pymatgen.analysis.elasticity.elastic import get_strain_state_dict
-from ase.mep import NEB, NEBTools
 
 ### CONSTANTS
 THz_TO_K = 47.9924  # 1 THz ≈ 47.9924 K
@@ -49,8 +55,6 @@ def parse_args():
             log_level = 'INFO'
         args = Args()
     return args
-
-
 
 
 args = parse_args()
@@ -445,6 +449,7 @@ def optimize_crystal_structure(
     head: str = "Omat24",
     force_tolerance: float = 0.01, 
     max_iterations: int = 100, 
+    relax_cell: bool = False,
 ) -> OptimizationResult:
     # TODO: RELAX CELL
     """Optimize crystal structure using a Deep Potential (DP) model.
@@ -452,7 +457,7 @@ def optimize_crystal_structure(
     Args:
         input_structure (Path): Path to the input structure file (e.g., CIF, POSCAR).
         model_path (Path): Path to the trained Deep Potential model directory.
-            Default is "local:///model/upload/30d126de-b367-4254-90d1-5e41799e2853/dpa-2.4-7M.pt", i.e. the DPA-2.4-7M.
+            Default is "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/27666/store/upload/cd12300a-d3e6-4de9-9783-dd9899376cae/dpa-2.4-7M.pt", i.e. the DPA-2.4-7M.
         head (str, optional): Model head corresponding to the application domain. Options are:
             - 'solvated_protein_fragments' : For **biomolecular systems**, such as proteins, peptides, 
             and molecular fragments in aqueous or biological environments.
@@ -469,6 +474,8 @@ def optimize_crystal_structure(
             Default is 0.01 eV/Å.
         max_iterations (int, optional): Maximum number of geometry optimization steps.
             Default is 100 steps.
+        relax_cell (bool, optional): Whether to relax the unit cell shape and volume in addition to atomic positions.
+            Default is False.
 
 
     Returns:
@@ -492,8 +499,15 @@ def optimize_crystal_structure(
             Path(traj_file).unlink()
 
         logging.info("Starting structure optimization...")
-        optimizer = BFGS(atoms, trajectory=traj_file)
-        optimizer.run(fmax=force_tolerance, steps=max_iterations)
+
+        if relax_cell:
+            logging.info("Using cell relaxation (ExpCellFilter)...")
+            ecf = ExpCellFilter(atoms)
+            optimizer = BFGS(ecf, trajectory=traj_file)
+            optimizer.run(fmax=force_tolerance, steps=max_iterations)
+        else:
+            optimizer = BFGS(atoms, trajectory=traj_file)
+            optimizer.run(fmax=force_tolerance, steps=max_iterations)
 
         output_file = f"{base_name}_optimized.cif"
         write(output_file, atoms)
@@ -533,30 +547,30 @@ def calculate_phonon(
 ) -> PhononResult:
     """Calculate phonon properties using a Deep Potential (DP) model.
 
-    Args:
-        cif_file (Path): Path to the input CIF structure file.
-        model_path (Path): Path to the Deep Potential model file.
-            Default is "local:///model/upload/30d126de-b367-4254-90d1-5e41799e2853/dpa-2.4-7M.pt", i.e. the DPA-2.4-7M.
-        head (str, optional): Model head corresponding to the application domain. Options are:
-            - 'solvated_protein_fragments' : For **biomolecular systems**, such as proteins, peptides, 
-            and molecular fragments in aqueous or biological environments.
-            - 'Omat24' : For **inorganic crystalline materials**, including oxides, metals, ceramics, 
-            and other extended solid-state systems. (This is the **default** head.)
-            - 'SPICE2' : For **organic small molecules**, including drug-like compounds, ligands, 
-            and general organic chemistry structures.
-            - 'OC22' : For **interface and heterogeneous catalysis systems**, such as surfaces, 
-            adsorbates, and catalytic reactions involving solid-liquid or solid-gas interfaces.
-            - 'Organic_Reactions' : For **organic reaction prediction**, transition state modeling, 
-            and energy profiling of organic chemical transformations.
-            Default is 'Omat24', which is suitable for most inorganic materials and crystalline solids.
-        supercell_matrix (list[int], optional): 2×2×2 matrix for supercell expansion.
-            Defaults to [2, 2, 2].
-        displacement_distance (float, optional): Atomic displacement distance in Ångström.
-            Default is 0.005 Å.
-        temperatures (tuple, optional): Tuple of temperatures (in Kelvin) for thermal property calculations.
-            Default is (300,).
-        plot_path (str, optional): File path to save the phonon band structure plot.
-            Default is "phonon_band.png".
+        Args:
+            cif_file (Path): Path to the input CIF structure file.
+            model_path (Path): Path to the Deep Potential model file.
+                Default is "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/27666/store/upload/cd12300a-d3e6-4de9-9783-dd9899376cae/dpa-2.4-7M.pt", i.e. the DPA-2.4-7M.
+            head (str, optional): Model head corresponding to the application domain. Options are:
+                - 'solvated_protein_fragments' : For **biomolecular systems**, such as proteins, peptides, 
+                and molecular fragments in aqueous or biological environments.
+                - 'Omat24' : For **inorganic crystalline materials**, including oxides, metals, ceramics, 
+                and other extended solid-state systems. (This is the **default** head.)
+                - 'SPICE2' : For **organic small molecules**, including drug-like compounds, ligands, 
+                and general organic chemistry structures.
+                - 'OC22' : For **interface and heterogeneous catalysis systems**, such as surfaces, 
+                adsorbates, and catalytic reactions involving solid-liquid or solid-gas interfaces.
+                - 'Organic_Reactions' : For **organic reaction prediction**, transition state modeling, 
+                and energy profiling of organic chemical transformations.
+                Default is 'Omat24', which is suitable for most inorganic materials and crystalline solids.
+            supercell_matrix (list[int], optional): 2×2×2 matrix for supercell expansion.
+                Defaults to [2, 2, 2].
+            displacement_distance (float, optional): Atomic displacement distance in Ångström.
+                Default is 0.005 Å.
+            temperatures (tuple, optional): Tuple of temperatures (in Kelvin) for thermal property calculations.
+                Default is (300,).
+            plot_path (str, optional): File path to save the phonon band structure plot.
+                Default is "phonon_band.png".
 
     Returns:
         dict: A dictionary containing phonon properties:
@@ -684,14 +698,38 @@ def _run_md_stage(atoms, stage, save_interval_steps, traj_file, seed, stage_id):
         ZeroRotation(atoms)
 
     # Choose ensemble
-    if mode == 'NVT':
+    if mode == 'NVT' or mode == 'NVT-NH':
+        # Use NoseHooverChain for NVT by default
+        dyn = NoseHooverChainNVT(
+            atoms,
+            timestep=timestep_fs * units.fs,
+            temperature_K=temperature_K,
+            chain_length=stage.get('chain_length', 3) 
+        )
+    elif mode == 'NVT-Berendsen':
         dyn = NVTBerendsen(
             atoms,
             timestep=timestep_fs * units.fs,
             temperature_K=temperature_K,
             taut=tau_t_ps * 1000 * units.fs
         )
-    elif mode.startswith('NPT'):
+    elif mode == 'NVT-Andersen':
+        dyn = Andersen(
+            atoms,
+            timestep=timestep_fs * units.fs,
+            temperature_K=temperature_K,
+            friction=1.0 / (tau_t_ps * 1000 * units.fs),
+            rng=np.random.RandomState(seed)
+        )
+    elif mode == 'NVT-Langevin' or mode == 'Langevin':
+        dyn = Langevin(
+            atoms,
+            timestep=timestep_fs * units.fs,
+            temperature_K=temperature_K,
+            friction=1.0 / (tau_t_ps * 1000 * units.fs),
+            rng=np.random.RandomState(seed)
+        )
+    elif mode == 'NPT-aniso' or mode == 'NPT-tri':
         if mode == 'NPT-aniso':
             mask = np.eye(3, dtype=bool)
         elif mode == 'NPT-tri':
@@ -801,10 +839,13 @@ def run_molecular_dynamics(
         model_path (Path): Path to the Deep Potential model file (.pt or .pb)
         stages (List[Dict]): List of simulation stages. Each dictionary can contain:
             - mode (str): Simulation ensemble type. One of:
-                * "NVT" - constant Number, Volume, Temperature
+                * "NVT" or "NVT-NH"- NVT ensemble (constant Particle Number, Volume, Temperature), with Nosé-Hoover (NH) chain thermostat
+                * "NVT-Berendsen"- NVT ensemble with Berendsen thermostat. For quick thermalization
+                * 'NVT-Andersen- NVT ensemble with Andersen thermostat. For quick thermalization (not rigorous NVT)
+                * "NVT-Langevin" or "Langevin"- Langevin dynamics. For biomolecules or implicit solvent systems.
                 * "NPT-aniso" - constant Number, Pressure (anisotropic), Temperature
                 * "NPT-tri" - constant Number, Pressure (tri-axial), Temperature
-                * "NVE" - constant Number, Volume, Energy (no thermostat/barostat)
+                * "NVE" - constant Number, Volume, Energy (no thermostat/barostat, or microcanonical)
             - runtime_ps (float): Simulation duration in picoseconds.
             - temperature_K (float, optional): Temperature in Kelvin (required for NVT/NPT).
             - pressure (float, optional): Pressure in GPa (required for NPT).
@@ -977,7 +1018,7 @@ def calculate_elastic_constants(
     Args:
         cif_file (Path): Path to the input CIF file of the fully relaxed structure.
         model_path (Path): Path to the Deep Potential model file.
-            Default is "local:///model/upload/30d126de-b367-4254-90d1-5e41799e2853/dpa-2.4-7M.pt", i.e. the DPA-2.4-7M.
+            Default is "https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/13756/27666/store/upload/cd12300a-d3e6-4de9-9783-dd9899376cae/dpa-2.4-7M.pt", i.e. the DPA-2.4-7M.
         head (str, optional): Model head corresponding to the application domain. Options are:
             - 'solvated_protein_fragments' : For **biomolecular systems**, such as proteins, peptides, 
             and molecular fragments in aqueous or biological environments.
