@@ -1,0 +1,29 @@
+[project]
+name = "pubchem-mcp-server"
+version = "1.0.0"
+description = "PubChem MCP Server - Provides PubChem compound data retrieval functionality"
+authors = [
+    { name = "PubChem MCP Team" }
+]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "requests>=2.25.0",
+    "fastapi",
+    "uvicorn",
+    "fastmcp"
+]
+
+[project.optional-dependencies]
+rdkit = ["rdkit>=2022.9.1"]
+
+[project.scripts]
+pubchem-mcp = "pubchem.cli:main"
+pubchem-mcp-server = "pubchem_mcp_server.server:main"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
