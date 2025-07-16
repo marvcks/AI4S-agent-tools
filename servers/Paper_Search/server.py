@@ -12,7 +12,7 @@ PAPER_DIR = "papers"
 
 def parse_args():
     """Parse command line arguments for MCP server."""
-    parser = argparse.ArgumentParser(description="DPA Calculator MCP Server")
+    parser = argparse.ArgumentParser(description="Paper Search MCP Server")
     parser.add_argument('--port', type=int, default=50001, help='Server port (default: 50001)')
     parser.add_argument('--host', default='0.0.0.0', help='Server host (default: 0.0.0.0)')
     parser.add_argument('--log-level', default='INFO', 
@@ -31,7 +31,7 @@ def parse_args():
 args = parse_args()
 mcp = FastMCP("paper_search", port=args.port, host=args.host)
     
-    
+
 @mcp.tool()
 def search_papers(topic: str, max_results: int = 5) -> List[str]:
     """
