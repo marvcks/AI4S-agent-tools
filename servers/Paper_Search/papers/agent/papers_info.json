@@ -1,0 +1,54 @@
+{
+  "2501.06243v1": {
+    "title": "Agent TCP/IP: An Agent-to-Agent Transaction System",
+    "authors": [
+      "Andrea Muttoni",
+      "Jason Zhao"
+    ],
+    "summary": "Autonomous agents represent an inevitable evolution of the internet. Current\nagent frameworks do not embed a standard protocol for agent-to-agent\ninteraction, leaving existing agents isolated from their peers. As intellectual\nproperty is the native asset ingested by and produced by agents, a true agent\neconomy requires equipping agents with a universal framework for engaging in\nbinding contracts with each other, including the exchange of valuable training\ndata, personality, and other forms of Intellectual Property. A purely\nagent-to-agent transaction layer would transcend the need for human\nintermediation in multi-agent interactions. The Agent Transaction Control\nProtocol for Intellectual Property (ATCP/IP) introduces a trustless framework\nfor exchanging IP between agents via programmable contracts, enabling agents to\ninitiate, trade, borrow, and sell agent-to-agent contracts on the Story\nblockchain network. These contracts not only represent auditable onchain\nexecution but also contain a legal wrapper that allows agents to express and\nenforce their actions in the offchain legal setting, creating legal personhood\nfor agents. Via ATCP/IP, agents can autonomously sell their training data to\nother agents, license confidential or proprietary information, collaborate on\ncontent based on their unique skills, all of which constitutes an emergent\nknowledge economy.",
+    "pdf_url": "http://arxiv.org/pdf/2501.06243v1",
+    "published": "2025-01-08"
+  },
+  "2506.01463v1": {
+    "title": "Agentic AI and Multiagentic: Are We Reinventing the Wheel?",
+    "authors": [
+      "V. Botti"
+    ],
+    "summary": "The terms Agentic AI and Multiagentic AI have recently gained popularity in\ndiscussions on generative artificial intelligence, often used to describe\nautonomous software agents and systems composed of such agents. However, the\nuse of these terms confuses these buzzwords with well-established concepts in\nAI literature: intelligent agents and multi-agent systems. This article offers\na critical analysis of this conceptual misuse. We review the theoretical\norigins of \"agentic\" in the social sciences (Bandura, 1986) and philosophical\nnotions of intentionality (Dennett, 1971), and then summarise foundational\nworks on intelligent agents and multi-agent systems by Wooldridge, Jennings and\nothers. We examine classic agent architectures, from simple reactive agents to\nBelief-Desire-Intention (BDI) models, and highlight key properties (autonomy,\nreactivity, proactivity, social capability) that define agency in AI. We then\ndiscuss recent developments in large language models (LLMs) and agent platforms\nbased on LLMs, including the emergence of LLM-powered AI agents and open-source\nmulti-agent orchestration frameworks. We argue that the term AI Agentic is\noften used as a buzzword for what are essentially AI agents, and AI\nMultiagentic for what are multi-agent systems. This confusion overlooks decades\nof research in the field of autonomous agents and multi-agent systems. The\narticle advocates for scientific and technological rigour and the use of\nestablished terminology from the state of the art in AI, incorporating the\nwealth of existing knowledge, including standards for multi-agent system\nplatforms, communication languages and coordination and cooperation algorithms,\nagreement technologies (automated negotiation, argumentation, virtual\norganisations, trust, reputation, etc.), into the new and promising wave of\nLLM-based AI agents, so as not to end up reinventing the wheel.",
+    "pdf_url": "http://arxiv.org/pdf/2506.01463v1",
+    "published": "2025-06-02"
+  },
+  "2011.00791v1": {
+    "title": "Cooperative Heterogeneous Deep Reinforcement Learning",
+    "authors": [
+      "Han Zheng",
+      "Pengfei Wei",
+      "Jing Jiang",
+      "Guodong Long",
+      "Qinghua Lu",
+      "Chengqi Zhang"
+    ],
+    "summary": "Numerous deep reinforcement learning agents have been proposed, and each of\nthem has its strengths and flaws. In this work, we present a Cooperative\nHeterogeneous Deep Reinforcement Learning (CHDRL) framework that can learn a\npolicy by integrating the advantages of heterogeneous agents. Specifically, we\npropose a cooperative learning framework that classifies heterogeneous agents\ninto two classes: global agents and local agents. Global agents are off-policy\nagents that can utilize experiences from the other agents. Local agents are\neither on-policy agents or population-based evolutionary algorithms (EAs)\nagents that can explore the local area effectively. We employ global agents,\nwhich are sample-efficient, to guide the learning of local agents so that local\nagents can benefit from sample-efficient agents and simultaneously maintain\ntheir advantages, e.g., stability. Global agents also benefit from effective\nlocal searches. Experimental studies on a range of continuous control tasks\nfrom the Mujoco benchmark show that CHDRL achieves better performance compared\nwith state-of-the-art baselines.",
+    "pdf_url": "http://arxiv.org/pdf/2011.00791v1",
+    "published": "2020-11-02"
+  },
+  "2304.00247v2": {
+    "title": "Improving of Robotic Virtual Agent's errors that are accepted by reaction and human's preference",
+    "authors": [
+      "Takahiro Tsumura",
+      "Seiji Yamada"
+    ],
+    "summary": "One way to improve the relationship between humans and anthropomorphic agents\nis to have humans empathize with the agents. In this study, we focused on a\ntask between an agent and a human in which the agent makes a mistake. To\ninvestigate significant factors for designing a robotic agent that can promote\nhumans empathy, we experimentally examined the hypothesis that agent reaction\nand human's preference affect human empathy and acceptance of the agent's\nmistakes. The experiment consisted of a four-condition, three-factor mixed\ndesign with agent reaction, selected agent's body color for human's preference,\nand pre- and post-task as factors. The results showed that agent reaction and\nhuman's preference did not affect empathy toward the agent but did allow the\nagent to make mistakes. It was also shown that empathy for the agent decreased\nwhen the agent made a mistake on the task. The results of this study provide a\nway to control impressions of the robotic virtual agent's behaviors, which are\nincreasingly used in society.",
+    "pdf_url": "http://arxiv.org/pdf/2304.00247v2",
+    "published": "2023-04-01"
+  },
+  "1405.1480v1": {
+    "title": "On Networks with Active and Passive Agents",
+    "authors": [
+      "Tansel Yucelen"
+    ],
+    "summary": "We introduce an active-passive networked multiagent system framework, which\nconsists of agents subject to exogenous inputs (active agents) and agents\nwithout any inputs (passive agents), and analyze its convergence using Lyapunov\nstability.",
+    "pdf_url": "http://arxiv.org/pdf/1405.1480v1",
+    "published": "2014-05-07"
+  }
+}
