@@ -29,7 +29,7 @@ def parse_args():
     return args
 
 args = parse_args()
-mcp = FastMCP("paper_search", port=args.port)
+mcp = FastMCP("paper_search", port=args.port, host=args.host)
     
     
 @mcp.tool()
