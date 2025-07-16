@@ -1,0 +1,59 @@
+{
+  "categories": {
+    "biology": {
+      "name": "Biology",
+      "icon": "🧬",
+      "description": "Biological systems and biomolecular analysis",
+      "color": "#4CAF50"
+    },
+    "chemistry": {
+      "name": "Chemistry",
+      "icon": "⚗️",
+      "description": "Chemical compounds, reactions and catalysis",
+      "color": "#2196F3"
+    },
+    "materials": {
+      "name": "Materials Science",
+      "icon": "💎",
+      "description": "Materials properties, discovery and engineering",
+      "color": "#9C27B0"
+    },
+    "physics": {
+      "name": "Physics",
+      "icon": "⚛️",
+      "description": "Physical simulations and quantum mechanics",
+      "color": "#FF5722"
+    },
+    "research": {
+      "name": "Research Tools",
+      "icon": "📚",
+      "description": "Literature search, documentation and knowledge management",
+      "color": "#607D8B"
+    },
+    "simulation": {
+      "name": "Simulation",
+      "icon": "🔬",
+      "description": "Molecular dynamics and computational modeling",
+      "color": "#FF9800"
+    },
+    "data": {
+      "name": "Data & Analysis",
+      "icon": "📊",
+      "description": "Data processing, visualization and analytics",
+      "color": "#00BCD4"
+    },
+    "machine-learning": {
+      "name": "Machine Learning",
+      "icon": "🤖",
+      "description": "AI/ML models and intelligent systems",
+      "color": "#E91E63"
+    },
+    "general": {
+      "name": "General Tools",
+      "icon": "🛠️",
+      "description": "General purpose scientific utilities",
+      "color": "#795548"
+    }
+  },
+  "default_category": "general"
+}
