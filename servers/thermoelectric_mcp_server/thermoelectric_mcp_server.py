@@ -9,7 +9,7 @@ from ase.build import bulk, surface
 from ase.io import write
 from ase import Atoms
 from ase.io import read as ase_read, write as ase_write
-from ase import io
+import ase.io as ase_io
 
 import random
 import os
@@ -18,6 +18,9 @@ import glob
 
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.io.ase import AseAtomsAdaptor
+from pymatgen.core import Structure
+from pymatgen.analysis.structure_matcher import StructureMatcher
+
 from dp.agent.server import CalculationMCPServer
 
 from deepmd.calculator import DP
@@ -27,10 +30,11 @@ from ase.io import read, Trajectory
 from ase.optimize import LBFGS
 from ase.constraints import UnitCellFilter
 from ase.data import atomic_masses
-
+from collections import defaultdict
 
 import pandas as pd
 import json
+import csv
 
 # Setup logging
 logging.basicConfig(
@@ -48,6 +52,7 @@ mcp = CalculationMCPServer(
 # ====== Tool 1: Predict Material Thermoelectronic Properties ======
 
 class MaterialProperties(TypedDict):
+    formula:  str
     band_gap: float
     pf_n:     float
     pf_p:     float
@@ -57,7 +62,6 @@ class MaterialProperties(TypedDict):
     s_p:      float
     G:        float
     K:        float
-    path:     str
 
 MaterialData = Dict[str, MaterialProperties]
 
@@ -93,10 +97,11 @@ def predict_thermoelectric_properties(
             If None, all supported properties will be calculated.
     Return:
         MultiPropertiesResult with keys:
-        - results (Path): Path to access to thermoelectric_properties.json which save calculated thermoelectric properties information. thermoelectric_properties.json is saved
+        - results (Path): Path to access to thermoelectric_properties.csv which save calculated thermoelectric properties information. thermoelectric_properties.csv is saved
                           in outputs.
         - properties (MaterialData) with keys:
-            - band_gap : hse functional band gap in eV,
+            - "formula":     Path to access corresponding structures.
+            - "band_gap : hse functional band gap in eV,
             - "pf_n":     n-type power factor in uW/cm.2K, 
             - "pf_p":     p-type power factor in uW/cm.2K, 
             - "m_n":      n-type effective mass,
@@ -105,7 +110,6 @@ def predict_thermoelectric_properties(
             - "s_p":      p-type Seebeck coefficient in Volt/K,
             - "G":        shear modulus in GPa, 
             - "K":        bulk modulus in GPa,
-            - "path":     Path to access corresponding structures.
         - message (str): Message about calculation results.
     """
     def eval_properties(
@@ -125,7 +129,9 @@ def predict_thermoelectric_properties(
 
         coords = structure.get_positions()
         cells = structure.get_cell()
-        atom_types = structure.get_atomic_numbers()
+        atom_numbers = structure.get_atomic_numbers()
+        atom_types = [x - 1 for x in atom_numbers]
+        #atom_types = structure.get_atomic_numbers()
 
         #evaluate properties
         dp_property = DeepProperty(model_file=str(model))
@@ -160,7 +166,7 @@ def predict_thermoelectric_properties(
 
         structure_file = Path(structure_file)
         if not structure_file.exists():
-            return {"results": {}, "message": f"Structure file not found: {structure_file}"}
+            return {"results": {}, "properties": {}, "message": f"Structure file not found: {structure_file}"}
 
         structures = sorted(structure_file.rglob("POSCAR*")) + sorted(structure_file.rglob("*.cif"))
         for structure in structures:
@@ -172,7 +178,7 @@ def predict_thermoelectric_properties(
                else: 
                   continue
               
-               atom = io.read(str(structure), format=fmt)
+               atom = ase_io.read(str(structure), format=fmt)
                formula = atom.get_chemical_formula()
             except Exception as e:
                return{
@@ -181,14 +187,17 @@ def predict_thermoelectric_properties(
                  "message": f"Structure {structure} read failed!"
                }
             props_results = {} 
+            props_results["formula"] = formula
             for prop in props_to_calc:
                 try:
                     used_model = model_dirs[prop]
                     if not used_model.exists():
                        props_results[prop] = -1.0
-                       results[formula] = props_results
+                       results[structure] = props_results
+                       #results[formula] = props_results
                        return {
                            "results": results,
+                           "properties": {},
                            "message": f"Model file not found for {prop}: {used_model}"
                        }
                     
@@ -204,18 +213,25 @@ def predict_thermoelectric_properties(
                          "properties": {},
                          "message": f"Structure {structure} {prop} prediction failed!"
                        }
-            props_results["path"] = str(structure)
-            results[formula] = props_results
+            results[str(structure)] = props_results
       
         output_dir = Path("outputs")
         output_dir.mkdir(parents=True, exist_ok=True)
-        results_file = output_dir / "thermoelectric_properties.json"
-        with open(results_file, "w") as f:
-             json.dump(results, f, indent=2)
+        results_file = output_dir / "thermoelectric_properties.csv"
+        fieldnames = ["structure", "formula"] + props_to_calc 
+
+        with open(results_file, "w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            for struct_path, props in results.items():
+                row = {"structure": struct_path, **props}
+                writer.writerow(row)
+        #with open(results_file, "w") as f:
+        #     json.dump(results, f, indent=2)
 
         # build a preview of the first 10 formulas + their props
         preview_lines = []
-        for formula, props in list(results.items())[:10]:
+        for struct_path, props in list(results.items())[:10]:
             # join each property into “key=value” pairs
             prop_str = ", ".join(f"{k}={v}" for k, v in props.items())
             preview_lines.append(f"{formula}: {prop_str}")
@@ -288,8 +304,10 @@ ELEMENT_PROPS = {
 }
 
 
+#========== Tool generate calypso structures ===========
+
 @mcp.tool()
-def generate_calypso_structure(
+def generate_calypso_structures(
        species: List[str], 
        n_tot: int
     )->GenerateCalypsoStructureResult:
@@ -332,7 +350,7 @@ def generate_calypso_structure(
         return z_list, r_list, v_list
 
     def generate_counts(n):
-        return [random.randint(1, 10) for _ in range(n)]
+        return [random.randint(4, 4) for _ in range(n)]
    
     def write_input(path, species, z_list, n_list, r_mat, volume):
         """
@@ -463,34 +481,118 @@ FixCell = F
        }
 
 
+#======== Tool generate CrystalFormer Structures ==========
+class GenerateCryFormerStructureResult(TypedDict):
+      poscar_paths: Path
+      message: str
+
+@mcp.tool()
+def generate_crystalformer_structures(
+    space_group: int,
+    target_props: Optional[List[str]],
+    target_values: Optional[List[float]],
+    n_tot: int
+)->GenerateCryFormerStructureResult:
+   """
+   Generate conditional structures with target properties and space group number. Different target properties used different property model.
+   If user did not mention target property, please use band gap as target_prop. If user did not mention the space group please remind the usr to
+   give a value.
+
+   Args:
+     space_group (int): Target space group number for generated structures.
+     target_props (Optional[List[str]]): Target properties for generated structures.
+        - "band_gap": hse functional band gap as target property,
+        - "sound_vel": sound velocity as target property
+      If none, please use band_gap as target property directly.
+     target_values (Optional[List[float]]): Target property values for target properties
+     n_tot (int): Total number of structures generated
+   Returns:
+     poscar_paths (Path): Path to generated POSCAR.
+     message (str): Message about calculation results.  
+   """
+   try:
+      supported_props = ["band_gap", "sound_vel"]
+      
+      model  = Path("/opt/agents/thermal_properties/models")
+      model_dirs = {
+        "band_gap":     model / "bandgap" / "model.ckpt.pt",
+        "sound_vel":    model / "shear_modulus" / "model.ckpt.pt",
+      }
+      
+      try:
+         
+         #activate uv
+         workdir = Path("/opt/agents/crystalformer_gpu")
+         outputs = workdir/ "outputs"
+         
+         
+         alpha = [0.5]
+         mc_steps = 2000
+         for prop in target_props:
+             cmd = [
+                 "uv", "run", "python",
+                 "crystalformer_mcp.py",
+                 "--cond_model_path", str(model_dirs[prop]),
+                 "--target", str(target_values),
+                 "--alpha", str(alpha),
+                 "--spacegroup", str(space_group),
+                 "--mc_steps", str(mc_steps),
+                 "--num_samples", str(n_tot),
+                 "--output_path", str(outputs)
+             ]
+             subprocess.run(cmd, cwd=workdir, check=True)
+         
+         output_path = Path("outputs")
+         if output_path.exists():
+            shutil.rmtree(output_path)
+         shutil.copytree(outputs, output_path)
+         return {
+           "poscar_paths": output_path,
+           "message": "CrystalFormer structure generation successfully!"
+         }
+      except Exception as e:
+        return {
+          "poscar_paths": None,
+          "message": "CrystalFormer Execution failed!"
+        }
+   
+   except Exception as e:
+     return {
+       "poscar_paths": None,
+       "message": "CrystalFormer Generation failed!"
+     }
+
+#======== Tool predict enthalp and select on hull structures=========
 
 class CalculateEntalpyResult(TypedDict):
       """Results about enthalpy prediction"""
       enthalpy_file: Path
-      onhull_structures: Path
+      e_above_hull_structures: Path
+      e_above_hull_values: Path
       message: str
 
 @mcp.tool()
 def calculate_enthalpy(
     structure_path: Path,
-    pressure_low: float,
-    pressure_high: float
+    threshold: float,
+    pressure: float
 )->CalculateEntalpyResult:
     """ 
     Optimize the crystal structure using DP at a given pressure, then evaluate the enthalpy of the optimized structure,
-    and finally screen for on-hull structures.
-    When user call cal_enthalpy reminder user to give lower limit pressure and higher limit pressure
+    and finally screen for structures above convex hull with a value of threshold.
+    When user call cal_enthalpy reminder user to give pressure condition and threshold value to screen structures
     
     Args: 
        - structure_file (Path): Path to the structure files (e.g. POSCAR)
-       - pressure_low (float): Lower pressure used in geometry optimization process
-       - pressure_high (float): Higher pressure used in geometry optimization process
+       - threshold (float): Upper limit for energy above hull. Only structures with energy-above-hull values smaller than this threshold will be selected.
+       - pressure (float): Pressure used in geometry optimization process
 
     Return:
        CalculateEntalpyResult with keys:
          - enthalpy_file (Path): Path to access entalpy prediction related files, including convexhull.csv, convexhull.html, enthalpy.csv, e_above_hull_50meV.csv.
            All these files are saved in outputs.
-         - onhull_structures (Path): Path to access onhull structures. All structures are saved in outputs/onhull_structures.
+         - e_above_hull_structures (Path): Path to access e_above_hull structures. All structures are saved in outputs/e_above_hull_structures.
+         - e_above_hull_values (Path): Path to acess e_above_hull.cvs which contain the above hull energy values for selected structures.
          - message (str): Message about calculation results.
     """
 
@@ -511,8 +613,8 @@ def calculate_enthalpy(
               "python",
               str(opt_py),              # <— use the variable here
               str(fmax),
-              str(pressure_low),
-              str(pressure_high),
+              str(pressure),
+              str(pressure),
               str(nsteps),
           ] + [str(p) for p in poscar_files]
           
@@ -522,7 +624,8 @@ def calculate_enthalpy(
        except Exception as e:
           return{
             "enthalpy_file": [],
-            "onhull_structures": [],
+            "e_above_hull_structures": [],
+            "e_above_hull_values": [],
             "message": "Geometry Optimization failed!"
           }
 
@@ -538,7 +641,8 @@ def calculate_enthalpy(
        except Exception as e:
           return{
             "enthalpy_file": [],
-            "onhull_structures": [],
+            "e_above_hull_structures": [],
+            "e_above_hull_values": [],
             "message": "Screen traj failed!"
           }
 
@@ -560,7 +664,8 @@ def calculate_enthalpy(
        except Exception as e:
           return{
             "enthalpy_file": [],
-            "onhull_structures": [],
+            "e_above_hull_structures": [],
+            "e_above_hull_values": [],
             "message": "Convert optimized structure to POSCAR failed!"
           }
        
@@ -577,7 +682,8 @@ def calculate_enthalpy(
        except Exception as e:
           return{
             "enthalpy_file": [],
-            "onhull_structures": [],
+            "e_above_hull_structures": [],
+            "e_above_hull_values": [],
             "message": "Enthalpy Predictions failed!"
           }
 
@@ -597,13 +703,18 @@ def calculate_enthalpy(
                        enthalpy  = parts[2]       # Column 3: enthalpy H0
                        formula   = parts[5]        # Column 6: element composition
                        
-                       # Write out: file_name, formula, enthalpy
-                       ef.write(f"{file_name},{formula},{enthalpy}\n") 
+                       upper_limit = (pressure + 0.162) / 160.217
+                       lower_limit = (pressure - 0.162) / 160.217
+                       if lower_limit < float(parts[3]) < upper_limit:
+                       
+                          # Write out: file_name, formula, enthalpy
+                          ef.write(f"{file_name},{formula},{enthalpy}\n") 
 
        except Exception as e:
           return{
             "enthalpy_file": [],
-            "onhull_structures": [],
+            "e_above_hull_structures": [],
+            "e_above_hull_values": [],
             "message": "Enthalpy file save failed!"
           }
        try:
@@ -620,7 +731,8 @@ def calculate_enthalpy(
        except Exception as e:
           return{
             "enthalpy_file": [],
-            "onhull_structures": [],
+            "e_above_hull_structures": [],
+            "e_above_hull_values": [],
             "message": "Convexhull.csv file save failed!"
           }
           
@@ -644,7 +756,8 @@ def calculate_enthalpy(
        except Exception as e:
           return{
             "enthalpy_file": [],
-            "onhull_structures": [],
+            "e_above_hull_structures": [],
+            "e_above_hull_values": [],
             "message": "Update input.dat failed!"
           }
         
@@ -667,55 +780,98 @@ def calculate_enthalpy(
        except Exception as e:
           return{
            "enthalpy_file": [],
-           "onhull_structures": [],
+           "e_above_hull_structures": [],
+           "e_above_hull_values": [],
            "message": "Convex hull build failed"
        }
        try:
           #Collect on hull optimized structure to enthalpy_result
-          on_hull_optimized_structures = enthalpy_dir / "onhull_structures"
+          on_hull_optimized_structures = enthalpy_dir / "e_above_hull_structures"
           on_hull_optimized_structures.mkdir(parents=True, exist_ok=True)
 
           e_above_hull_file = enthalpy_dir / "e_above_hull_50meV.csv"
-          with e_above_hull_file.open("r") as f:
-              #If there is a header, skip
+          e_above_hull_output = enthalpy_dir / "e_above_hull.csv"
+
+          with e_above_hull_file.open("r") as f, e_above_hull_output.open("w") as fout:
+              # write header for new CSV
+              fout.write("structure,energy,poscar_path\n")
+          
               first = True
               for line in f:
-                  line.strip()
+                  line = line.strip()
                   if not line:
-                     continue
+                      continue
+          
+                  # skip header if it contains letters
                   if first and any(c.isalpha() for c in line):
-                     first = False
-                     continue
+                      first = False
+                      continue
                   first = False
-
-                  parts = line.split(' ')
+          
+                  parts = line.split()  # splits on any whitespace
                   if len(parts) < 4:
-                     continue
-
+                      continue
+          
                   try:
-                     energy = float(parts[1])
+                      energy = float(parts[1])
                   except ValueError:
-                     continue
-               
+                      continue
+          
                   raw = parts[3]
-                  cleaned = raw.strip().strip('"').strip("'")  
-                  on_hull_optimized_poscar = Path('.') / cleaned
-
-                  if energy <= 0.05  and  on_hull_optimized_poscar.is_file():
-                     try:
-                        shutil.copy(on_hull_optimized_poscar, on_hull_optimized_structures)
-                     except Exception as e:
+                  cleaned = raw.strip().strip('"').strip("'")
+                  on_hull_optimized_poscar = Path(cleaned)
+          
+                  if energy <= threshold and on_hull_optimized_poscar.is_file():
+                      try:
+                          shutil.copy(on_hull_optimized_poscar, on_hull_optimized_structures)
+                      except Exception as e:
+                          print(f"Copy on hull optimized poscar {on_hull_optimized_poscar} failed: {e}")
+          
+                      # write to new CSV, including the absolute path
+                      fout.write(f"{cleaned},{energy},{on_hull_optimized_poscar.resolve()}\n")
+#          with e_above_hull_file.open("r") as f:
+#              #If there is a header, skip
+#              first = True
+#              for line in f:
+#                  line.strip()
+#                  if not line:
+#                     continue
+#                  if first and any(c.isalpha() for c in line):
+#                     first = False
+#                     continue
+#                  first = False
+#
+#                  parts = line.split(' ')
+#                  if len(parts) < 4:
+#                     continue
+#
+#                  try:
+#                     energy = float(parts[1])
+#                  except ValueError:
+#                     continue
+#               
+#                  raw = parts[3]
+#                  cleaned = raw.strip().strip('"').strip("'")  
+#                  on_hull_optimized_poscar = Path('.') / cleaned
+#
+#                  if energy <= 0.05  and  on_hull_optimized_poscar.is_file():
+#                     try:
+#                        shutil.copy(on_hull_optimized_poscar, on_hull_optimized_structures)
+#                     except Exception as e:
+#                        print(f"Copy on hull optimized poscar {on_hull_optimized_poscar} failed!")
        except Exception as e:
           return{
            "enthalpy_file": [],
-           "onhull_structures": [],
+           "e_above_hull_structures": [],
+           "e_above_hull_values": [],
            "message": f"Collect on hull optimized poscar files failed!"
           }
              
         
        return{
           "enthalpy_file": enthalpy_dir,
-          "onhull_structures": on_hull_optimized_structures,
+          "e_above_hull_structures": on_hull_optimized_structures,
+          "e_above_hull_values": e_above_hull_output,
           "message": f"Entalpy calculated successfully and saved in {enthalpy_file}, optimized on hull structures are saved in {on_hull_optimized_structures}"
        }
 
@@ -726,11 +882,12 @@ def calculate_enthalpy(
        }
 
 
+#========= Tool to screen promising thermoelectric material candidates ===========
 class ThermoelectricProperties(TypedDict):
+    formula:               str
     band_gap:           float
     sound_velocity:     float
     space_group_number: int
-    path:               str
 
 ThermoelectricCandidatesData = Dict[str, ThermoelectricProperties]
 
@@ -742,7 +899,8 @@ class ScreenThermoelectricCandidateResults(TypedDict):
 
 @mcp.tool()
 def screen_thermoelectric_candidate(
-      structure_path: Path
+      structure_path: Path,
+      above_hull_file: Path
 )->ScreenThermoelectricCandidateResults:
 
       """
@@ -750,6 +908,7 @@ def screen_thermoelectric_candidate(
 
       Args:
           structure_file (Path): Path to structure files
+          above_hull_file (Path): Path to above_hull.csv file which about about hull energy information
 
       Return:
           ScreenThermoelectricCandidateResults with keys:
@@ -766,7 +925,7 @@ def screen_thermoelectric_candidate(
           Returns:
           - density (float): Density in kg/m³
           """ 
-          atoms = io.read(str(structure))
+          atoms = ase_io.read(str(structure))
 
           volume_A3 = atoms.get_volume()  # in Å³
           
@@ -801,6 +960,7 @@ def screen_thermoelectric_candidate(
           K_Pa = K * 1e9
           G_Pa = G * 1e9
           
+
           # Longitudinal velocity
           v_L = np.sqrt((K_Pa + (4/3) * G_Pa) / density)
           
@@ -823,7 +983,7 @@ def screen_thermoelectric_candidate(
               - space_group_number (int): Space group number of predicted structure
           """
           # Read structure using ASE
-          atoms = io.read(str(structure))
+          atoms = ase_io.read(str(structure))
           
           # Convert ASE Atoms to pymatgen Structure
           structure = AseAtomsAdaptor.get_structure(atoms)
@@ -834,72 +994,96 @@ def screen_thermoelectric_candidate(
       
           return space_group_number
          
-
+      # --- 0) load above-hull energies ---
+      above_hull_map: dict[str, float] = {}
+      if above_hull_file.is_file():
+          with above_hull_file.open("r") as fh:
+              reader = csv.DictReader(fh)
+              for row in reader:
+                  # normalize to basename so lookups by Path(...).name match
+                  key = Path(row["structure"]).name                    # ← normalize
+                  above_hull_map[key] = float(row["energy"])
  
 
       #Predict bandgap
       try:
          structure_path = Path(structure_path)
          if not structure_path.exists():
-            return {"results": {}, "message": f"Structure path not found: {structure_path}"}
+            return {"thermoelectric_file": {}, "message": f"Structure path not found: {structure_path}"}
 
          results = predict_thermoelectric_properties(structure_path, ["band_gap", "G", "K"])
          structures_properties = results["properties"]
 
          thermoelectric_candidates: ThermoelectricCandidatesData = {}
 
-         for formula, properties in structures_properties.items():
-             structure = Path(properties["path"])
+         # 1) bucket all passing candidates by space‐group number
+         candidates_by_spg: dict[int, list[tuple[Path, ThermoelectricProperties]]] = defaultdict(list)
+         for structure, properties in structures_properties.items():
+             formula = properties["formula"]
              band_gap = properties["band_gap"]
              G = properties["G"]
              K = properties["K"]
+         
+             if band_gap > 0.5:
+                 continue
+         
+             try:
+                 spg = get_space_group_number(structure)
+             except Exception as e:
+                 return {
+                     "thermoelectric_file": {},
+                     "message": f"{structure} space group number get failed! Error: {e}"
+                 }
+         
+             if spg <= 75:
+                 continue
+         
+             try:
+                 density = get_structure_density(structure)
+                 sv = calculate_sound_velocities(K, G, density)
+             except Exception as e:
+                 return {
+                     "thermoelectric_file": {},
+                     "message": f"{structure} property calculation failed! Error: {e}"
+                 }
+         
+             thermo_props: ThermoelectricProperties = {
+                 "formula": formula,
+                 "band_gap": band_gap,
+                 "space_group_number": spg,
+                 "sound_velocity": sv
+             }
+             candidates_by_spg[spg].append((structure, thermo_props))
+         
+         # 2) within each space‐group, dedupe via pymatgen StructureMatcher
+         matcher = StructureMatcher()
+         thermoelectric_candidates: ThermoelectricCandidatesData = {}
+         for spg, entries in candidates_by_spg.items():
+             seen_structs: list[Structure] = []
+             for struct_file, props in entries:
+                 struct = Structure.from_file(str(struct_file))
+                 if any(matcher.fit(seen, struct) for seen in seen_structs):
+                     continue
+                 seen_structs.append(struct)
+                 thermoelectric_candidates[str(struct_file)] = props
 
-             thermo_props: ThermoelectricProperties = {}
-
-             if(band_gap<0.5):
-
-                try:
-                  space_group_number = get_space_group_number(structure)
-                except Exception as e:
-                  return{
-                    "thermoelectric_file": {},
-                    "message": f"{structure} space group number get failed! Error: {str(e)}"
-                  }
-
-                if(space_group_number > 75):                
-                   try:
-                      density = get_structure_density(structure)
-                   except Exception as e:
-                     return{
-                       "thermoelectric_file": {},
-                       "message": f"{structure} density get failed!"
-                     }
-                   
-                   try:
-                      thermo_props["sound_velocity"] = calculate_sound_velocities(K, G, density)
-                   except Exception as e:
-                     return{
-                       "thermoelectric_file": {},
-                       "message": f"{structure} sound velocity get failed!"
-                     }
-
-                   thermo_props["space_group_number"] = space_group_number
-    
-                   thermo_props["band_gap"] = band_gap
-                   
-                   thermo_props["path"] = str(structure)
-
-                
-                   thermoelectric_candidates[formula] = thermo_props
 
          try:
-            # Sort results by sound_velocity
-            sorted_candidates = dict(
-                sorted(
-                    thermoelectric_candidates.items(),
-                    key=lambda item: item[1]["sound_velocity"]
-                )
-            )
+#            # Sort results by sound_velocity
+#            sorted_candidates = dict(
+#                sorted(
+#                    thermoelectric_candidates.items(),
+#                    key=lambda item: item[1]["sound_velocity"]
+#                )
+#            )
+           sorted_candidates = dict(
+               sorted(
+                   thermoelectric_candidates.items(),
+                   key=lambda item: above_hull_map.get(                # ← MODIFIED
+                       Path(item[0]).name, float("inf")               # ← MODIFIED
+                   )
+               )
+           )
          except Exception as e:
            return{
              "thermoelectric_file": {},
@@ -907,30 +1091,84 @@ def screen_thermoelectric_candidate(
            }
 
          try:
-            output_dir = Path("outputs")
-            output_dir.mkdir(parents=True, exist_ok=True)
-            results_file = output_dir / "thermoelectric_material_candidates.json" 
-            with open(results_file, "w") as f:
-                 json.dump(sorted_candidates, f, indent=2)
-         except Exception as e:
-           return{
-             "thermoelectric_file": {},
-             "message": f"thermoelectric_material_candidates.json save failed! Error: {str(e)}"
-           }
-
-         # build a preview of the first 10 formulas + their props
-         preview_lines = []
-         for formula, props in list(sorted_candidates.items())[:10]:
-             # join each property into “key=value” pairs
-             prop_str = ", ".join(f"{k}={v}" for k, v in props.items())
-             preview_lines.append(f"{formula}: {prop_str}")
+             output_dir = Path("outputs")
+             output_dir.mkdir(parents=True, exist_ok=True)
+             results_file = output_dir / "thermoelectric_material_candidates.csv"
          
-         message = "Predicted properties:\n" + "\n".join(preview_lines)
-
-         return{
-           "thermoelectric_file": Path(results_file),
-           "message": message
+             # Collect all field names from the first thermo_props dict
+             sample_props = next(iter(sorted_candidates.values()))
+             fieldnames = ["structure", *sample_props.keys(), "e_above_hull"]
+         
+             with results_file.open("w", newline="") as f:
+                 writer = csv.DictWriter(f, fieldnames=fieldnames)
+                 writer.writeheader()
+         
+                 for structure, prop_dict in sorted_candidates.items():
+                     # derive the filename for lookup in above_hull_map
+                     fname = Path(structure).name
+                     eh = above_hull_map.get(fname, "")
+         
+                     # build row with the energy‐above‐hull column
+                     row = {"structure": structure, **prop_dict, "e_above_hull": eh}
+                     writer.writerow(row)
+         
+         except Exception as e:
+             return {
+                 "thermoelectric_file": {},
+                 "message": f"{results_file} save failed! Error: {str(e)}"
+             }
+         import traceback
+         import io
+         try:
+             preview_entries = list(sorted_candidates.items())[:10]
+         
+             # Determine the property keys (columns) from the first entry, or empty if none
+             if preview_entries:
+                 sample_props = preview_entries[0][1]
+                 prop_keys = list(sample_props.keys())
+             else:
+                 prop_keys = []
+         
+             # Build CSV header
+             header = ["structure", *prop_keys, "e_above_hull"]
+         
+             # Write to a memory buffer
+             buf = io.StringIO()
+             writer = csv.writer(buf)
+             writer.writerow(header)
+         
+             # Write each preview row
+             for struct_path, props in preview_entries:
+                 fname = Path(struct_path).name
+                 eh = above_hull_map.get(fname, "")
+                 row = [struct_path] + [props[k] for k in prop_keys] + [eh]
+                 writer.writerow(row)
+         
+             message = buf.getvalue()
+         
+         except Exception:
+             # If anything goes wrong, print the full traceback to stdout for debugging
+             print("Error generating preview CSV:")
+             traceback.print_exc()
+             message = "Preview generation failed."
+         
+         return {
+             "thermoelectric_file": results_file,
+             "message": message
          }
+         # --- build a CSV preview of the first 10 candidates ---
+#              preview_lines = []
+#         for structure, props in list(sorted_candidates.items())[:10]:
+#             # join each property into “key=value” pairs
+#             prop_str = ", ".join(f"{k}={v}" for k, v in props.items())
+#             preview_lines.append(f"{formula}: {prop_str}")
+#         
+#         message = "Predicted properties:\n" + "\n".join(preview_lines)
+#
+#         return{
+#           "thermoelectric_file": Path(results_file),
+#           "message": message
+#         }
       except Exception as e:
          return{
            "thermoelectric_file" : [],
