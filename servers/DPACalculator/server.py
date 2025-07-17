@@ -1083,9 +1083,9 @@ def calculate_elastic_constants(
         youngs_modulus = 9 * bulk_modulus * shear_modulus / (3 * bulk_modulus + shear_modulus)
         
         return {
-            "bulk_modulus": bulk_modulus,
-            "shear_modulus": shear_modulus,
-            "youngs_modulus": youngs_modulus
+            "bulk_modulus": float(bulk_modulus),
+            "shear_modulus": float(shear_modulus),
+            "youngs_modulus": float(youngs_modulus)
         }
     except Exception as e:
         logging.error(f"Elastic calculation failed: {str(e)}", exc_info=True)
