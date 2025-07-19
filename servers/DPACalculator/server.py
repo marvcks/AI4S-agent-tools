@@ -58,7 +58,7 @@ def parse_args():
 
 
 args = parse_args()
-mcp = CalculationMCPServer("DPACalculatorServer",host=args.host,port=args.port)
+mcp = CalculationMCPServer("DPACalculatorServer", host=args.host, port=args.port)
 
 
 class OptimizationResult(TypedDict):
@@ -86,7 +86,7 @@ class BuildStructureResult(TypedDict):
 class MDResult(TypedDict):
     """Result of MD simulation"""
     final_structure: Path
-    trajectory_files: List[Path]
+    trajectory_dir: Path
     log_file: Path
 
 class ElasticResult(TypedDict):
@@ -704,6 +704,7 @@ def _run_md_stage(atoms, stage, save_interval_steps, traj_file, seed, stage_id):
             atoms,
             timestep=timestep_fs * units.fs,
             temperature_K=temperature_K,
+            tdamp=tau_t_ps * 1000 * units.fs,
             chain_length=stage.get('chain_length', 3) 
         )
     elif mode == 'NVT-Berendsen':
@@ -871,7 +872,7 @@ def run_molecular_dynamics(
     Returns:
         MDResult: A dictionary containing:
             - final_structure (Path): Final atomic structure after all stages.
-            - trajectory_files (List[Path]): List of trajectory files generated, one per stage.
+            - trajectory_dir (Path): The path of output directory of trajectory files generated.
             - log_file (Path): Path to the log file containing simulation output.
 
     Examples:
@@ -934,11 +935,11 @@ def run_molecular_dynamics(
     write(final_structure, final_atoms)
     
     # Collect trajectory files
-    trajectory_files = [Path(f) for f in glob.glob(f"trajs_files/{traj_prefix}_*.extxyz")]
+    trajectory_dir = Path("trajs_files")
     
     return {
         "final_structure": final_structure,
-        "trajectory_files": trajectory_files,
+        "trajectory_dir": trajectory_dir,
         "log_file": log_file
     }
 
@@ -1083,9 +1084,9 @@ def calculate_elastic_constants(
         youngs_modulus = 9 * bulk_modulus * shear_modulus / (3 * bulk_modulus + shear_modulus)
         
         return {
-            "bulk_modulus": bulk_modulus,
-            "shear_modulus": shear_modulus,
-            "youngs_modulus": youngs_modulus
+            "bulk_modulus": float(bulk_modulus),
+            "shear_modulus": float(shear_modulus),
+            "youngs_modulus": float(youngs_modulus)
         }
     except Exception as e:
         logging.error(f"Elastic calculation failed: {str(e)}", exc_info=True)
@@ -1162,7 +1163,7 @@ def run_neb(
         energy_barrier = neb_tool.get_barrier()
         neb_tool.plot_bands("neb_band.pdf")
         return {
-            "energy_barrier": energy_barrier,
+            "energy_barrier": float(energy_barrier),
             "neb_traj": Path("neb_band.pdf")
         }
 
