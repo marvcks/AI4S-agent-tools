@@ -55,106 +55,60 @@ def read_pyproject_toml(server_dir: Path) -> Dict[str, Any]:
 
 
 def extract_tools_from_server(server_dir: Path) -> List[str]:
-    """Extract tool names from server implementation."""
+    """Extract tool names from server implementation by searching all Python files."""
     tools = []
     
-    # First, try to find tools in server files
-    for pattern in ['server.py', '*_server.py', '*_mcp_server.py']:
-        for server_file in server_dir.glob(pattern):
-            try:
-                with open(server_file, 'r', encoding='utf-8') as f:
-                    tree = ast.parse(f.read())
-                
-                # Two patterns to look for:
-                # 1. Legacy: Functions decorated with @mcp_server containing @mcp.tool() inside
-                # 2. New: Module-level functions decorated with @mcp.tool()
-                
-                # Pattern 1: Legacy - Find functions decorated with @mcp_server
-                for node in ast.walk(tree):
-                    if isinstance(node, ast.FunctionDef):
-                        # Check if this function has @mcp_server decorator
-                        has_mcp_server = False
-                        for decorator in node.decorator_list:
-                            if isinstance(decorator, ast.Call):
-                                if (isinstance(decorator.func, ast.Name) and 
-                                    decorator.func.id == 'mcp_server'):
-                                    has_mcp_server = True
-                                    break
-                        
-                        # If we found a function with @mcp_server, look for tools inside it
-                        if has_mcp_server:
-                            # Look for nested function definitions with @mcp.tool() decorator
-                            for inner_node in ast.walk(node):
-                                if isinstance(inner_node, ast.FunctionDef) and inner_node != node:
-                                    for decorator in inner_node.decorator_list:
-                                        # Check for @mcp.tool() pattern
-                                        if isinstance(decorator, ast.Call):
-                                            if (isinstance(decorator.func, ast.Attribute) and 
-                                                decorator.func.attr == 'tool' and
-                                                isinstance(decorator.func.value, ast.Name)):
-                                                tools.append(inner_node.name)
-                                        # Also check for @mcp.tool without parentheses
-                                        elif isinstance(decorator, ast.Attribute):
-                                            if (decorator.attr == 'tool' and
-                                                isinstance(decorator.value, ast.Name)):
-                                                tools.append(inner_node.name)
-                
-                # Pattern 2: New - Module-level @mcp.tool() decorated functions
-                for node in ast.walk(tree):
-                    if isinstance(node, ast.FunctionDef):
-                        # Skip if this is inside another function
-                        parent_funcs = [n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and node in ast.walk(n) and n != node]
-                        if not parent_funcs:  # This is a module-level function
-                            for decorator in node.decorator_list:
-                                # Check for @mcp.tool() pattern
-                                if isinstance(decorator, ast.Call):
-                                    if (isinstance(decorator.func, ast.Attribute) and 
-                                        decorator.func.attr == 'tool' and
-                                        isinstance(decorator.func.value, ast.Name) and
-                                        decorator.func.value.id == 'mcp'):
-                                        tools.append(node.name)
-                                # Also check for @mcp.tool without parentheses
-                                elif isinstance(decorator, ast.Attribute):
-                                    if (decorator.attr == 'tool' and
-                                        isinstance(decorator.value, ast.Name) and
-                                        decorator.value.id == 'mcp'):
-                                        tools.append(node.name)
-                        
-            except Exception as e:
-                logger.debug(f"Failed to extract tools from {server_file}: {e}")
-    
-    # Special handling for servers that load tools dynamically (like ABACUS)
-    # Check if there's a modules directory with tool definitions
-    for mod_dir in server_dir.glob("src/*/modules"):
-        if mod_dir.is_dir():
-            # Scan all Python files in modules directory
-            for py_file in mod_dir.glob("*.py"):
-                if py_file.name.startswith("_") or py_file.name in ["utils.py", "comm.py"]:
-                    continue
-                
-                try:
-                    with open(py_file, 'r', encoding='utf-8') as f:
-                        tree = ast.parse(f.read())
+    # Recursively search all .py files in the server directory
+    for py_file in server_dir.rglob('*.py'):
+        # Skip __pycache__, .venv, and other virtual environment directories
+        path_parts = py_file.parts
+        if any(part in ['__pycache__', '.venv', 'venv', '.env', 'env', 'site-packages'] for part in path_parts):
+            continue
+            
+        try:
+            # Read the file content to check for commented lines
+            with open(py_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+                lines = content.splitlines()
+            
+            # Parse the AST
+            tree = ast.parse(content)
+            
+            # Look for any function decorated with @mcp.tool
+            for node in ast.walk(tree):
+                if isinstance(node, ast.FunctionDef) and hasattr(node, 'lineno'):
+                    # Check if this function has @mcp.tool decorator
+                    has_mcp_tool = False
+                    decorator_line = None
                     
-                    # Look for @mcp.tool() decorated functions
-                    for node in ast.walk(tree):
-                        if isinstance(node, ast.FunctionDef):
-                            for decorator in node.decorator_list:
-                                # Check for @mcp.tool() pattern
-                                if isinstance(decorator, ast.Call):
-                                    if (isinstance(decorator.func, ast.Attribute) and 
-                                        decorator.func.attr == 'tool' and
-                                        isinstance(decorator.func.value, ast.Name) and
-                                        decorator.func.value.id == 'mcp'):
-                                        tools.append(node.name)
-                                # Also check for @mcp.tool without parentheses
-                                elif isinstance(decorator, ast.Attribute):
-                                    if (decorator.attr == 'tool' and
-                                        isinstance(decorator.value, ast.Name) and
-                                        decorator.value.id == 'mcp'):
-                                        tools.append(node.name)
-                except Exception as e:
-                    logger.debug(f"Failed to extract tools from module {py_file}: {e}")
+                    for decorator in node.decorator_list:
+                        if hasattr(decorator, 'lineno'):
+                            decorator_line = decorator.lineno - 1  # Convert to 0-based
+                            
+                        # Check for @mcp.tool() pattern
+                        if isinstance(decorator, ast.Call):
+                            if (isinstance(decorator.func, ast.Attribute) and 
+                                decorator.func.attr == 'tool' and
+                                isinstance(decorator.func.value, ast.Name) and
+                                decorator.func.value.id == 'mcp'):
+                                has_mcp_tool = True
+                        # Also check for @mcp.tool without parentheses
+                        elif isinstance(decorator, ast.Attribute):
+                            if (decorator.attr == 'tool' and
+                                isinstance(decorator.value, ast.Name) and
+                                decorator.value.id == 'mcp'):
+                                has_mcp_tool = True
+                    
+                    # If we found @mcp.tool, check if it's not commented
+                    if has_mcp_tool and decorator_line is not None and decorator_line < len(lines):
+                        line = lines[decorator_line].strip()
+                        # Skip if the line is commented
+                        if not line.startswith('#'):
+                            tools.append(node.name)
+                            logger.debug(f"  Found tool '{node.name}' in {py_file.relative_to(server_dir)}")
+                                
+        except Exception as e:
+            logger.debug(f"Failed to parse {py_file}: {e}")
     
     return list(set(tools))  # Remove duplicates
 
@@ -249,9 +203,17 @@ def generate_tools_json(root_dir: Path) -> Dict[str, Any]:
         metadata = scan_server_directory(server_dir)
         
         if metadata:
-            # Extract available tools
-            tools_list = extract_tools_from_server(server_dir)
-            metadata['tools'] = tools_list
+            # Extract available tools from code
+            tools_from_code = extract_tools_from_server(server_dir)
+            
+            # Get tools from metadata.json if present
+            tools_from_metadata = metadata.get('tools', [])
+            if isinstance(tools_from_metadata, str):
+                tools_from_metadata = [tools_from_metadata]
+            
+            # Combine tools from both sources (union)
+            all_tools = list(set(tools_from_code + tools_from_metadata))
+            metadata['tools'] = all_tools
             
             # Use category from decorator if available, otherwise auto-categorize
             if 'category' not in metadata:
@@ -267,7 +229,11 @@ def generate_tools_json(root_dir: Path) -> Dict[str, Any]:
                 metadata['category'] = categories_config.get('default_category', 'general')
             
             tools.append(metadata)
-            logger.info(f"  Found: {metadata['name']} with {len(tools_list)} tools (category: {metadata['category']})")
+            logger.info(f"  Found: {metadata['name']} with {len(all_tools)} tools (category: {metadata['category']})")
+            if tools_from_metadata:
+                logger.info(f"    Tools from metadata.json: {tools_from_metadata}")
+            if tools_from_code:
+                logger.info(f"    Tools from code scanning: {tools_from_code}")
     
     # Sort tools by name
     tools.sort(key=lambda x: x['name'])

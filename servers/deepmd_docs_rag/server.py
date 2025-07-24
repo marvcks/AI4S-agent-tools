@@ -34,7 +34,8 @@ def parse_args():
 
 args = parse_args()
 backend = Client("https://api.fastgpt.in/api/mcp/app/wrSvRtDydWEb7faAP6uPooSX/mcp")
-mcp = FastMCP.as_proxy(backend, name="FastGPT Proxy Server", port=args.port)
+mcp = FastMCP.as_proxy(backend, name="FastGPT Proxy Server", port=args.port, host=args.host)
+
 
 @mcp.tool()
 def upload_single_file_to_deepmd_knowledge_base(file_url: str):

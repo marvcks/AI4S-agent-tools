@@ -735,11 +735,11 @@
                 <div class="stats">
                     <div class="stat">
                         <div class="stat-value">7</div>
-                        <div class="stat-label">Tools</div>
+                        <div class="stat-label">Collections</div>
                     </div>
                     <div class="stat">
-                        <div class="stat-value">35</div>
-                        <div class="stat-label">Functions</div>
+                        <div class="stat-value">38</div>
+                        <div class="stat-label">Tools</div>
                     </div>
                     <div class="stat">
                         <div class="stat-value">7</div>
@@ -851,9 +851,9 @@ python server.py --port &lt;port&gt;</div>
                         </div>
                         <p class="tool-description">First principles calculations bridge for AI models - ABACUS computational jobs</p>
                         <div class="tool-features">
-                            <span class="tool-feature">run_abacus_onejob</span>
-                            <span class="tool-feature">generate_bulk_structure</span>
-                            <span class="tool-feature">abacus_collect_data</span>
+                            <span class="tool-feature">abacus_cal_elastic</span>
+                            <span class="tool-feature">abacus_badercharge_run</span>
+                            <span class="tool-feature">abacus_modify_stru</span>
                             <span class="tool-count">+10 more</span>
                         </div>
                     </div>
@@ -866,10 +866,10 @@ python server.py --port &lt;port&gt;</div>
                         </div>
                         <p class="tool-description">Deep Potential Agent for atomistic simulation</p>
                         <div class="tool-features">
-                            <span class="tool-feature">calculate_phonon</span>
+                            <span class="tool-feature">build_bulk_structure</span>
                             <span class="tool-feature">build_surface_adsorbate</span>
-                            <span class="tool-feature">optimize_crystal_structure</span>
-                            <span class="tool-count">+7 more</span>
+                            <span class="tool-feature">build_molecule_structure</span>
+                            <span class="tool-count">+8 more</span>
                         </div>
                     </div>
                     <div class="tool-card" onclick="showToolDetails('ThermoelectricMaterialsServer')">
@@ -881,10 +881,10 @@ python server.py --port &lt;port&gt;</div>
                         </div>
                         <p class="tool-description">Thermoelectric materials screening with CALYPSO</p>
                         <div class="tool-features">
-                            <span class="tool-feature">screen_thermoelectric_candidate</span>
-                            <span class="tool-feature">generate_calypso_structure</span>
+                            <span class="tool-feature">generate_calypso_structures</span>
                             <span class="tool-feature">calculate_enthalpy</span>
-                            <span class="tool-count">+1 more</span>
+                            <span class="tool-feature">generate_crystalformer_structures</span>
+                            <span class="tool-count">+2 more</span>
                         </div>
                     </div>
                     <div class="tool-card" onclick="showToolDetails('deepmd_docs_rag')">
@@ -896,6 +896,7 @@ python server.py --port &lt;port&gt;</div>
                         </div>
                         <p class="tool-description">DeepMD documentation RAG server</p>
                         <div class="tool-features">
+                            <span class="tool-feature">deepmd-docs-workflow</span>
                             <span class="tool-feature">upload_single_file_to_deepmd_knowledge_base</span>
                         </div>
                     </div>
@@ -916,9 +917,9 @@ python server.py --port &lt;port&gt;</div>
                         </div>
                         <p class="tool-description">Catalysis reaction calculations based on ADSEC workflow</p>
                         <div class="tool-features">
+                            <span class="tool-feature">cal_ads_energy</span>
                             <span class="tool-feature">cal_surface_energy</span>
                             <span class="tool-feature">cal_vacancy_formation_energy</span>
-                            <span class="tool-feature">cal_ads_energy</span>
                         </div>
                     </div>
                     <div class="tool-card" onclick="showToolDetails('pubchem')">
@@ -951,8 +952,8 @@ python server.py --port &lt;port&gt;</div>
                         </div>
                         <p class="tool-description">Scientific literature search tool for arXiv papers</p>
                         <div class="tool-features">
-                            <span class="tool-feature">extract_info</span>
                             <span class="tool-feature">search_papers</span>
+                            <span class="tool-feature">extract_info</span>
                         </div>
                     </div>
                 </div>
@@ -997,7 +998,7 @@ python server.py --port &lt;port&gt;</div>
                 <a href="https://github.com/deepmodeling">DeepModeling</a>
                 <a href="https://github.com/deepmodeling/AI4S-agent-tools/blob/main/LICENSE">License</a>
             </div>
-            <p>Generated on 2025-07-14 • Built with ❤️ by the <a href="https://github.com/deepmodeling" style="color: var(--primary);">DeepModeling</a> community</p>
+            <p>Generated on 2025-07-24 • Built with ❤️ by the <a href="https://github.com/deepmodeling" style="color: var(--primary);">DeepModeling</a> community</p>
         </div>
     </footer>
     
@@ -1020,19 +1021,19 @@ python server.py --port &lt;port&gt;</div>
         "path": "servers/ABACUS-tools",
         "start_command": "cd servers/ABACUS-tools && python server.py --port <PORT>",
         "tools": [
-            "run_abacus_onejob",
-            "generate_bulk_structure",
-            "abacus_collect_data",
             "abacus_cal_elastic",
-            "abacus_cal_band",
             "abacus_badercharge_run",
-            "abacus_prepare_inputs_from_relax_results",
-            "abacus_modify_input",
+            "abacus_modify_stru",
+            "abacus_collect_data",
+            "abacus_cal_band",
             "abacus_do_relax",
             "abacus_dos_run",
-            "abacus_modify_stru",
+            "run_abacus_onejob",
+            "abacus_prepare_inputs_from_relax_results",
+            "abacus_modify_input",
             "abacus_prepare",
-            "generate_deeptb_config"
+            "generate_deeptb_config",
+            "generate_bulk_structure"
         ]
     },
     {
@@ -1043,9 +1044,9 @@ python server.py --port &lt;port&gt;</div>
         "path": "servers/catalysis",
         "start_command": "cd servers/catalysis && python server.py --port <PORT>",
         "tools": [
+            "cal_ads_energy",
             "cal_surface_energy",
-            "cal_vacancy_formation_energy",
-            "cal_ads_energy"
+            "cal_vacancy_formation_energy"
         ]
     },
     {
@@ -1056,16 +1057,17 @@ python server.py --port &lt;port&gt;</div>
         "path": "servers/DPACalculator",
         "start_command": "cd servers/DPACalculator && python server.py --port <PORT>",
         "tools": [
-            "calculate_phonon",
-            "build_surface_adsorbate",
-            "optimize_crystal_structure",
-            "calculate_elastic_constants",
-            "build_surface_interface",
             "build_bulk_structure",
-            "run_neb",
+            "build_surface_adsorbate",
             "build_molecule_structure",
             "build_surface_slab",
-            "run_molecular_dynamics"
+            "make_supercell_structure",
+            "build_surface_interface",
+            "run_molecular_dynamics",
+            "optimize_crystal_structure",
+            "calculate_phonon",
+            "run_neb",
+            "calculate_elastic_constants"
         ]
     },
     {
@@ -1076,10 +1078,11 @@ python server.py --port &lt;port&gt;</div>
         "path": "servers/thermoelectric",
         "start_command": "cd servers/thermoelectric && python server.py --port <PORT>",
         "tools": [
-            "screen_thermoelectric_candidate",
-            "generate_calypso_structure",
+            "generate_calypso_structures",
             "calculate_enthalpy",
-            "predict_thermoelectric_properties"
+            "generate_crystalformer_structures",
+            "predict_thermoelectric_properties",
+            "screen_thermoelectric_candidate"
         ]
     },
     {
@@ -1087,23 +1090,24 @@ python server.py --port &lt;port&gt;</div>
         "description": "DeepMD documentation RAG server",
         "author": "@felix5572",
         "category": "materials",
-        "path": "servers/deepmd_docs_rag",
-        "start_command": "cd servers/deepmd_docs_rag && python server.py --port <PORT>",
         "tools": [
+            "deepmd-docs-workflow",
             "upload_single_file_to_deepmd_knowledge_base"
-        ]
+        ],
+        "path": "servers/deepmd_docs_rag",
+        "start_command": "cd servers/deepmd_docs_rag && python server.py --port <PORT>"
     },
     {
         "name": "paper_search",
         "description": "Scientific literature search tool for arXiv papers",
         "author": "@Demo",
         "category": "research",
-        "path": "servers/Paper_Search",
-        "start_command": "cd servers/Paper_Search && python server.py --port <PORT>",
         "tools": [
-            "extract_info",
-            "search_papers"
-        ]
+            "search_papers",
+            "extract_info"
+        ],
+        "path": "servers/Paper_Search",
+        "start_command": "cd servers/Paper_Search && python server.py --port <PORT>"
     },
     {
         "name": "pubchem",

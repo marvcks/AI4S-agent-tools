@@ -785,11 +785,11 @@ def generate_showcase():
                 <div class="stats">
                     <div class="stat">
                         <div class="stat-value">{len(tools_data['tools'])}</div>
-                        <div class="stat-label">Tools</div>
+                        <div class="stat-label">Collections</div>
                     </div>
                     <div class="stat">
                         <div class="stat-value">{sum(len(tool.get('tools', [])) for tool in tools_data['tools'])}</div>
-                        <div class="stat-label">Functions</div>
+                        <div class="stat-label">Tools</div>
                     </div>
                     <div class="stat">
                         <div class="stat-value">{len(set(tool.get('author', '@unknown') for tool in tools_data['tools']))}</div>

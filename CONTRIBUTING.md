@@ -59,7 +59,8 @@ if __name__ == "__main__":
     "name": "YourToolName",
     "description": "Brief description of what your tool does",
     "author": "@your-github-username",
-    "category": "chemistry"
+    "category": "chemistry",
+    "tools":["tool1","tool2"]
 }
 ```
 
