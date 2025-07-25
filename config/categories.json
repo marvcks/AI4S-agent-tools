@@ -53,6 +53,12 @@
       "icon": "🛠️",
       "description": "General purpose scientific utilities",
       "color": "#795548"
+    },
+    "battery": {
+      "name": "Battery",
+      "icon": "🔋",
+      "description": "Battery modeling, analysis and energy storage systems",
+      "color": "#FFC107"
     }
   },
   "default_category": "general"

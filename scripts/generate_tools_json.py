@@ -145,8 +145,21 @@ def scan_server_directory(server_dir: Path) -> Optional[Dict[str, Any]]:
     metadata.setdefault('description', f"{server_dir.name} MCP server")
     metadata.setdefault('author', '@unknown')
     
-    # Generate start command based on directory name
-    metadata['start_command'] = f"cd {metadata['path']} && python server.py --port <PORT>"
+    # Generate start command based on whether server.py exists
+    server_py_path = server_dir / "server.py"
+    if server_py_path.exists():
+        metadata['start_command'] = f"cd {metadata['path']} && python server.py --port <PORT>"
+    else:
+        # For closed-source or external tools without server.py
+        metadata['start_command'] = "See README for details"
+    
+    # Generate install command based on whether server.py exists
+    if server_py_path.exists():
+        metadata['install_command'] = f"cd {metadata['path']} && uv sync"
+    else:
+        # For closed-source tools without server.py
+        author = metadata.get('author', '@author')
+        metadata['install_command'] = f"Contact {author} for access"
     
     return metadata
 
