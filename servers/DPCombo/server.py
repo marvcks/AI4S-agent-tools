@@ -1,0 +1,794 @@
+import glob
+import logging
+import os
+import sys
+from pathlib import Path
+from typing import Literal, Optional, Tuple, TypedDict, List, Dict, Union
+import sys
+import argparse
+import traceback
+import json
+import dpdata
+
+import numpy as np
+from deepmd.pt.infer.deep_eval import DeepEval
+from deepmd.utils.argcheck import normalize
+from dp.agent.server import CalculationMCPServer
+
+
+MODEL_TEMPLATE_DICT = {
+    "DPA1": "dpa1_train.json",
+    "DPA2": "dpa2_train.json",
+    "DPA3": "dpa3_train.json",
+}
+
+ALL_TYPE_MAP = [
+    "H", "He", 
+    "Li", "Be", "B", "C", "N", "O", "F", "Ne",
+    "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", 
+    "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", 
+    "Ga", "Ge", "As", "Se", "Br", "Kr", 
+    "Rb", "Sr", "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", 
+    "In", "Sn", "Sb", "Te", "I", "Xe",
+    "Cs", "Ba", 
+    "La", "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb",
+    "Dy", "Ho", "Er", "Tm", "Yb", "Lu", 
+    "Hf", "Ta", "W", "Re", "Os", "Ir", "Pt", "Au", "Hg", 
+    "Tl", "Pb", "Bi", "Po", "At", "Rn",
+    "Fr", "Ra", "Ac", "Th", "Pa", "U", "Np", "Pu", "Am", "Cm", "Bk", "Cf",
+    "Es", "Fm", "Md", "No", "Lr", "Rf", "Db", "Sg", "Bh", "Hs", "Mt",
+    "Ds", "Rg", "Cn", "Nh", "Fl", "Mc", "Lv", "Ts", "Og"
+]
+
+def parse_args():
+    """Parse command line arguments for MCP server."""
+    parser = argparse.ArgumentParser(description="DP Combo MCP Server")
+    parser.add_argument('--port', type=int, default=50001, help='Server port (default: 50001)')
+    parser.add_argument('--host', default='0.0.0.0', help='Server host (default: 0.0.0.0)')
+    parser.add_argument('--log-level', default='INFO', 
+                       choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
+                       help='Logging level (default: INFO)')
+    try:
+        args = parser.parse_args()
+    except SystemExit:
+        class Args:
+            port = 50001
+            host = '0.0.0.0'
+            log_level = 'INFO'
+        args = Args()
+    return args
+
+
+args = parse_args()
+mcp = CalculationMCPServer("DPComboServer", host=args.host, port=args.port)
+
+
+def _get_dataset(path: Path) -> list:
+    if os.path.isfile(path):
+        import zipfile
+        import tarfile
+        if zipfile.is_zipfile(path) or tarfile.is_tarfile(path):
+            extract_dir = path.with_suffix('').with_suffix('') if path.suffix in ['.zip', '.tar', '.gz', '.tgz'] else path.with_name(path.name + '_extracted')
+            os.makedirs(extract_dir, exist_ok=True)
+            
+            if zipfile.is_zipfile(path):
+                with zipfile.ZipFile(path, 'r') as zip_ref:
+                    zip_ref.extractall(extract_dir)
+            elif tarfile.is_tarfile(path):
+                with tarfile.open(path, 'r:*') as tar_ref:
+                    tar_ref.extractall(extract_dir)
+            
+            path = extract_dir
+
+    valid_datapath = []    
+    for r, _, f in os.walk(path):
+        for file in f:
+            if "type_map.raw" in file:
+                valid_datapath.append(os.path.join(r, file))
+
+    return valid_datapath
+
+@mcp.tool()
+def train_dp_model(
+    model_type: str,
+    training_path: Path,
+    validation_path: Path,
+    init_model: Optional[Path] = None,
+    restart_model: Optional[Path] = None,
+    finetune_model: Optional[Path] = None,
+    output_dir: str = "./training_output"
+) -> dict:
+    """
+    Train a Deep Potential model using DeepMD-kit.
+    
+    This tool trains a Deep Potential model based on the provided configuration file.
+    It supports initialization from existing models, restarting training, and fine-tuning.
+    The training is performed using the command line interface 'dp --pt train input.json'.
+    
+    Args:
+        model_type (str): Type of the DP model to train. Supported values: "DPA1", "DPA2", "DPA3".
+        training_path (Path): Path to the training data set.
+        validation_path (Path): Path to the validation data set.
+        init_model (Path, optional): Path to the model used for initialization (Init-model).
+        restart_model (Path, optional): Path to the model used for restarting training.
+        finetune_model (Path, optional): Path to the model used for fine-tuning.
+        output_dir (str): Directory to save the trained model and training logs.
+            Default is "./training_output".
+            
+    Returns:
+        dict: A dictionary containing:
+            - model_file (Path): Path to the final trained model.
+            - training_log (Path): Path to the training log file.
+            - message (str): Status message indicating success or failure.
+    """    
+    try:
+        # Create output directory
+        model_type = model_type.replace("-","").replace("_","").upper()
+        os.makedirs(output_dir, exist_ok=True)
+        config_file = MODEL_TEMPLATE_DICT[model_type]
+        # Load and normalize config
+        with open(config_file, 'r') as f:
+            config = json.load(f)
+        config = normalize(config)
+        config["training"]["training_data"]["systems"] = _get_dataset(training_path)
+
+        # Setup validation data if available
+        if validation_path is not None:
+            config["training"]["validation_data"]["systems"] = _get_dataset(validation_path)
+        
+        # Handle model initialization options
+        if init_model:
+            config["training"]["init_model"] = str(init_model)
+        if restart_model:
+            config["training"]["restart_model"] = str(restart_model)
+        if finetune_model:
+            config["training"]["finetune_model"] = str(finetune_model)
+        
+        # Write the configuration to input.json
+        input_file = os.path.join(output_dir, "input.json")
+        with open(input_file, 'w') as f:
+            json.dump(config, f, indent=2)
+        
+        # Change to output directory and run training with dp command
+        cwd = os.getcwd()
+        os.chdir(output_dir)
+        
+        try:
+            # Run the training using dp command
+            import subprocess
+            result = subprocess.run(["dp", "--pt", "train", "input.json"], 
+                                  capture_output=True, text=True)
+            
+            if result.returncode != 0:
+                raise RuntimeError(f"Training failed with error: {result.stderr}")
+        finally:
+            os.chdir(cwd)
+        
+        # Find the latest model
+        checkpoint_files = list(Path(output_dir).glob("model.ckpt-*.pt"))
+        if not checkpoint_files:
+            raise FileNotFoundError("No model checkpoint found after training")
+        
+        latest_model = max(checkpoint_files, key=lambda f: f.stat().st_mtime)
+        
+        return {
+            "model_file": latest_model,
+            "training_log": Path(os.path.join(output_dir, "lcurve.out")),
+            "message": "Training completed successfully"
+        }
+        
+    except Exception as e:
+        logging.error(f"Training failed: {traceback.format_exc()}", exc_info=True)
+        return {
+            "model_file": Path(""),
+            "training_log": Path(""),
+            "message": f"Training failed: {traceback.format_exc()}"
+        }
+
+
+@mcp.tool()
+def infer_dp_model(
+    model_file: Path,
+    coord: list,
+    cell: Optional[list] = None,
+    atom_types: list = [],
+    fparam: Optional[list] = None,
+    aparam: Optional[list] = None,
+    atomic: bool = False,
+    head: Optional[str] = None
+) -> dict:
+    """
+    Perform inference using a trained Deep Potential model.
+    
+    This tool uses a trained Deep Potential model to predict energies, forces, and other properties
+    for given atomic configurations.
+    
+    Args:
+        model_file (Path): Path to the trained Deep Potential model (.pt or .pth file).
+        coord (list): Atomic coordinates. Shape should be [nframes, natoms, 3] or [natoms, 3].
+        cell (list, optional): Cell vectors. Shape should be [nframes, 9] or [9]. For non-PBC, set to None.
+        atom_types (list): Atom types. Shape should be [natoms] or [nframes, natoms].
+        fparam (list, optional): Frame parameters. Shape should be [nframes, dim_fparam] or [dim_fparam].
+        aparam (list, optional): Atomic parameters. Shape should be [nframes, natoms, dim_aparam], 
+            [natoms, dim_aparam], or [dim_aparam].
+        atomic (bool): Whether to compute atomic contributions. Default is False.
+        head (str, optional): Model head for multi-task models. Required for multi-task models.
+        
+    Returns:
+        dict: A dictionary containing:
+            - energy (list, optional): Predicted energies. Returned if energy is in the model output.
+            - force (list, optional): Predicted forces. Returned if force is in the model output.
+            - virial (list, optional): Predicted virials. Returned if virial is in the model output.
+            - atom_energy (list, optional): Predicted atomic energies. Returned if atomic=True and 
+              atom_energy is in the model output.
+            - atom_virial (list, optional): Predicted atomic virials. Returned if atomic=True and 
+              atom_virial is in the model output.
+            - message (str): Status message.
+    """
+    
+    try:
+        # Convert inputs to numpy arrays
+        coord = np.array(coord)
+        cell = np.array(cell) if cell is not None else None
+        atom_types = np.array(atom_types, dtype=int)
+        
+        # Reshape coord if needed
+        if len(coord.shape) == 2:
+            coord = coord.reshape([1, *coord.shape])
+        
+        nframes = coord.shape[0]
+        natoms = coord.shape[1] // 3  # Assuming coord is [nframes, natoms*3]
+        coord = coord.reshape([nframes, natoms, 3])
+        
+        # Reshape cell if needed
+        if cell is not None:
+            if len(cell.shape) == 1:
+                cell = cell.reshape([1, -1])
+            if cell.shape[1] == 3:  # If cell is [3, 3], reshape to [9]
+                cell = cell.reshape([nframes, 9])
+        
+        # Reshape atom_types if needed
+        if len(atom_types.shape) == 1:
+            atom_types = atom_types.reshape([-1])
+        
+        # Initialize DeepEval
+        evaluator = DeepEval(
+            str(model_file),
+            head=head
+        )
+        
+        # Perform evaluation
+        result = evaluator.eval(
+            coords=coord,
+            cells=cell,
+            atom_types=atom_types,
+            atomic=atomic,
+            fparam=np.array(fparam) if fparam is not None else None,
+            aparam=np.array(aparam) if aparam is not None else None
+        )
+        
+        # Convert results to lists for JSON serialization
+        result_dict = {}
+        for key, value in result.items():
+            # Handle None values
+            if value is not None:
+                result_dict[key] = value.tolist()
+            else:
+                result_dict[key] = None
+        
+        result_dict["message"] = "Inference completed successfully"
+        return result_dict
+        
+    except Exception as e:
+        logging.error(f"Inference failed: {str(e)}", exc_info=True)
+        return {
+            "message": f"Inference failed: {str(e)}"
+        }
+
+
+@mcp.tool()
+def identify_multisystem(data_path: Path) -> bool:
+    """
+    Identify if the given data path contains a MultiSystem dataset.
+    
+    Args:
+        data_path (Path): Path to the dataset.
+        
+    Returns:
+        bool: True if the dataset is a MultiSystem, False otherwise.
+    """
+    try:
+        # Check if there are multiple systems by looking for type.raw files in subdirectories
+        type_raw_files = list(data_path.rglob("type.raw"))
+        # A multisystem typically has multiple type.raw files in different subdirectories
+        # or has the specific structure of a MultiSystem
+        if len(type_raw_files) > 1:
+            return True
+        
+        # Also check for mixed type systems which are typically MultiSystems
+        real_atom_types_files = list(data_path.rglob("*/real_atom_types.npy"))
+        if len(real_atom_types_files) > 0:
+            return True
+            
+        # Try to load as MultiSystem to check
+        try:
+            d = dpdata.MultiSystems()
+            d.load_systems_from_file(str(data_path), fmt="deepmd/npy/mixed")
+            return True
+        except:
+            pass
+            
+        return False
+    except Exception as e:
+        logging.error(f"Failed to identify multisystem: {str(e)}", exc_info=True)
+        return False
+
+
+@mcp.tool()
+def parse_dpdata(data_path: Path, is_multisystem: bool) -> dict:
+    """
+    Parse dpdata from the given path.
+    
+    Args:
+        data_path (Path): Path to the dataset.
+        is_multisystem (bool): Whether the dataset is a MultiSystem.
+        
+    Returns:
+        dict: A dictionary containing:
+            - coord (list): Atomic coordinates.
+            - cell (list): Cell vectors.
+            - atom_types (list): Atom types.
+            - fparam (list): Frame parameters.
+            - aparam (list): Atomic parameters.
+    """
+    try:
+        if is_multisystem:
+            d = dpdata.MultiSystems()
+            mixed_type = len(list(data_path.glob("*/real_atom_types.npy"))) > 0
+            if mixed_type:
+                d.load_systems_from_file(str(data_path), fmt="deepmd/npy/mixed")
+            else:
+                # Load each system individually
+                for f in data_path.rglob("type.raw"):
+                    sys_path = f.parent
+                    k = dpdata.LabeledSystem(sys_path, fmt="deepmd/npy")
+                    d.append(k)
+        else:
+            d = dpdata.LabeledSystem(str(data_path), fmt="deepmd/npy")
+            
+        # Extract data
+        systems = []
+        if is_multisystem:
+            for k in d:
+                systems.append(k)
+        else:
+            systems = [d]
+            
+        # Return the first system's data as example
+        # In a real implementation, you might want to handle all systems
+        first_system = systems[0]
+        if len(first_system) > 0:
+            coord = first_system["coords"][0].tolist()
+            cell = first_system["cells"][0].tolist() if not first_system.nopbc else None
+            atom_types = first_system["atom_types"].tolist()
+            fparam = None  # These would need to be extracted from the data if available
+            aparam = None  # These would need to be extracted from the data if available
+            
+            return {
+                "coord": coord,
+                "cell": cell,
+                "atom_types": atom_types,
+                "fparam": fparam,
+                "aparam": aparam
+            }
+            
+        return {
+            "coord": [],
+            "cell": None,
+            "atom_types": [],
+            "fparam": None,
+            "aparam": None
+        }
+        
+    except Exception as e:
+        logging.error(f"Failed to parse dpdata: {str(e)}", exc_info=True)
+        return {
+            "coord": [],
+            "cell": None,
+            "atom_types": [],
+            "fparam": None,
+            "aparam": None
+        }
+
+
+def rmse(predictions, targets):
+    """Calculate root mean square error."""
+    return np.sqrt(((predictions - targets) ** 2).mean())
+
+
+@mcp.tool()
+def evaluate_error(
+    data_path: Path,
+    model_file: Path,
+    is_multisystem: bool = False,
+    head: Optional[str] = None
+) -> dict:
+    """
+    Evaluate RMSE errors of a model on given data.
+    
+    Args:
+        data_path (Path): Path to the dataset.
+        model_file (Path): Path to the trained model.
+        is_multisystem (bool): Whether the dataset is a MultiSystem.
+        head (str, optional): Model head for multi-task models.
+        
+    Returns:
+        dict: A dictionary containing:
+            - rmse_e (float): RMSE of energies.
+            - rmse_f (float): RMSE of forces.
+            - rmse_v (float): RMSE of virials.
+    """
+    try:        
+        # Load data using dpdata
+        if is_multisystem:
+            data = dpdata.MultiSystems()
+            mixed_type = len(list(data_path.glob("*/real_atom_types.npy"))) > 0
+            if mixed_type:
+                data.load_systems_from_file(str(data_path), fmt="deepmd/npy/mixed")
+            else:
+                # Load each system individually
+                for f in data_path.rglob("type.raw"):
+                    sys_path = f.parent
+                    k = dpdata.LabeledSystem(sys_path, fmt="deepmd/npy")
+                    data.append(k)
+        else:
+            data = dpdata.LabeledSystem(str(data_path), fmt="deepmd/npy")
+        
+        # Initialize model
+        dp = DeepEval(str(model_file), head=head)
+        all_type_map = dp.get_type_map()
+        
+        infer_energies, infer_forces, infer_virials = [], [], []
+        gt_energies, gt_forces, gt_virials = [], [], []
+        
+        # Handle both MultiSystems and single LabeledSystem
+        systems = []
+        if isinstance(data, dpdata.MultiSystems):
+            for k in data:
+                systems.append(k)
+        else:
+            systems = [data]
+            
+        for system in systems:
+            for i in range(len(system)):
+                cell = system["cells"][i]
+                if system.nopbc:
+                    cell = None
+                coord = system["coords"][i]
+                ori_atype = system["atom_types"]
+                anames = system["atom_names"]
+                atype = np.array([all_type_map.index(anames[j]) for j in ori_atype])
+                natoms = atype.shape[0]
+                
+                # Reshape for model evaluation
+                coord = coord.reshape([1, -1, 3])
+                if cell is not None:
+                    cell = cell.reshape([1, 3, 3])
+                atype = atype.reshape([1, -1])
+                
+                # Evaluate with model
+                e, f, v = dp.eval(coord, cell, atype, infer_batch_size=1)
+                e = e.reshape([1])[0]
+                f = f.reshape([-1, 3])
+                v = v.reshape([3, 3])
+                
+                # Store predictions
+                infer_energies.append(e/natoms)
+                infer_forces.extend(f.reshape(-1))
+                if v is not None:
+                    infer_virials.extend(v.reshape(-1)/natoms)
+                
+                # Store ground truth
+                gt_energies.append(system["energies"][i]/natoms)
+                gt_forces.extend(system["forces"][i].reshape(-1))
+                if "virials" in system.data and system.data["virials"] is not None:
+                    gt_virials.extend(system["virials"][i].reshape(-1)/natoms)
+        
+        # Calculate RMSE
+        rmse_e = rmse(np.array(infer_energies), np.array(gt_energies)) if len(infer_energies) > 0 else 0.0
+        rmse_f = rmse(np.array(infer_forces), np.array(gt_forces)) if len(infer_forces) > 0 else 0.0
+        rmse_v = rmse(np.array(infer_virials), np.array(gt_virials)) if len(infer_virials) > 0 and len(gt_virials) > 0 else 0.0
+        
+        return {
+            "rmse_e": float(rmse_e),
+            "rmse_f": float(rmse_f),
+            "rmse_v": float(rmse_v)
+        }
+        
+    except Exception as e:
+        logging.error(f"Error evaluation failed: {str(e)}", exc_info=True)
+        return {
+            "rmse_e": 0.0,
+            "rmse_f": 0.0,
+            "rmse_v": 0.0
+        }
+
+
+@mcp.tool()
+def filter_outliers(
+    data_path: Path,
+    metric: Literal["energies", "forces", "virials"],
+    comparison: Literal["greater", "less"],
+    threshold: float
+) -> dict:
+    """
+    Filter dataset based on specified metrics (energies, forces, or virials).
+    
+    This tool filters a labeled system dataset based on a specified metric and threshold.
+    Data points that meet the filtering criteria will be retained in the filtered dataset.
+    
+    Args:
+        data_path (Path): Path to the dataset in dpdata format.
+        metric (str): The metric to filter on. Supported values: "energies", "forces", "virials".
+        comparison (str): Comparison operation. Supported values: "greater", "less".
+        threshold (float): Threshold value for filtering.
+        
+    Returns:
+        dict: A dictionary containing:
+            - filtered_data_path (Path): Path to the filtered dataset.
+            - original_count (int): Number of data points in the original dataset.
+            - filtered_count (int): Number of data points in the filtered dataset.
+            - message (str): Status message indicating success or failure.
+    """
+    try:
+        # Load the dataset
+        data = dpdata.LabeledSystem(str(data_path), fmt='deepmd/npy')
+        original_count = len(data)
+        
+        if original_count == 0:
+            return {
+                "filtered_data_path": Path(""),
+                "original_count": 0,
+                "filtered_count": 0,
+                "message": "Input dataset is empty"
+            }
+        
+        # Determine valid indices based on the specified metric and comparison
+        if metric == "energies":
+            if comparison == "less":
+                valid_indices = data.data["energies"] < threshold
+            else:  # greater
+                valid_indices = data.data["energies"] > threshold
+                
+        elif metric == "forces":
+            # Calculate force magnitudes
+            force_magnitudes = np.linalg.norm(data.data["forces"], axis=2)
+            if comparison == "less":
+                valid_indices = np.all(force_magnitudes < threshold, axis=1)
+            else:  # greater
+                valid_indices = np.any(force_magnitudes > threshold, axis=1)
+                
+        elif metric == "virials":
+            if "virials" not in data.data:
+                return {
+                    "filtered_data_path": Path(""),
+                    "original_count": original_count,
+                    "filtered_count": 0,
+                    "message": "Virials data not available in the dataset"
+                }
+            
+            # Calculate virial magnitudes
+            virial_magnitudes = np.linalg.norm(data.data["virials"], axis=2)
+            if comparison == "less":
+                valid_indices = np.all(virial_magnitudes < threshold, axis=1)
+            else:  # greater
+                valid_indices = np.any(virial_magnitudes > threshold, axis=1)
+        else:
+            return {
+                "filtered_data_path": Path(""),
+                "original_count": original_count,
+                "filtered_count": 0,
+                "message": f"Unsupported metric: {metric}"
+            }
+        
+        # Apply the filter
+        filtered_data = data[valid_indices]
+        filtered_count = len(filtered_data)
+        
+        # Save the filtered dataset
+        filtered_data_path = Path("filtered_data")
+        filtered_data.to_deepmd_npy(str(filtered_data_path))
+        
+        return {
+            "filtered_data_path": filtered_data_path,
+            "original_count": original_count,
+            "filtered_count": filtered_count,
+            "message": f"Filtering completed successfully. Kept {filtered_count} out of {original_count} data points."
+        }
+        
+    except Exception as e:
+        logging.error(f"Filtering failed: {str(e)}", exc_info=True)
+        return {
+            "filtered_data_path": Path(""),
+            "original_count": 0,
+            "filtered_count": 0,
+            "message": f"Filtering failed: {str(e)}"
+        }
+
+
+@mcp.tool()
+def stat_af(dataset_path: Path) -> dict:
+    """
+    Statistics on atomic numbers in the dataset.
+    
+    This tool calculates statistics on atom numbers and frame counts in the datasets.
+    
+    Args:
+        dataset_path (Path): Path to the dataset. Can be a directory or a compressed file (zip/tar.gz).
+        
+    Returns:
+        dict: A dictionary containing:
+            - atom_numbs (list): Atom numbers in training dataset.
+            - frame_numbs (int): Total frame count in training dataset.
+    """
+    try:
+        dataset_dirs = _get_dataset(dataset_path)
+        
+        atom_numbs = []
+        frames = []
+                
+        for dataset_dir in dataset_dirs:
+            dataset_path_obj = Path(dataset_dir).parent
+            
+            coord_file = dataset_path_obj / "coord.npy"
+            if not coord_file.exists():
+                coord_files = list(dataset_path_obj.rglob("coord.npy"))
+                if coord_files:
+                    coord_file = coord_files[0]
+                else:
+                    continue
+            
+            coord_data = np.load(coord_file)
+            nbz = coord_data.shape[0]
+            natoms = int(coord_data.shape[1] / 3)
+            frames.append(nbz)
+            
+            for jj in range(nbz):
+                atom_numbs.append(natoms)
+        
+        atom_numbs = np.array(atom_numbs)
+        frame_numbs = np.array(frames).sum() if frames else 0
+        
+        return {
+            "atom_numbs": atom_numbs.tolist(),
+            "frame_numbs": int(frame_numbs),
+        }
+        
+    except Exception as e:
+        logging.error(f"stat_af failed: {str(e)}", exc_info=True)
+        return {
+            "atom_numbs": [],
+            "frame_numbs": 0,
+            "message": f"stat_af failed: {str(e)}"
+        }
+
+
+@mcp.tool()
+def stat_efv(dataset_path: Path) -> dict:
+    """
+    Statistics on energies, forces, and virials in the dataset.
+    
+    This tool calculates statistics on energies, forces, and virials in the dataset.
+    
+    Args:
+        dataset_path (Path): Path to the dataset. Can be a directory or a compressed file (zip/tar.gz).
+        
+    Returns:
+        dict: A dictionary containing:
+            - energies (list): Energy values per atom.
+            - forces (list): Force values.
+            - virials (list): Virial values per atom (if available).
+    """
+    try:
+        # Use _get_dataset to handle compressed files
+        dataset_dirs = _get_dataset(dataset_path)
+        
+        energies, forces, virials = [], [], []
+        natoms_avg = []  # This was referenced in original code but not defined
+        
+        # Process each dataset directory
+        for dataset_dir in dataset_dirs:
+            dataset_path_obj = Path(dataset_dir).parent
+            
+            # Find required npy files in a smarter way
+            energy_file = dataset_path_obj / "energy.npy"
+            force_file = dataset_path_obj / "force.npy"
+            virial_file = dataset_path_obj / "virial.npy"
+            
+            # Try to find files if not directly in dataset directory
+            if not energy_file.exists():
+                energy_files = list(dataset_path_obj.rglob("energy.npy"))
+                if energy_files:
+                    energy_file = energy_files[0]
+                else:
+                    continue  # Skip if energy file not found
+                    
+            if not force_file.exists():
+                force_files = list(dataset_path_obj.rglob("force.npy"))
+                if force_files:
+                    force_file = force_files[0]
+                else:
+                    continue  # Skip if force file not found
+            
+            if not virial_file.exists():
+                virial_files = list(dataset_path_obj.rglob("virial.npy"))
+                if virial_files:
+                    virial_file = virial_files[0]
+                    virial = np.load(virial_file)
+                else:
+                    virial = None
+            else:
+                virial = np.load(virial_file)
+            
+            # Load energy and force data
+            ener = np.load(energy_file).reshape(-1)
+            force = np.load(force_file)
+            
+            # Validate data shapes
+            assert ener.shape[0] == force.shape[0]
+            if virial is not None:
+                assert virial.shape[0] == force.shape[0]
+            assert len(force.shape) == 2
+            if virial is not None:
+                assert len(virial.shape) == 2
+            assert len(ener.shape) == 1
+
+            # Process each frame
+            for idx in range(len(force)):
+                natoms = len(force[idx]) / 3
+                natoms_avg.append(natoms)
+                
+                if virial is not None:
+                    virial_peratom = virial[idx] / natoms
+                    
+                enerperatom = ener[idx] / natoms
+                
+                energies.append(enerperatom)
+                forces.extend(force[idx])
+                if virial is not None:
+                    virials.extend(virial_peratom[idx] / natoms)
+
+        energies = np.array(energies).reshape(-1) if energies else np.array([])
+        forces = np.array(forces).reshape(-1) if forces else np.array([])
+        virials = np.array(virials).reshape(-1) if virials else np.array([])
+        
+        return {
+            "energies": energies.tolist(),
+            "forces": forces.tolist(),
+            "virials": virials.tolist()
+        }
+        
+    except Exception as e:
+        logging.error(f"stat_efv failed: {str(e)}", exc_info=True)
+        return {
+            "energies": [],
+            "forces": [],
+            "virials": [],
+            "message": f"stat_efv failed: {str(e)}"
+        }
+
+
+# @mcp.tool()
+# def downsample_dataset():
+#     pass
+
+
+# @mcp.tool()
+# def convert_dataset_fomat():
+#     pass
+
+
+
+if __name__ == "__main__":
+    logging.info("Starting Unified MCP Server with all tools...")
+    mcp.run(transport="sse")
