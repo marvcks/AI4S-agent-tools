@@ -488,7 +488,10 @@ def filter_outliers(
     data_path: Path,
     metric: Literal["energies", "forces", "virials"],
     comparison: Literal["greater", "less"],
-    threshold: float
+    is_mixedtype: bool,
+    threshold: float,
+    save_dir_name: str = "filetered_data",
+    save_format: Literal["npy", "mixed"] = "npy"
 ) -> dict:
     """
     Filter dataset based on specified metrics (energies, forces, or virials).
@@ -499,8 +502,11 @@ def filter_outliers(
     Args:
         data_path (Path): Path to the dataset in dpdata format.
         metric (str): The metric to filter on. Supported values: "energies", "forces", "virials".
-        comparison (str): Comparison operation. Supported values: "greater", "less".
+        comparison (str): Comparison operation. Supported values: "greater", "less". For forces and virials, the magnitude of the metric is set as the averaged value.
+        is_mixedtype (bool): Whether the dataset is a MixedType.
         threshold (float): Threshold value for filtering.
+        save_path (str): Path to save the filtered dataset. Defaults to "filetered_data".
+        save_format (str): Format to save the filtered dataset. Supported values: "npy", "mixed". Defaults to "npy".
         
     Returns:
         dict: A dictionary containing:
@@ -510,64 +516,72 @@ def filter_outliers(
             - message (str): Status message indicating success or failure.
     """
     try:
-        # Load the dataset
-        data = dpdata.LabeledSystem(str(data_path), fmt='deepmd/npy')
-        original_count = len(data)
+        all_filtered_data = dpdata.MultiSystems()
+        if is_mixedtype:
+            raw_data = dpdata.MultiSystems().load_systems_from_file(str(data_path), fmt='deepmd/npy/mixed')
+        else:
+            raw_data = dpdata.MultiSystems().load_systems_from_file(str(data_path), fmt='deepmd/npy')
+        system_count = len(raw_data)
         
-        if original_count == 0:
+        if system_count == 0:
             return {
                 "filtered_data_path": Path(""),
                 "original_count": 0,
                 "filtered_count": 0,
                 "message": "Input dataset is empty"
             }
+        else:
+            original_count = sum([len(sys) for sys in raw_data])
         
-        # Determine valid indices based on the specified metric and comparison
-        if metric == "energies":
-            if comparison == "less":
-                valid_indices = data.data["energies"] < threshold
-            else:  # greater
-                valid_indices = data.data["energies"] > threshold
+        filtered_count = 0
+        for data in raw_data:
+            if metric == "energies":
+                if comparison == "less":
+                    valid_indices = data.data["energies"] < threshold
+                else:  # greater
+                    valid_indices = data.data["energies"] > threshold
+                    
+            elif metric == "forces":
+                # Calculate force magnitudes
+                force_magnitudes = np.linalg.norm(data.data["forces"], axis=2)
+                if comparison == "less":
+                    valid_indices = np.all(force_magnitudes < threshold, axis=1)
+                else:  # greater
+                    valid_indices = np.any(force_magnitudes > threshold, axis=1)
+                    
+            elif metric == "virials":
+                if "virials" not in data.data:
+                    return {
+                        "filtered_data_path": Path(""),
+                        "original_count": original_count,
+                        "filtered_count": 0,
+                        "message": "Virials data not available in the dataset"
+                    }
                 
-        elif metric == "forces":
-            # Calculate force magnitudes
-            force_magnitudes = np.linalg.norm(data.data["forces"], axis=2)
-            if comparison == "less":
-                valid_indices = np.all(force_magnitudes < threshold, axis=1)
-            else:  # greater
-                valid_indices = np.any(force_magnitudes > threshold, axis=1)
-                
-        elif metric == "virials":
-            if "virials" not in data.data:
+                virial_magnitudes = np.linalg.norm(data.data["virials"], axis=2)
+                if comparison == "less":
+                    valid_indices = np.all(virial_magnitudes < threshold, axis=1)
+                else:
+                    valid_indices = np.any(virial_magnitudes > threshold, axis=1)
+            else:
                 return {
                     "filtered_data_path": Path(""),
                     "original_count": original_count,
                     "filtered_count": 0,
-                    "message": "Virials data not available in the dataset"
+                    "message": f"Unsupported metric: {metric}"
                 }
             
-            # Calculate virial magnitudes
-            virial_magnitudes = np.linalg.norm(data.data["virials"], axis=2)
-            if comparison == "less":
-                valid_indices = np.all(virial_magnitudes < threshold, axis=1)
-            else:  # greater
-                valid_indices = np.any(virial_magnitudes > threshold, axis=1)
-        else:
-            return {
-                "filtered_data_path": Path(""),
-                "original_count": original_count,
-                "filtered_count": 0,
-                "message": f"Unsupported metric: {metric}"
-            }
-        
-        # Apply the filter
-        filtered_data = data[valid_indices]
-        filtered_count = len(filtered_data)
-        
-        # Save the filtered dataset
-        filtered_data_path = Path("filtered_data")
-        filtered_data.to_deepmd_npy(str(filtered_data_path))
-        
+            # Apply the filter
+            filtered_data = data[valid_indices]
+            filtered_count += len(filtered_data)
+            all_filtered_data.append(filtered_data)
+            
+        filtered_data_path = Path(save_dir_name)
+        if save_format == "npy":
+            all_filtered_data.to_deepmd_npy(str(filtered_data_path))
+        elif save_format == "mixed":
+            all_filtered_data.to_deepmd_mixed(str(filtered_data_path))
+
         return {
             "filtered_data_path": filtered_data_path,
             "original_count": original_count,
