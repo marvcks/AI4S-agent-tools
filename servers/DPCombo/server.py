@@ -618,7 +618,7 @@ def stat_af(dataset_path: Path) -> dict:
         atom_numbs = []
         frames = []
                 
-        dataset_path_obj = Path(dataset_path).parent
+        dataset_path_obj = Path(dataset_path)
         
         coord_file = dataset_path_obj / "coord.npy"
         coord_files = []
@@ -684,7 +684,7 @@ def stat_efv(dataset_path: Path) -> dict:
         energies, forces, virials = [], [], []
         natoms_avg = [] 
     
-        dataset_path_obj = Path(dataset_path).parent
+        dataset_path_obj = Path(dataset_path)
         
         # Find all relevant files
         energy_files = []
