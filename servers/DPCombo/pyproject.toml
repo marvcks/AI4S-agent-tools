@@ -1,7 +1,7 @@
 [project]
 name = "dpa"
 version = "0.1.0"
-description = "Deep Potential Agent for atomistic simulation"
+description = "Server for DPA training, evaluation and dataset processing"
 readme = "README.md"
 requires-python = ">=3.10,<3.12"
 
@@ -11,17 +11,16 @@ dependencies = [
     "scipy>=1.12.0",
     "ase>=3.22.1",
     "seekpath>=2.0.1",
+    "tensorflow==2.19.0",
     "torchaudio",
     "torchvision",
-    "tensorflow==2.15.0",
     "deepmd-kit==3.1.0",  
     "numpy==1.26.4",
     "dpdata",
-    "phonopy",
     "pymatgen",
     "spglib",
     "matplotlib",    
     "typing-extensions",  
     "pyyaml",
-    "science-agent-sdk"    
+    "bohr-agent-sdk"    
 ]
