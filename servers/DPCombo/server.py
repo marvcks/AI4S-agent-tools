@@ -753,9 +753,11 @@ def stat_efv(dataset_path: Path) -> dict:
 
 @mcp.tool()
 def downsample_dataset(
-    input_path: Path,
-    output_path: Path,
-    ds_num: int
+    data_path: Path,
+    is_mixedtype: bool,
+    ds_num: int,
+    save_dir_name: str = "downsampled_data",
+    save_format: Literal["npy", "mixed"] = "npy"
 ) -> dict:
     """
     Downsample a dataset using random selection.
@@ -764,26 +766,38 @@ def downsample_dataset(
     from the input dataset and saving them to the output path.
     
     Args:
-        input_path (Path): Path to the input dataset.
-        output_path (Path): Path to save the downsampled dataset.
+        data_path (Path): Path to the input dataset.
+        is_mixedtype (bool): Whether the dataset is a MixedType.
         ds_num (int): Number of frames to select in the downsampled dataset.
+        save_dir_name (str): Output dataset name to save the downsampled dataset.
+            Defaults to "downsampled_data".
+        save_format (str): Format to save the downsampled dataset. Supported values: 
+            "npy", "mixed". Defaults to "npy".
         
     Returns:
         dict: A dictionary containing:
             - output_path (Path): Path to the downsampled dataset.
+            - original_count (int): Number of data points in the original dataset.
+            - downsampled_count (int): Number of data points in the downsampled dataset.
             - message (str): Status message indicating success or failure.
     """
-    try:        
-        os.makedirs(output_path, exist_ok=True)
-        
+    try:
         # Load dataset
-        try:
-            dd = dpdata.MultiSystems().load_systems_from_file(str(input_path), fmt='deepmd/npy')
-        except:
-            dd = dpdata.MultiSystems().load_systems_from_file(str(input_path), fmt='deepmd/npy/mixed')
+        if is_mixedtype:
+            dd = dpdata.MultiSystems().load_systems_from_file(str(data_path), fmt='deepmd/npy/mixed')
+        else:
+            dd = dpdata.MultiSystems().load_systems_from_file(str(data_path), fmt='deepmd/npy')
         
         total_frames = dd.get_nframes()
         print(f"Total frames: {total_frames}")
+        
+        if total_frames == 0:
+            return {
+                "output_path": Path(""),
+                "original_count": 0,
+                "downsampled_count": 0,
+                "message": "Input dataset is empty"
+            }
 
         # 1. Build global indices for all frames (system_id, local_frame_id)
         frame_indices = []
@@ -797,7 +811,9 @@ def downsample_dataset(
         # Check if ds_num is valid
         if ds_num > len(frame_indices):
             return {
-                "output_path": None,
+                "output_path": Path(""),
+                "original_count": total_frames,
+                "downsampled_count": 0,
                 "message": f"Error: Requested {ds_num} frames but only {len(frame_indices)} frames available"
             }
 
@@ -818,19 +834,25 @@ def downsample_dataset(
             sub_d = dd[sys_id]
             frame_ids = np.array(frame_ids)
             downsample_ms.append(sub_d.sub_system(frame_ids))
-            del sub_d
-            gc.collect()
         
-        downsample_ms.to_deepmd_npy_mixed(f"{output_path}/")
-        print(downsample_ms)
-        
+        output_path = Path(save_dir_name)
+        if save_format == "npy":
+            downsample_ms.to_deepmd_npy(str(output_path))
+        elif save_format == "mixed":
+            downsample_ms.to_deepmd_mixed(str(output_path))
+                
         return {
             "output_path": output_path,
+            "original_count": total_frames,
+            "downsampled_count": ds_num,
             "message": f"Successfully downsampled dataset from {total_frames} to {ds_num} frames"
         }
     except Exception as e:
+        logging.error(f"Downsampling failed: {str(e)}", exc_info=True)
         return {
-            "output_path": None,
+            "output_path": Path(""),
+            "original_count": 0,
+            "downsampled_count": 0,
             "message": f"Error during downsampling: {str(e)}"
         }
 
