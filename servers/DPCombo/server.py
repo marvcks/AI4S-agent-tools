@@ -81,11 +81,11 @@ def _get_dataset(path: Path) -> list:
             
             path = extract_dir
 
-    valid_datapath = []    
+    valid_datapath = []
     for r, _, f in os.walk(path):
         for file in f:
             if "type_map.raw" in file:
-                valid_datapath.append(os.path.join(r, file))
+                valid_datapath.append(r)
 
     return valid_datapath
 
@@ -296,7 +296,7 @@ def identify_multisystem(data_path: Path) -> bool:
         data_path (Path): Path to the dataset.
         
     Returns:
-        bool: True if the dataset is a MultiSystem, False otherwise.
+        bool: True if the dataset is a MixedType, False otherwise.
     """
     try:
         # Check if there are multiple systems by looking for type.raw files in subdirectories
@@ -326,13 +326,13 @@ def identify_multisystem(data_path: Path) -> bool:
 
 
 @mcp.tool()
-def parse_dpdata(data_path: Path, is_multisystem: bool) -> dict:
+def parse_dpdata(data_path: Path, is_mixedtype: bool) -> dict:
     """
     Parse dpdata from the given path.
     
     Args:
         data_path (Path): Path to the dataset.
-        is_multisystem (bool): Whether the dataset is a MultiSystem.
+        is_mixedtype (bool): Whether the dataset is a MixedType dataset.
         
     Returns:
         dict: A dictionary containing:
@@ -343,7 +343,7 @@ def parse_dpdata(data_path: Path, is_multisystem: bool) -> dict:
             - aparam (list): Atomic parameters.
     """
     try:
-        if is_multisystem:
+        if is_mixedtype:
             d = dpdata.MultiSystems()
             mixed_type = len(list(data_path.glob("*/real_atom_types.npy"))) > 0
             if mixed_type:
@@ -359,7 +359,7 @@ def parse_dpdata(data_path: Path, is_multisystem: bool) -> dict:
             
         # Extract data
         systems = []
-        if is_multisystem:
+        if is_mixedtype:
             for k in d:
                 systems.append(k)
         else:
@@ -411,7 +411,7 @@ def rmse(predictions, targets):
 def evaluate_error(
     data_path: Path,
     model_file: Path,
-    is_multisystem: bool = False,
+    is_mixedtype: bool = False,
     head: Optional[str] = None
 ) -> dict:
     """
@@ -420,7 +420,7 @@ def evaluate_error(
     Args:
         data_path (Path): Path to the dataset.
         model_file (Path): Path to the trained model.
-        is_multisystem (bool): Whether the dataset is a MultiSystem.
+        is_mixedtype (bool): Whether the dataset is a MixedType.
         head (str, optional): Model head for multi-task models.
         
     Returns:
@@ -431,7 +431,7 @@ def evaluate_error(
     """
     try:        
         # Load data using dpdata
-        if is_multisystem:
+        if is_mixedtype:
             data = dpdata.MultiSystems()
             mixed_type = len(list(data_path.glob("*/real_atom_types.npy"))) > 0
             if mixed_type:
