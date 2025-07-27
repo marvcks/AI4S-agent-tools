@@ -399,21 +399,16 @@ def evaluate_error(
             - rmse_v (float): RMSE of virials.
     """
     try:
+        # TODO: change energy bias
         # Load data using dpdata
+        data = dpdata.MultiSystems()
         if is_mixedtype:
-            data = dpdata.MultiSystems()
-            mixed_type = len(list(data_path.glob("*/real_atom_types.npy"))) > 0
-            if mixed_type:
-                data.load_systems_from_file(str(data_path), fmt="deepmd/npy/mixed")
-            else:
-                # Load each system individually
-                for f in data_path.rglob("type.raw"):
-                    sys_path = f.parent
-                    k = dpdata.LabeledSystem(sys_path, fmt="deepmd/npy")
-                    data.append(k)
+            data.load_systems_from_file(str(data_path), fmt="deepmd/npy/mixed")
         else:
-            data = dpdata.LabeledSystem(str(data_path), fmt="deepmd/npy")
-        
+            sub_data = _get_dataset(str(data_path))
+            for sub_d in sub_data:
+                data.append(dpdata.LabeledSystem(sub_d, fmt="deepmd/npy"))
+
         # Initialize model
         dp = DeepEval(str(model_file), head=head)
         all_type_map = dp.get_type_map()
@@ -421,48 +416,46 @@ def evaluate_error(
         infer_energies, infer_forces, infer_virials = [], [], []
         gt_energies, gt_forces, gt_virials = [], [], []
         
-        # Handle both MultiSystems and single LabeledSystem
-        systems = []
-        if isinstance(data, dpdata.MultiSystems):
-            for k in data:
-                systems.append(k)
-        else:
-            systems = [data]
+        # Process systems
+        for system in data:
+            # Get data from system
+            coord = system.data.get("coords")
+            cell = system.data.get("cells") if not system.nopbc else None
+            ori_atype = system.data.get("atom_types")
+            anames = system.data.get("atom_names")
             
-        for system in systems:
-            for i in range(len(system)):
-                cell = system["cells"][i]
-                if system.nopbc:
-                    cell = None
-                coord = system["coords"][i]
-                ori_atype = system["atom_types"]
-                anames = system["atom_names"]
-                atype = np.array([all_type_map.index(anames[j]) for j in ori_atype])
-                natoms = atype.shape[0]
-                
-                # Reshape for model evaluation
-                coord = coord.reshape([1, -1, 3])
-                if cell is not None:
-                    cell = cell.reshape([1, 3, 3])
-                atype = atype.reshape([1, -1])
+            # Convert atom types based on model's type map
+            atype = np.array([all_type_map.index(anames[j]) for j in ori_atype])
+            
+            n_frames = coord.shape[0]
+            natoms = atype.shape[0]
+            
+            # Process each frame
+            for i in range(n_frames):
+                # Prepare data for model evaluation
+                cur_coord = coord[i].reshape([1, -1, 3])
+                cur_cell = cell[i].reshape([1, 3, 3]) if cell is not None else None
+                cur_atype = atype.reshape([1, -1])
                 
                 # Evaluate with model
-                e, f, v = dp.eval(coord, cell, atype, infer_batch_size=1)
-                e = e.reshape([1])[0]
-                f = f.reshape([-1, 3])
-                v = v.reshape([3, 3])
+                e, f, v = dp.eval(
+                    coords=cur_coord,
+                    cells=cur_cell,
+                    atom_types=cur_atype,
+                    infer_batch_size=1
+                )
                 
-                # Store predictions
-                infer_energies.append(e/natoms)
-                infer_forces.extend(f.reshape(-1))
-                if v is not None:
-                    infer_virials.extend(v.reshape(-1)/natoms)
+                # Process predictions
+                infer_energies.append(e[0] / natoms)
+                infer_forces.extend(f[0].reshape(-1))
+                if v is not None and v[0] is not None:
+                    infer_virials.extend(v[0].reshape(-1) / natoms)
                 
-                # Store ground truth
-                gt_energies.append(system["energies"][i]/natoms)
-                gt_forces.extend(system["forces"][i].reshape(-1))
+                # Process ground truth
+                gt_energies.append(system.data["energies"][i] / natoms)
+                gt_forces.extend(system.data["forces"][i].reshape(-1))
                 if "virials" in system.data and system.data["virials"] is not None:
-                    gt_virials.extend(system["virials"][i].reshape(-1)/natoms)
+                    gt_virials.extend(system.data["virials"][i].reshape(-1) / natoms)
         
         # Calculate RMSE
         rmse_e = rmse(np.array(infer_energies), np.array(gt_energies)) if len(infer_energies) > 0 else 0.0
