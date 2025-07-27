@@ -355,13 +355,13 @@ def parse_dpdata(data_path: Path, is_mixedtype: bool) -> dict:
         for k in d:
             coord = k.data.get("coords").tolist()
             cell = k.data.get("cells").tolist() if not k.nopbc else None
-            atom_types = k.data.get("atom_types").tolist()
+            atom_type = k.data.get("atom_types").tolist()
             fparam = k.data.get("fparam", None)
             aparam = k.data.get("aparam", None)
         
             coords.append(coord)
             cells.append(cell)
-            atom_types.append(atom_types)
+            atom_types.append(atom_type)
             fparams.append(fparam)
             aparams.append(aparam)
         
