@@ -12,7 +12,7 @@ import json
 import dpdata
 
 import numpy as np
-from deepmd.pt.infer.deep_eval import DeepEval
+from deepmd.infer.deep_eval import DeepEval
 from deepmd.utils.argcheck import normalize
 from dp.agent.server import CalculationMCPServer
 
@@ -190,11 +190,11 @@ def train_dp_model(
 @mcp.tool()
 def infer_dp_model(
     model_file: Path,
-    coord: list,
-    cell: Optional[list] = None,
+    coords: list,
+    cells: Optional[list] = None,
     atom_types: list = [],
-    fparam: Optional[list] = None,
-    aparam: Optional[list] = None,
+    fparams: Optional[list] = None,
+    aparams: Optional[list] = None,
     atomic: bool = False,
     head: Optional[str] = None
 ) -> dict:
@@ -206,12 +206,11 @@ def infer_dp_model(
     
     Args:
         model_file (Path): Path to the trained Deep Potential model (.pt or .pth file).
-        coord (list): Atomic coordinates. Shape should be [nframes, natoms, 3] or [natoms, 3].
-        cell (list, optional): Cell vectors. Shape should be [nframes, 9] or [9]. For non-PBC, set to None.
-        atom_types (list): Atom types. Shape should be [natoms] or [nframes, natoms].
-        fparam (list, optional): Frame parameters. Shape should be [nframes, dim_fparam] or [dim_fparam].
-        aparam (list, optional): Atomic parameters. Shape should be [nframes, natoms, dim_aparam], 
-            [natoms, dim_aparam], or [dim_aparam].
+        coords (list): Atomic coordinates. Shape should be [nsystem, nframes, natoms, 3].
+        cells (list, optional): Cell vectors. Shape should be [nsystem, nframes, 9]. For non-PBC, set to None.
+        atom_types (list): Atom types. Shape should be [nsystem, natoms].
+        fparams (list, optional): Frame parameters. Shape should be [nsystem, nframes, dim_fparam].
+        aparams (list, optional): Atomic parameters. Shape should be [nsystem, nframes, natoms, dim_aparam].
         atomic (bool): Whether to compute atomic contributions. Default is False.
         head (str, optional): Model head for multi-task models. Required for multi-task models.
         
@@ -226,49 +225,28 @@ def infer_dp_model(
               atom_virial is in the model output.
             - message (str): Status message.
     """
-    
     try:
-        # Convert inputs to numpy arrays
-        coord = np.array(coord)
-        cell = np.array(cell) if cell is not None else None
-        atom_types = np.array(atom_types, dtype=int)
-        
-        # Reshape coord if needed
-        if len(coord.shape) == 2:
-            coord = coord.reshape([1, *coord.shape])
-        
-        nframes = coord.shape[0]
-        natoms = coord.shape[1] // 3  # Assuming coord is [nframes, natoms*3]
-        coord = coord.reshape([nframes, natoms, 3])
-        
-        # Reshape cell if needed
-        if cell is not None:
-            if len(cell.shape) == 1:
-                cell = cell.reshape([1, -1])
-            if cell.shape[1] == 3:  # If cell is [3, 3], reshape to [9]
-                cell = cell.reshape([nframes, 9])
-        
-        # Reshape atom_types if needed
-        if len(atom_types.shape) == 1:
-            atom_types = atom_types.reshape([-1])
-        
-        # Initialize DeepEval
-        evaluator = DeepEval(
-            str(model_file),
-            head=head
-        )
-        
-        # Perform evaluation
-        result = evaluator.eval(
-            coords=coord,
-            cells=cell,
-            atom_types=atom_types,
-            atomic=atomic,
-            fparam=np.array(fparam) if fparam is not None else None,
-            aparam=np.array(aparam) if aparam is not None else None
-        )
-        
-        # Convert results to lists for JSON serialization
+        for idx, coord in enumerate(coords):
+            coord = np.array(coord)
+            cell = np.array(cells[idx]) if cells is not None else None
+            atom_type = np.array(atom_types[idx], dtype=int)
+            n_frames = coord.shape[0]            
+            for idx_frame in range(n_frames):
+                evaluator = DeepEval(
+                    str(model_file),
+                    head=head
+                )
+                
+                # Perform evaluation
+                e, f, v = evaluator.eval(
+                    coords=coord[idx_frame].reshape([1, -1, 3]),
+                    cells=cell[idx_frame].reshape([1, 3, 3]), ## TODO: handel nopbc
+                    atom_types=atom_type.reshape([1, -1]),  ## TODO: handel model type map
+                    # fparam=np.array(fparam) if fparams is not None else None,
+                    # aparam=np.array(aparam) if aparams is not None else None
+                )
+                print(e, f, v)
+                
         result_dict = {}
         for key, value in result.items():
             # Handle None values
