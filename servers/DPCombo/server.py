@@ -343,62 +343,44 @@ def parse_dpdata(data_path: Path, is_mixedtype: bool) -> dict:
             - aparam (list): Atomic parameters.
     """
     try:
+        d = dpdata.MultiSystems()
         if is_mixedtype:
-            d = dpdata.MultiSystems()
-            mixed_type = len(list(data_path.glob("*/real_atom_types.npy"))) > 0
-            if mixed_type:
-                d.load_systems_from_file(str(data_path), fmt="deepmd/npy/mixed")
-            else:
-                # Load each system individually
-                for f in data_path.rglob("type.raw"):
-                    sys_path = f.parent
-                    k = dpdata.LabeledSystem(sys_path, fmt="deepmd/npy")
-                    d.append(k)
+            d.load_systems_from_file(str(data_path), fmt="deepmd/npy/mixed")
         else:
-            d = dpdata.LabeledSystem(str(data_path), fmt="deepmd/npy")
-            
-        # Extract data
-        systems = []
-        if is_mixedtype:
-            for k in d:
-                systems.append(k)
-        else:
-            systems = [d]
-            
-        # Return the first system's data as example
-        # In a real implementation, you might want to handle all systems
-        first_system = systems[0]
-        if len(first_system) > 0:
-            coord = first_system["coords"][0].tolist()
-            cell = first_system["cells"][0].tolist() if not first_system.nopbc else None
-            atom_types = first_system["atom_types"].tolist()
-            fparam = None  # These would need to be extracted from the data if available
-            aparam = None  # These would need to be extracted from the data if available
-            
-            return {
-                "coord": coord,
-                "cell": cell,
-                "atom_types": atom_types,
-                "fparam": fparam,
-                "aparam": aparam
-            }
-            
+            sub_data = _get_dataset(str(data_path))
+            for sub_d in sub_data:
+                d.append(dpdata.LabeledSystem(sub_d, fmt="deepmd/npy"))
+
+        coords, cells, atom_types, fparams, aparams = [], [], [], [], []
+        for k in d:
+            coord = k.data.get("coords").tolist()
+            cell = k.data.get("cells").tolist() if not k.nopbc else None
+            atom_types = k.data.get("atom_types").tolist()
+            fparam = k.data.get("fparam", None)
+            aparam = k.data.get("aparam", None)
+        
+            coords.append(coord)
+            cells.append(cell)
+            atom_types.append(atom_types)
+            fparams.append(fparam)
+            aparams.append(aparam)
+        
         return {
-            "coord": [],
-            "cell": None,
-            "atom_types": [],
-            "fparam": None,
-            "aparam": None
+            "coords": coords,
+            "cells": cells,
+            "atom_types": atom_types,
+            "fparams": fparams,
+            "aparams": aparams
         }
         
     except Exception as e:
         logging.error(f"Failed to parse dpdata: {str(e)}", exc_info=True)
         return {
-            "coord": [],
-            "cell": None,
+            "coords": [],
+            "cells": None,
             "atom_types": [],
-            "fparam": None,
-            "aparam": None
+            "fparams": None,
+            "aparams": None
         }
 
 
