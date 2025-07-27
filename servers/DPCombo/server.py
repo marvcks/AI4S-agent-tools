@@ -226,6 +226,11 @@ def infer_dp_model(
             - message (str): Status message.
     """
     try:
+        raw_results = {
+            "energies": [],
+            "forces": [],
+            "stresses": [],
+        }
         for idx, coord in enumerate(coords):
             coord = np.array(coord)
             cell = np.array(cells[idx]) if cells is not None else None
@@ -246,9 +251,12 @@ def infer_dp_model(
                     # aparam=np.array(aparam) if aparams is not None else None
                 )
                 print(e, f, v)
+                raw_results['energies'].append(e[0])
+                raw_results['forces'].append(f[0])
+                raw_results['virials'].append(v[0])
                 
         result_dict = {}
-        for key, value in result.items():
+        for key, value in raw_results.items():
             # Handle None values
             if value is not None:
                 result_dict[key] = value.tolist()
