@@ -639,7 +639,6 @@ def stat_af(dataset_path: Path) -> dict:
                 atom_numbs.append(natoms)
                 
             total_frame_numbs += nbz
-            print(coord_file, coord_data.shape)
         
         atom_numbs = np.mean(atom_numbs)
         frame_numbs = total_frame_numbs
