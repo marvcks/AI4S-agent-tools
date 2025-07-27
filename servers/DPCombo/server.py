@@ -611,7 +611,7 @@ def stat_af(dataset_path: Path) -> dict:
         
     Returns:
         dict: A dictionary containing:
-            - atom_numbs (list): Atom numbers in training dataset.
+            - atom_numbs (int): Averaged atom numbers in training dataset.
             - frame_numbs (int): Total frame count in training dataset.
     """
     try:
@@ -641,11 +641,11 @@ def stat_af(dataset_path: Path) -> dict:
             total_frame_numbs += nbz
             print(coord_file, coord_data.shape)
         
-        atom_numbs = np.array(atom_numbs)
+        atom_numbs = np.mean(atom_numbs)
         frame_numbs = total_frame_numbs
         
         return {
-            "atom_numbs": np.mean(atom_numbs),
+            "atom_numbs": int(atom_numbs),
             "frame_numbs": int(frame_numbs),
         }
         
