@@ -397,7 +397,7 @@ def evaluate_error(
             - rmse_f (float): RMSE of forces.
             - rmse_v (float): RMSE of virials.
     """
-    try:        
+    try:
         # Load data using dpdata
         if is_mixedtype:
             data = dpdata.MultiSystems()
