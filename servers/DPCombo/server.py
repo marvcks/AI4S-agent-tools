@@ -336,11 +336,11 @@ def parse_dpdata(data_path: Path, is_mixedtype: bool) -> dict:
         
     Returns:
         dict: A dictionary containing:
-            - coord (list): Atomic coordinates.
-            - cell (list): Cell vectors.
+            - coords (list): Atomic coordinates.
+            - cells (list): Cell vectors.
             - atom_types (list): Atom types.
-            - fparam (list): Frame parameters.
-            - aparam (list): Atomic parameters.
+            - fparams (list): Frame parameters.
+            - aparams (list): Atomic parameters.
     """
     try:
         d = dpdata.MultiSystems()
