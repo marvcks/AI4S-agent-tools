@@ -842,9 +842,9 @@ def downsample_dataset(
         
         # Load dataset
         try:
-            dd = dpdata.MultiSystems().load_systems_from_file(input_path, fmt='deepmd/npy')
+            dd = dpdata.MultiSystems().load_systems_from_file(str(input_path), fmt='deepmd/npy')
         except:
-            dd = dpdata.MultiSystems().load_systems_from_file(input_path, fmt='deepmd/npy/mixed')
+            dd = dpdata.MultiSystems().load_systems_from_file(str(input_path), fmt='deepmd/npy/mixed')
         
         total_frames = dd.get_nframes()
         print(f"Total frames: {total_frames}")
