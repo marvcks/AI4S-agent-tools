@@ -2,6 +2,7 @@ import glob
 import logging
 import os
 import sys
+import gc
 from pathlib import Path
 from typing import Literal, Optional, Tuple, TypedDict, List, Dict, Union
 import sys
@@ -631,23 +632,28 @@ def stat_af(dataset_path: Path) -> dict:
             - atom_numbs (list): Atom numbers in training dataset.
             - frame_numbs (int): Total frame count in training dataset.
     """
-    try:
-        dataset_dirs = _get_dataset(dataset_path)
-        
+    try:        
         atom_numbs = []
         frames = []
                 
-        for dataset_dir in dataset_dirs:
-            dataset_path_obj = Path(dataset_dir).parent
+        dataset_path_obj = Path(dataset_path).parent
+        
+        coord_file = dataset_path_obj / "coord.npy"
+        coord_files = []
+        if not coord_file.exists():
+            coord_files = list(dataset_path_obj.rglob("coord.npy"))
+        else:
+            coord_files = [coord_file]
             
-            coord_file = dataset_path_obj / "coord.npy"
-            if not coord_file.exists():
-                coord_files = list(dataset_path_obj.rglob("coord.npy"))
-                if coord_files:
-                    coord_file = coord_files[0]
-                else:
-                    continue
-            
+        if not coord_files:
+            return {
+                "atom_numbs": [],
+                "frame_numbs": 0,
+                "message": "No coord.npy files found in dataset"
+            }
+        
+        total_frame_numbs = 0
+        for coord_file in coord_files:
             coord_data = np.load(coord_file)
             nbz = coord_data.shape[0]
             natoms = int(coord_data.shape[1] / 3)
@@ -655,9 +661,11 @@ def stat_af(dataset_path: Path) -> dict:
             
             for jj in range(nbz):
                 atom_numbs.append(natoms)
+                
+            total_frame_numbs += nbz
         
         atom_numbs = np.array(atom_numbs)
-        frame_numbs = np.array(frames).sum() if frames else 0
+        frame_numbs = total_frame_numbs
         
         return {
             "atom_numbs": atom_numbs.tolist(),
@@ -686,64 +694,92 @@ def stat_efv(dataset_path: Path) -> dict:
     Returns:
         dict: A dictionary containing:
             - energies (list): Energy values per atom.
-            - forces (list): Force values.
+            - forces (list): Force values (if available).
             - virials (list): Virial values per atom (if available).
     """
     try:
-        # Use _get_dataset to handle compressed files
-        dataset_dirs = _get_dataset(dataset_path)
         
         energies, forces, virials = [], [], []
-        natoms_avg = []  # This was referenced in original code but not defined
+        natoms_avg = [] 
+    
+        dataset_path_obj = Path(dataset_path).parent
         
-        # Process each dataset directory
-        for dataset_dir in dataset_dirs:
-            dataset_path_obj = Path(dataset_dir).parent
-            
-            # Find required npy files in a smarter way
-            energy_file = dataset_path_obj / "energy.npy"
-            force_file = dataset_path_obj / "force.npy"
-            virial_file = dataset_path_obj / "virial.npy"
-            
-            # Try to find files if not directly in dataset directory
-            if not energy_file.exists():
-                energy_files = list(dataset_path_obj.rglob("energy.npy"))
-                if energy_files:
-                    energy_file = energy_files[0]
-                else:
-                    continue  # Skip if energy file not found
-                    
-            if not force_file.exists():
-                force_files = list(dataset_path_obj.rglob("force.npy"))
-                if force_files:
-                    force_file = force_files[0]
-                else:
-                    continue  # Skip if force file not found
-            
-            if not virial_file.exists():
-                virial_files = list(dataset_path_obj.rglob("virial.npy"))
-                if virial_files:
-                    virial_file = virial_files[0]
-                    virial = np.load(virial_file)
-                else:
-                    virial = None
+        # Find all relevant files
+        energy_files = []
+        force_files = []
+        virial_files = []
+        
+        energy_file = dataset_path_obj / "energy.npy"
+        force_file = dataset_path_obj / "force.npy"
+        virial_file = dataset_path_obj / "virial.npy"
+        
+        # Process e, f, and v separately
+        if energy_file.exists():
+            energy_files = [energy_file]
+        else:
+            energy_files = list(dataset_path_obj.rglob("energy.npy"))
+                
+        if force_file.exists():
+            force_files = [force_file]
+        else:
+            force_files = list(dataset_path_obj.rglob("force.npy"))
+        
+        if virial_file.exists():
+            virial_files = [virial_file]
+        else:
+            virial_files = list(dataset_path_obj.rglob("virial.npy"))
+        
+        # Validate input files exist
+        all_energies = []
+        if energy_files:
+            for ef in energy_files:
+                if ef.exists():
+                    all_energies.append(np.load(ef).reshape(-1))
+            if all_energies:
+                ener = np.concatenate(all_energies)
             else:
-                virial = np.load(virial_file)
+                ener = None
+        else:
+            ener = None
             
-            # Load energy and force data
-            ener = np.load(energy_file).reshape(-1)
-            force = np.load(force_file)
+        all_forces = []
+        if force_files:
+            for ff in force_files:
+                if ff.exists():
+                    all_forces.append(np.load(ff))
+            if all_forces:
+                force = np.concatenate(all_forces)
+            else:
+                force = None
+        else:
+            force = None
             
-            # Validate data shapes
+        all_virials = []
+        if virial_files:
+            for vf in virial_files:
+                if vf.exists():
+                    all_virials.append(np.load(vf))
+            if all_virials:
+                virial = np.concatenate(all_virials)
+            else:
+                virial = None
+        else:
+            virial = None
+        
+        # Validate data shapes if both energy and force data exist
+        if ener is not None and force is not None:
             assert ener.shape[0] == force.shape[0]
-            if virial is not None:
-                assert virial.shape[0] == force.shape[0]
+        if virial is not None and force is not None:
+            assert virial.shape[0] == force.shape[0]
+        if force is not None:
             assert len(force.shape) == 2
-            if virial is not None:
-                assert len(virial.shape) == 2
+        if virial is not None:
+            assert len(virial.shape) == 2
+        if ener is not None:
             assert len(ener.shape) == 1
 
-            # Process each frame
+        # Process each frame if force data exists
+        if force is not None:
             for idx in range(len(force)):
                 natoms = len(force[idx]) / 3
                 natoms_avg.append(natoms)
@@ -751,12 +787,13 @@ def stat_efv(dataset_path: Path) -> dict:
                 if virial is not None:
                     virial_peratom = virial[idx] / natoms
                     
-                enerperatom = ener[idx] / natoms
-                
-                energies.append(enerperatom)
+                if ener is not None:
+                    enerperatom = ener[idx] / natoms
+                    
+                    energies.append(enerperatom)
                 forces.extend(force[idx])
                 if virial is not None:
-                    virials.extend(virial_peratom[idx] / natoms)
+                    virials.extend(virial_peratom)  # Fixed: removed incorrect indexing
 
         energies = np.array(energies).reshape(-1) if energies else np.array([])
         forces = np.array(forces).reshape(-1) if forces else np.array([])
@@ -778,9 +815,88 @@ def stat_efv(dataset_path: Path) -> dict:
         }
 
 
-# @mcp.tool()
-# def downsample_dataset():
-#     pass
+@mcp.tool()
+def downsample_dataset(
+    input_path: Path,
+    output_path: Path,
+    ds_num: int
+) -> dict:
+    """
+    Downsample a dataset using random selection.
+    
+    This tool downsamples a dataset by randomly selecting a specified number of frames
+    from the input dataset and saving them to the output path.
+    
+    Args:
+        input_path (Path): Path to the input dataset.
+        output_path (Path): Path to save the downsampled dataset.
+        ds_num (int): Number of frames to select in the downsampled dataset.
+        
+    Returns:
+        dict: A dictionary containing:
+            - output_path (Path): Path to the downsampled dataset.
+            - message (str): Status message indicating success or failure.
+    """
+    try:        
+        os.makedirs(output_path, exist_ok=True)
+        
+        # Load dataset
+        try:
+            dd = dpdata.MultiSystems().load_systems_from_file(input_path, fmt='deepmd/npy')
+        except:
+            dd = dpdata.MultiSystems().load_systems_from_file(input_path, fmt='deepmd/npy/mixed')
+        
+        total_frames = dd.get_nframes()
+        print(f"Total frames: {total_frames}")
+
+        # 1. Build global indices for all frames (system_id, local_frame_id)
+        frame_indices = []
+        for sys_id, sub_d in enumerate(dd):
+            num_frames_in_sys = sub_d.get_nframes()
+            for frame_id in range(num_frames_in_sys):
+                frame_indices.append((sys_id, frame_id))
+        
+        print(f"Total collected frame indices: {len(frame_indices)}")
+
+        # Check if ds_num is valid
+        if ds_num > len(frame_indices):
+            return {
+                "output_path": None,
+                "message": f"Error: Requested {ds_num} frames but only {len(frame_indices)} frames available"
+            }
+
+        # 2. Randomly sample ds_num frames without replacement
+        selected_indices = np.random.choice(len(frame_indices), ds_num, replace=False)
+        selected_indices = [frame_indices[i] for i in selected_indices]
+
+        # 3. Map selected_indices back to system structure
+        system_frame_map = {}
+        for sys_id, frame_id in selected_indices:
+            if sys_id not in system_frame_map:
+                system_frame_map[sys_id] = []
+            system_frame_map[sys_id].append(frame_id)
+        
+        # 4. Rebuild MultiSystems
+        downsample_ms = dpdata.MultiSystems()
+        for sys_id, frame_ids in system_frame_map.items():
+            sub_d = dd[sys_id]
+            frame_ids = np.array(frame_ids)
+            downsample_ms.append(sub_d.sub_system(frame_ids))
+            del sub_d
+            gc.collect()
+        
+        downsample_ms.to_deepmd_npy_mixed(f"{output_path}/")
+        print(downsample_ms)
+        
+        return {
+            "output_path": output_path,
+            "message": f"Successfully downsampled dataset from {total_frames} to {ds_num} frames"
+        }
+    except Exception as e:
+        return {
+            "output_path": None,
+            "message": f"Error during downsampling: {str(e)}"
+        }
 
 
 # @mcp.tool()
