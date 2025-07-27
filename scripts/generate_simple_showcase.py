@@ -1072,7 +1072,7 @@ python server.py --port &lt;port&gt;</div>
                 
                 <div class="modal-section">
                     <div class="modal-section-title">Installation</div>
-                    <div class="code-block">cd ${{tool.path}} && uv sync</div>
+                    <div class="code-block">${{tool.install_command || `cd ${{tool.path}} && uv sync`}}</div>
                 </div>
                 
                 <div class="modal-section">

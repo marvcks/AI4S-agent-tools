@@ -5,7 +5,7 @@ description = "Example AI4S MCP server demonstrating the new pattern"
 requires-python = ">=3.8"
 dependencies = [
     "mcp",
-    "mcp.server.fastmcp",
+    "fastmcp",
     "numpy",
     "scipy"
 ]

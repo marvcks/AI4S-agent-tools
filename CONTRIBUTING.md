@@ -114,6 +114,7 @@ Choose one when creating your tool (use exact string in metadata.json):
 - `simulation` - Molecular dynamics, Monte Carlo
 - `data` - Processing, visualization, statistics
 - `machine-learning` - AI models for science
+- `battery` - Battery modeling, analysis and energy storage systems
 
 ## 🏗️ Project Structure
 
