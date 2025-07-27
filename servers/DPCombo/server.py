@@ -614,18 +614,12 @@ def stat_af(dataset_path: Path) -> dict:
             - atom_numbs (list): Atom numbers in training dataset.
             - frame_numbs (int): Total frame count in training dataset.
     """
-    try:        
+    try:
         atom_numbs = []
         frames = []
                 
-        dataset_path_obj = Path(dataset_path)
-        
-        coord_file = dataset_path_obj / "coord.npy"
-        coord_files = []
-        if not coord_file.exists():
-            coord_files = list(dataset_path_obj.rglob("coord.npy"))
-        else:
-            coord_files = [coord_file]
+        dataset_path_obj = Path(dataset_path)       
+        coord_files = list(dataset_path_obj.rglob("coord.npy"))
             
         if not coord_files:
             return {
@@ -645,19 +639,20 @@ def stat_af(dataset_path: Path) -> dict:
                 atom_numbs.append(natoms)
                 
             total_frame_numbs += nbz
+            print(coord_file, coord_data.shape)
         
         atom_numbs = np.array(atom_numbs)
         frame_numbs = total_frame_numbs
         
         return {
-            "atom_numbs": atom_numbs.tolist(),
+            "atom_numbs": np.mean(atom_numbs),
             "frame_numbs": int(frame_numbs),
         }
         
     except Exception as e:
         logging.error(f"stat_af failed: {str(e)}", exc_info=True)
         return {
-            "atom_numbs": [],
+            "atom_numbs": 0,
             "frame_numbs": 0,
             "message": f"stat_af failed: {str(e)}"
         }
