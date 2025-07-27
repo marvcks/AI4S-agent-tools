@@ -669,126 +669,86 @@ def stat_efv(dataset_path: Path) -> dict:
         
     Returns:
         dict: A dictionary containing:
-            - energies (list): Energy values per atom.
-            - forces (list): Force values (if available).
-            - virials (list): Virial values per atom (if available).
+            - energy_mean (float): Mean energy per atom.
+            - energy_std (float): Standard deviation of energy per atom.
+            - force_mean (float): Mean force component (if available).
+            - force_std (float): Standard deviation of force component (if available).
+            - virial_mean (float): Mean virial component per atom (if available).
+            - virial_std (float): Standard deviation of virial component per atom (if available).
     """
+    result = {
+        'energy_mean': None,
+        'energy_std': None,
+        'force_mean': None,
+        'force_std': None,
+        'virial_mean': None,
+        'virial_std': None
+    }
     try:
-        
         energies, forces, virials = [], [], []
-        natoms_avg = [] 
-    
+        
         dataset_path_obj = Path(dataset_path)
-        
+
         # Find all relevant files
-        energy_files = []
-        force_files = []
-        virial_files = []
-        
-        energy_file = dataset_path_obj / "energy.npy"
-        force_file = dataset_path_obj / "force.npy"
-        virial_file = dataset_path_obj / "virial.npy"
-        
-        # Process e, f, and v separately
-        if energy_file.exists():
-            energy_files = [energy_file]
-        else:
-            energy_files = list(dataset_path_obj.rglob("energy.npy"))
-                
-        if force_file.exists():
-            force_files = [force_file]
-        else:
-            force_files = list(dataset_path_obj.rglob("force.npy"))
-        
-        if virial_file.exists():
-            virial_files = [virial_file]
-        else:
-            virial_files = list(dataset_path_obj.rglob("virial.npy"))
-        
-        # Validate input files exist
-        all_energies = []
-        if energy_files:
-            for ef in energy_files:
-                if ef.exists():
-                    all_energies.append(np.load(ef).reshape(-1))
-            if all_energies:
-                ener = np.concatenate(all_energies)
-            else:
-                ener = None
-        else:
-            ener = None
-            
-        all_forces = []
-        if force_files:
-            for ff in force_files:
-                if ff.exists():
-                    all_forces.append(np.load(ff))
-            if all_forces:
-                force = np.concatenate(all_forces)
-            else:
-                force = None
-        else:
-            force = None
-            
-        all_virials = []
-        if virial_files:
-            for vf in virial_files:
-                if vf.exists():
-                    all_virials.append(np.load(vf))
-            if all_virials:
-                virial = np.concatenate(all_virials)
-            else:
-                virial = None
-        else:
-            virial = None
-        
-        # Validate data shapes if both energy and force data exist
-        if ener is not None and force is not None:
-            assert ener.shape[0] == force.shape[0]
-        if virial is not None and force is not None:
-            assert virial.shape[0] == force.shape[0]
-        if force is not None:
-            assert len(force.shape) == 2
-        if virial is not None:
-            assert len(virial.shape) == 2
-        if ener is not None:
-            assert len(ener.shape) == 1
+        energy_files = list(dataset_path_obj.rglob("energy.npy"))
+        force_files = list(dataset_path_obj.rglob("force.npy"))
+        virial_files = list(dataset_path_obj.rglob("virial.npy"))
 
-        # Process each frame if force data exists
-        if force is not None:
-            for idx in range(len(force)):
-                natoms = len(force[idx]) / 3
-                natoms_avg.append(natoms)
-                
-                if virial is not None:
-                    virial_peratom = virial[idx] / natoms
-                    
-                if ener is not None:
-                    enerperatom = ener[idx] / natoms
-                    
-                    energies.append(enerperatom)
-                forces.extend(force[idx])
-                if virial is not None:
-                    virials.extend(virial_peratom)  # Fixed: removed incorrect indexing
+        # Load energies
+        for ef in energy_files:
+            e = np.load(ef)
+            energies.append(e)
 
-        energies = np.array(energies).reshape(-1) if energies else np.array([])
-        forces = np.array(forces).reshape(-1) if forces else np.array([])
-        virials = np.array(virials).reshape(-1) if virials else np.array([])
-        
-        return {
-            "energies": energies.tolist(),
-            "forces": forces.tolist(),
-            "virials": virials.tolist()
-        }
-        
+        # Load forces
+        for ff in force_files:
+            f = np.load(ff)
+            forces.append(f)
+
+        # Load virials
+        for vf in virial_files:
+            v = np.load(vf)
+            virials.append(v)
+
+        result = {}
+
+        if energies:
+            energies_concat = np.concatenate(energies, axis=0)
+            natoms = energies_concat.shape[1] if energies_concat.ndim == 2 else 1
+            energy_per_atom = energies_concat / natoms
+            result['energy_mean'] = float(np.mean(energy_per_atom))
+            result['energy_std'] = float(np.std(energy_per_atom))
+        else:
+            result['energy_mean'] = None
+            result['energy_std'] = None
+
+        if forces:
+            force_components_list = []
+            for f in forces:
+                f_reshaped = f.reshape(-1, 3)  # Flatten each to (N, 3)
+                force_components_list.append(f_reshaped)
+
+            force_components = np.concatenate(force_components_list, axis=0)  # Now all shapes are (N, 3)
+            result['force_mean'] = float(np.mean(force_components))
+            result['force_std'] = float(np.std(force_components))
+        else:
+            result['force_mean'] = None
+            result['force_std'] = None
+
+        if virials:
+            virials_concat = np.concatenate(virials, axis=0)
+            natoms = virials_concat.shape[1] if virials_concat.ndim == 2 else 1
+            virial_per_atom = virials_concat / natoms
+            result['virial_mean'] = float(np.mean(virial_per_atom))
+            result['virial_std'] = float(np.std(virial_per_atom))
+        else:
+            result['virial_mean'] = None
+            result['virial_std'] = None
+
+        return result
+    
     except Exception as e:
         logging.error(f"stat_efv failed: {str(e)}", exc_info=True)
-        return {
-            "energies": [],
-            "forces": [],
-            "virials": [],
-            "message": f"stat_efv failed: {str(e)}"
-        }
+        raise
 
 
 @mcp.tool()
