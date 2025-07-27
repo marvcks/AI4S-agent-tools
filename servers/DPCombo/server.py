@@ -274,9 +274,9 @@ def infer_dp_model(
 
 
 @mcp.tool()
-def identify_multisystem(data_path: Path) -> bool:
+def identify_mixedtype(data_path: Path) -> bool:
     """
-    Identify if the given data path contains a MultiSystem dataset.
+    Identify if the given dataset is in MixedType format.
     
     Args:
         data_path (Path): Path to the dataset.
