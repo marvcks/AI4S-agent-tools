@@ -229,7 +229,7 @@ def infer_dp_model(
         raw_results = {
             "energies": [],
             "forces": [],
-            "stresses": [],
+            "virials": [],
         }
         for idx, coord in enumerate(coords):
             coord = np.array(coord)
