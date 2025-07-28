@@ -13,7 +13,7 @@ dependencies = [
 ]
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = []
 [project.scripts]
 example-mcp = "server:main"
 
