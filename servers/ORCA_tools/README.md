@@ -2,6 +2,16 @@
 
 本文档介绍了 `servers/ORCA_tools/server.py` 中提供的 ORCA 计算和结果检索工具。
 
+## 配置Python环境
+
+```bash
+conda create -n orca_agent_tools python=3.10
+conda activate orca_agent_tools
+cd your_path_to_AI4S-agent-tools/servers/ORCA_tools
+pip install -e .
+python server.py
+```
+
 ## 运行前环境设置
 
 在运行 `server.py` 之前，请确保已设置以下环境变量。这些变量对于 ORCA 和 OpenMPI 的正确运行至关重要。
