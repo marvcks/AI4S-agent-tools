@@ -5,13 +5,33 @@ import plotly.express as px
 from fastmcp import FastMCP
 import sys
 import os
+import argparse
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 import logging
 import numpy as np
 from typing import List, Optional
 
-# Create MCP server instance
-mcp = FastMCP(name="PerovskiteSolarCellPlotServer")
+def parse_args():
+    """Parse command line arguments for MCP server."""
+    parser = argparse.ArgumentParser(description="PerovskiteSolarCellPlotServer")
+    parser.add_argument('--port', type=int, default=50010, help='Server port (default: 50010)')
+    parser.add_argument('--host', default='0.0.0.0', help='Server host (default: 0.0.0.0)')
+    parser.add_argument('--log-level', default='INFO', 
+                       choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
+                       help='Logging level (default: INFO)')
+    try:
+        args = parser.parse_args()
+    except SystemExit:
+        class Args:
+            port = 50010
+            host = '0.0.0.0'
+            log_level = 'INFO'
+        args = Args()
+    return args
+
+
+args = parse_args()
+mcp = FastMCP("PerovskiteSolarCellPlotServer", host=args.host, port=args.port)
 
 @mcp.tool()
 async def plot_solar_cell_structure_vs_time(start_year: int, end_year: int) -> dict:
@@ -910,7 +930,8 @@ def run_server():
     for perovskite solar cell research data visualization and trend analysis.
     """
     print("🚀 Starting Perovskite Solar Cell Data Analysis MCP Server...")
-    print("📍 Server address: http://0.0.0.0:50010")
+    print(f"📍 Server address: http://{args.host}:{args.port}")
+    print(f"📝 Log level: {args.log_level}")
     print("🛠️  Available MCP Tools:")
     print("   📊 plot_solar_cell_structure_vs_time:")
     print("      └─ Generate normalized stacked bar chart of structure type percentages over time")
@@ -919,9 +940,15 @@ def run_server():
     print("   ✨ Features: Interactive charts, detailed analysis, type-safe data processing")
     print("   📚 Data Sources: Excel files + database queries with intelligent structure classification")
     print("   ⚠️  Note: Some tools may be temporarily disabled for maintenance")
-    mcp.run(transport='sse', host="0.0.0.0", port=50010)
+    mcp.run(transport='sse', host=args.host, port=args.port)
 
 if __name__ == "__main__":
+    # Configure logging based on command line arguments
+    logging.basicConfig(
+        level=getattr(logging, args.log_level),
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    
     # Test new functions
     import asyncio
     run_server()
