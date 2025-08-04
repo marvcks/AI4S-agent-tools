@@ -19,11 +19,35 @@ import shutil
 
 from pymatgen.core import Composition
 
+import argparse
+
 # Setup logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
+
+def parse_args():
+    """Parse command line arguments for MCP server."""
+    parser = argparse.ArgumentParser(description="DPA Calculator MCP Server")
+    parser.add_argument('--port', type=int, default=50001, help='Server port (default: 50001)')
+    parser.add_argument('--host', default='0.0.0.0', help='Server host (default: 0.0.0.0)')
+    parser.add_argument('--log-level', default='INFO',
+                       choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
+                       help='Logging level (default: INFO)')
+    try:
+        args = parser.parse_args()
+    except SystemExit:
+        class Args:
+            port = 50001
+            host = '0.0.0.0'
+            log_level = 'INFO'
+        args = Args()
+    return args
+
+args = parse_args()
+
+
 
 # Initialize MCP server
 mcp = CalculationMCPServer(
