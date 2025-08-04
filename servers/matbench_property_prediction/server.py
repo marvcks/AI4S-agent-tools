@@ -14,24 +14,30 @@ import pandas as pd
 import json
 
 from dp.agent.server import CalculationMCPServer
-
 from deepmd.infer.deep_property import DeepProperty
 
-# Setup logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
+def parse_args():
+    """Parse command line arguments for MCP server."""
+    parser = argparse.ArgumentParser(description="Matbench Property Prediction MCP Server")
+    parser.add_argument('--port', type=int, default=50001, help='Server port (default: 50001)')
+    parser.add_argument('--host', default='0.0.0.0', help='Server host (default: 0.0.0.0)')
+    parser.add_argument('--log-level', default='INFO',
+                       choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
+                       help='Logging level (default: INFO)')
+    try:
+        args = parser.parse_args()
+    except SystemExit:
+        class Args:
+            port = 50001
+            host = '0.0.0.0'
+            log_level = 'INFO'
+        args = Args()
+    return args
 
-# Initialize MCP server
-mcp = CalculationMCPServer(
-    "MatbenchServer",
-    host="0.0.0.0",
-    port=50001
-)
+args = parse_args()
+mcp = FastMCP("MatbenchServer", port=args.port, host=args.host)
 
-
-# ====== Tool 1: Predict Matbench Properties ======
+# ====== Tool: Predict Matbench Properties ======
 
 class MaterialProperties(TypedDict):
     dielectric: float
