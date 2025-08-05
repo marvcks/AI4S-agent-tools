@@ -1,0 +1,180 @@
+variable        NSTEPS          equal 20000
+
+variable        TEMP_1          equal 200
+variable        TEMP_2          equal 250
+variable        TEMP_3          equal 300
+variable        TEMP_4          equal 350
+variable        TEMP_5          equal 400
+
+variable        THERMO_FREQ     equal 100
+variable        PRES            equal 1
+variable        TAU_T           equal 0.1
+variable        TAU_P           equal 1
+variable        dump_freq       equal 100
+# Initialization
+units          metal
+dimension      3
+atom_style     atomic
+boundary       p p p
+
+read_data      conf.lmp
+
+# mass map
+
+mass    1 1.008
+mass    2 4.003
+mass    3 6.94
+mass    4 9.012
+mass    5 10.81
+mass    6 12.011
+mass    7 14.007
+mass    8 15.999
+mass    9 18.998
+mass    10 20.18
+mass    11 22.99
+mass    12 24.305
+mass    13 26.982
+mass    14 28.085
+mass    15 30.974
+mass    16 32.06
+mass    17 35.45
+mass    18 39.948
+mass    19 39.098
+mass    20 40.078
+mass    21 44.956
+mass    22 47.867
+mass    23 50.942
+mass    24 51.996
+mass    25 54.938
+mass    26 55.845
+mass    27 58.933
+mass    28 58.693
+mass    29 63.546
+mass    30 65.38
+mass    31 69.723
+mass    32 72.63
+mass    33 74.922
+mass    34 78.971
+mass    35 79.904
+mass    36 83.798
+mass    37 85.468
+mass    38 87.62
+mass    39 88.906
+mass    40 91.224
+mass    41 92.906
+mass    42 95.95
+mass    43 98.0
+mass    44 101.07
+mass    45 102.906
+mass    46 106.42
+mass    47 107.868
+mass    48 112.414
+mass    49 114.818
+mass    50 118.71
+mass    51 121.76
+mass    52 127.6
+mass    53 126.904
+mass    54 131.293
+mass    55 132.905
+mass    56 137.327
+mass    57 138.905
+mass    58 140.116
+mass    59 140.908
+mass    60 144.242
+mass    61 146.0
+mass    62 150.36
+mass    63 151.964
+mass    64 157.25
+mass    65 158.925
+mass    66 162.5
+mass    67 164.93
+mass    68 167.259
+mass    69 168.934
+mass    70 173.055
+mass    71 174.967
+mass    72 178.49
+mass    73 180.948
+mass    74 183.84
+mass    75 186.207
+mass    76 190.23
+mass    77 192.217
+mass    78 195.085
+mass    79 196.967
+mass    80 200.592
+mass    81 204.383
+mass    82 207.2
+mass    83 208.98
+mass    84 208.982
+mass    85 209.987
+mass    86 222.018
+mass    87 223.0
+mass    88 226.025
+mass    89 227.028
+mass    90 232.038
+mass    91 231.036
+mass    92 238.029
+mass    93 237.048
+mass    94 244.0
+mass    95 243.0
+mass    96 247.0
+mass    97 247.0
+mass    98 251.0
+mass    99 252.0
+mass    100 257.0
+mass    101 258.0
+mass    102 259.0
+mass    103 262.0
+mass    104 267.0
+mass    105 268.0
+mass    106 269.0
+mass    107 270.0
+mass    108 269.0
+mass    109 278.0
+mass    110 281.0
+mass    111 281.0
+mass    112 285.0
+mass    113 286.0
+mass    114 289.0
+mass    115 290.0
+mass    116 293.0
+mass    117 294.0
+mass    118 294.0
+
+# Interatomic potentials - DeepMD
+pair_style     deepmd frozen_model_000.pth   frozen_model_001.pth  frozen_model_002.pth  frozen_model_003.pth  out_freq 1000 out_file model_devi.out
+pair_coeff     * *
+
+timestep       2e-3  # ps
+velocity       all create ${TEMP_1}  42 loop geom
+run_style       verlet
+
+
+# Minimization
+fix             relax all box/relax iso 0.0 vmax 0.001
+minimize        1.0e-10 1.0e-10 10000 100000
+unfix           relax
+
+## npt
+fix             1 all npt temp ${TEMP_1} ${TEMP_1} ${TAU_T}  iso  ${PRES} ${PRES} ${TAU_P}  
+thermo_style    custom step temp ke pe etotal press vol density
+thermo          ${THERMO_FREQ} # Ouput thermodynamic properties
+
+dump            npt all custom ${dump_freq} dump_msst_freq-${dump_freq}.lammpstrj element id type x y z vx vy vz
+dump_modify     npt  element H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr Rf Db Sg Bh Hs Mt Ds Rg Cn Nh Fl Mc Lv Ts Og
+run             ${NSTEPS}
+unfix           1
+
+
+fix             2 all npt temp ${TEMP_2} ${TEMP_2} ${TAU_T}  iso  ${PRES} ${PRES} ${TAU_P}
+run             ${NSTEPS}
+unfix           2
+fix             3 all npt temp ${TEMP_3} ${TEMP_3} ${TAU_T}  iso  ${PRES} ${PRES} ${TAU_P}
+run             ${NSTEPS}
+unfix           3
+fix             4 all npt temp ${TEMP_4} ${TEMP_4} ${TAU_T}  iso  ${PRES} ${PRES} ${TAU_P}
+run             ${NSTEPS}
+unfix           4
+fix             5 all npt temp ${TEMP_4} ${TEMP_4} ${TAU_T}  iso  ${PRES} ${PRES} ${TAU_P}
+run             ${NSTEPS}
+unfix           5
+

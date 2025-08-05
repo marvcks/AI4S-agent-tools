@@ -1,0 +1,13 @@
+{
+    "job_name": "invar_Co-Ni_benchmark_struct_template",
+    "job_type": "container",
+    "command": "lmp -i in.lmp",
+    "log_file": "tmp_log",
+    "backward_files": [
+        "*.*"
+    ],
+    "project_id": 11331,
+    "platform": "ali",
+    "machine_type": "1 * NVIDIA V100_32g",
+    "image_address": "registry.dp.tech/dptech/deepmd-kit:2024Q1-d23cf3e"
+}
