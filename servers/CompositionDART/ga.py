@@ -34,6 +34,10 @@ class GeneticAlgorithm:
             self.population_size = population_size
             self.population = self.initialize_population(population_size)
 
+        # Handle empty models
+        if self.tec_models is None or len(self.tec_models) == 0:
+            raise ValueError(f"TEC models are not provided or empty, got {tec_models}. Please provide valid TEC models.")
+             
         logging.info(f"Population size: {self.population_size}")
 
     def manipulate_population_size(self, population, population_size):
@@ -196,6 +200,9 @@ if __name__ == "__main__":
         [0.635, 0.3, 0.025, 0.0, 0.04, 0.0],
         [0.635, 0.305, 0.06, 0.0, 0.0, 0.0]
     ]
+    import os
+    import glob
+    from deepmd.pt.infer.deep_eval import DeepProperty
     def run_ga(output, elements, init_mode, population_size, selection_mode,
             constraints, get_density_mode, a, b, c, d, crossover_rate, mutation_rate, init_population):
 
@@ -203,6 +210,14 @@ if __name__ == "__main__":
         logging.info("===----Starting----===")
         logging.info("Elements: %s", elements)
         logging.info(f"Constraints: {constraints}")
+
+        # Load tec_models here and pass to GeneticAlgorithm
+        # HACK: Using a local path for tec models
+        tec_model_files = glob.glob(
+            "/personal/TOOLS_IN_DEV/Models/tec_*.pt"
+        )
+        tec_models = [DeepProperty(model_file) for model_file in tec_model_files]
+        logging.info(f"Loaded {len(tec_model_files) if os.path.exists('models') else 0} tec models")
 
         if init_mode == "random":
             init_population = None
@@ -217,7 +232,8 @@ if __name__ == "__main__":
             init_population=init_population,
             constraints=constraints,
             a=a, b=b, c=c, d=d,
-            get_density_mode=get_density_mode
+            get_density_mode=get_density_mode,
+            tec_models=tec_models
         )
 
         best_individual, best_score = ga.evolve()
