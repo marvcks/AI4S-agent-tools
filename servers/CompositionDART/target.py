@@ -137,12 +137,14 @@ def target(
         finalize=None, 
         get_density_mode="relax", 
         calculator=None,
+        tec_models=None,
     ):
     logging.info(f"a: {a}, b: {b}, c: {c}, d: {d}, compositions: {compositions}")
     packing = get_packing(elements, compositions)
 
-    tec_models = glob.glob('models/tec*.pt')
-    tec_models = (DeepProperty(model) for model in tec_models)
+    if tec_models is None:
+        tec_model_files = glob.glob('models/tec*.pt')
+        tec_models = (DeepProperty(model) for model in tec_model_files)
 
     struct_list = comp2struc(elements, compositions, packing=packing)
 
@@ -199,29 +201,4 @@ def target(
             ----\n
             """)
 
-
     return target
-
-
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-    calculator = DPCalculator("/mnt/data_nas/guomingyu/PROPERTIES_PREDICTION/RELAX_Density_Calculation/alloy.pth")
-    comp = [
-        1.58534604e-01,
-        3.81925319e-02,
-        9.92886136e-02,
-        1.09126615e-02,
-        6.92985901e-01,
-        8.56879332e-05, 
-        0.00000000e+00, 
-        0.00000000e+00
-    ]
-    elements = ['Fe', 'Ni', 'Co', 'Cr', 'V', 'Cu', 'Al', 'Ti']
-    ss = comp2struc(elements, comp, 'bcc')
-    from time import time
-    start = time()
-    target = target(elements, comp, finalize=True, get_density_mode="pred", calculator=calculator)
-    end = time()
-    print(end - start)
-    print(target)

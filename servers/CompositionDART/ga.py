@@ -8,7 +8,7 @@ from constraints_utils import apply_constraints, parse_constraints, mass_to_mola
 class GeneticAlgorithm:
     def __init__(self, elements, population_size=10, generations=100, crossover_rate=0.8, mutation_rate=0.1,
                  selection_mode="roulette", init_population=None, constraints={}, a=0.9, b=0.1, c=0.9, d=0.1,
-                 get_density_mode='weighted_avg'):
+                 get_density_mode='weighted_avg', tec_models=None):
         self.elements = elements
         self.generations = generations
         self.crossover_rate = crossover_rate
@@ -20,6 +20,7 @@ class GeneticAlgorithm:
         self.c = c
         self.d = d
         self.get_density_mode = get_density_mode
+        self.tec_models = tec_models
 
         # Handle population initialization
         if init_population:
@@ -89,10 +90,10 @@ class GeneticAlgorithm:
             molar_comp = apply_constraints(comp, self.elements, self.constraints)
             return target(self.elements, molar_comp, generation=generation,
                          a=self.a, b=self.b, c=self.c, d=self.d,
-                         get_density_mode=self.get_density_mode)
+                         get_density_mode=self.get_density_mode, tec_models=self.tec_models)
         return target(self.elements, comp, generation=generation,
                      a=self.a, b=self.b, c=self.c, d=self.d,
-                     get_density_mode=self.get_density_mode)
+                     get_density_mode=self.get_density_mode, tec_models=self.tec_models)
 
     def select_parents(self):
         logging.info("Selecting parents using mode: %s", self.selection_mode)

@@ -140,21 +140,26 @@ def run_ga(output, elements, init_mode, population_size, selection_mode,
     logging.info("Elements: %s", elements)
     logging.info(f"Constraints: {constraints}")
 
+    # Load tec_models here and pass to GeneticAlgorithm
+    tec_model_files = glob.glob('models/tec*.pt')
+    tec_models = [DeepProperty(model_file) for model_file in tec_model_files]
+    logging.info(f"Loaded {len(tec_models)} tec models")
+
     if init_mode == "random":
         init_population = None
 
     ga = GeneticAlgorithm(
         elements=elements,
         population_size=population_size,
-        generations=500,
+        generations=8000,
         crossover_rate=crossover_rate,
         mutation_rate=mutation_rate,
         selection_mode=selection_mode,
         init_population=init_population,
         constraints=constraints,
         a=a, b=b, c=c, d=d,
-        get_density_mode=get_density_mode
-    )
+        get_density_mode=get_density_mode,
+        tec_models=tec_models)
 
     best_individual, best_score = ga.evolve()
 
