@@ -940,6 +940,7 @@ def run_server():
     print("   ✨ Features: Interactive charts, detailed analysis, type-safe data processing")
     print("   📚 Data Sources: Excel files + database queries with intelligent structure classification")
     print("   ⚠️  Note: Some tools may be temporarily disabled for maintenance")
+    # Get transport type from environment variable, default to SSE
     transport_type = os.getenv('MCP_TRANSPORT', 'sse')
     mcp.run(transport=transport_type)
 
