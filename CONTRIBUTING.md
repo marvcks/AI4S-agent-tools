@@ -47,9 +47,11 @@ mcp = FastMCP("example",host=args.host,port=args.port)
 def demo_function(message: str) -> str:
     return f"Echo: {message}"
 
-
+# support sse and stdio
 if __name__ == "__main__":
-    mcp.run(transport="sse")
+    # Get transport type from environment variable, default to SSE
+    transport_type = os.getenv('MCP_TRANSPORT', 'sse')
+    mcp.run(transport=transport_type)
 ```
 
 ### 3. Create Metadata File
