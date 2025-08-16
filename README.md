@@ -3,7 +3,9 @@
 An open project by the DeepModeling community - Building intelligent tools for scientific research.
 
 🌐 **[View Tool Showcase](https://deepmodeling.github.io/AI4S-agent-tools/)** | 
-🤝 **[Contribute](CONTRIBUTING.md)**
+🤝 **[Contribute](CONTRIBUTING.md)** |
+💬 **[Discussions](https://github.com/deepmodeling/AI4S-agent-tools/discussions)**
+
 
 ## 🎯 Mission
 

@@ -14,6 +14,7 @@ from typing import Dict, List, Any, Optional
 import tomllib
 import logging
 
+
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -274,7 +275,7 @@ def main():
         return 1
     
     # Write to file
-    output_path = root_dir / "TOOLS.json"
+    output_path = root_dir / "data" / "tools.json"
     with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(tools_data, f, indent=2, ensure_ascii=False)
     

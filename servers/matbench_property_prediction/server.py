@@ -12,8 +12,9 @@ import shutil
 import glob
 import pandas as pd
 import json
+import argparse
 
-from dp.agent.server import CalculationMCPServer
+from mcp.server.fastmcp import FastMCP
 from deepmd.infer.deep_property import DeepProperty
 
 def parse_args():
