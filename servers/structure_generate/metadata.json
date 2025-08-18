@@ -1,11 +1,10 @@
 {
     "name": "StructureGenerateServer",
-    "description": "Generate structures with ASE, CALYPSO, and CrystalFormer - supports 9 specialized tools for crystal structure generation",
+    "description": "Generate structures with ASE, CALYPSO, and CrystalFormer",
     "author": "@A-LOST-WAPITI",
     "category": "materials",
     "tools":[
-        "build_bulk_structure_by_default",
-        "build_bulk_structure_by_wyckoff",
+        "build_bulk_structure",
         "make_supercell_structure",
         "build_molecule_structure",
         "build_surface_slab",

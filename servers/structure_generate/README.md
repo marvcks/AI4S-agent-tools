@@ -6,8 +6,7 @@
 
 使用 Atomic Simulation Environment (ASE) 库构建各种晶体结构：
 
-- **预定义模板构建** - 推荐用于标准材料和常见晶体结构（fcc、bcc、hcp、diamond等）
-- **Wyckoff位置构建** - 仅在用户提供完整晶体学数据时使用（专家级功能）
+- **体相晶体结构** - 构建标准晶体结构（fcc、bcc、hcp、diamond 等）
 - **超胞生成** - 从现有结构生成超胞
 - **分子结构** - 构建分子结构并放置在晶胞中
 - **表面切片** - 按指定米勒指数生成表面切片
@@ -34,8 +33,7 @@
 
 | 工具名称 | 功能描述 | 主要参数 |
 |---------|----------|----------|
-| `build_bulk_structure_by_default` | **推荐**: 标准材料的晶体结构构建 | 元素、晶体结构类型、晶格参数 |
-| `build_bulk_structure_by_wyckoff` | **专家级**: 需要完整Wyckoff位置数据 | 晶格参数、空间群、Wyckoff位置 |
+| `build_bulk_structure` | 构建体相晶体结构 | 元素、晶体结构类型、晶格参数 |
 | `make_supercell_structure` | 生成超胞结构 | 输入结构、超胞矩阵 |
 | `build_molecule_structure` | 构建分子结构 | 分子名称、晶胞参数、真空层 |
 | `build_surface_slab` | 构建表面切片 | 材料、米勒指数、层数、真空层 |
@@ -43,11 +41,3 @@
 | `build_surface_interface` | 构建界面结构 | 两个材料、堆叠轴、界面距离 |
 | `generate_calypso_structures` | CALYPSO 结构预测 | 元素列表、生成数量 |
 | `generate_crystalformer_structures` | 条件结构生成 | 目标性质、空间群、样本数 |
-
-## 开发信息
-
-- **作者**: @A-LOST-WAPITI
-- **类别**: materials (材料科学)
-- **服务器名称**: StructureGenerateServer
-- **传输协议**: SSE (Server-Sent Events)
-- **支持工具数量**: 9个专业结构生成工具
