@@ -78,7 +78,7 @@ class StructureResult(TypedDict):
 
 
 @mcp.tool()
-def build_bulk_structure_by_template(
+def build_bulk_structure_by_default(
     element: str,
     conventional: bool = True,
     crystal_structure: Literal['sc', 'fcc', 'bcc', 'hcp',

@@ -34,7 +34,7 @@
 
 | 工具名称 | 功能描述 | 主要参数 |
 |---------|----------|----------|
-| `build_bulk_structure_by_template` | **推荐**: 标准材料的晶体结构构建 | 元素、晶体结构类型、晶格参数 |
+| `build_bulk_structure_by_default` | **推荐**: 标准材料的晶体结构构建 | 元素、晶体结构类型、晶格参数 |
 | `build_bulk_structure_by_wyckoff` | **专家级**: 需要完整Wyckoff位置数据 | 晶格参数、空间群、Wyckoff位置 |
 | `make_supercell_structure` | 生成超胞结构 | 输入结构、超胞矩阵 |
 | `build_molecule_structure` | 构建分子结构 | 分子名称、晶胞参数、真空层 |
