@@ -91,10 +91,27 @@ def build_bulk_structure_by_template(
     '''
     Build a bulk crystal structure using ASE predefined structural templates.
 
+    **RECOMMENDED FOR AI AGENTS: Use this tool for standard crystal structures and common materials.**
+    
+    This is the primary tool for generating standard crystal structures when users request:
+    - Common materials by name (e.g., "aluminum", "silicon", "iron")
+    - Standard crystal structures (fcc, bcc, hcp, diamond, etc.)
+    - Simple compounds (GaAs, NaCl, etc.)
+    - When detailed Wyckoff position data is NOT provided
+
+    Only use build_bulk_structure_by_wyckoff() when the user explicitly provides complete 
+    crystallographic data including Wyckoff positions.
+
     This tool creates standard crystal structures by specifying element(s) and structural type.
     It uses ASE's built-in bulk() function to generate common crystalline phases with proper
     lattice parameters. The generated structure can be automatically converted to conventional
     standard cell using pymatgen for better crystallographic representation.
+
+    **Agent Guidelines:**
+    - Use this tool for 95% of bulk structure generation requests
+    - Perfect for standard materials: metals, semiconductors, simple ionic compounds
+    - Covers all common crystal structure types in materials science
+    - No need for complex crystallographic knowledge from the user
 
     Args:
         element (str): Element symbol or chemical formula (e.g., 'Si', 'GaAs', 'NaCl').
@@ -212,12 +229,26 @@ def build_bulk_structure_by_wyckoff(
     output_file: str = 'structure_bulk.cif'
 ) -> StructureResult:
     """
-    Generate crystal structure from complete crystallographic specification using Wyckoff positions.
+    **CRITICAL FOR AI AGENTS: This tool MUST ONLY be used when the user explicitly provides complete Wyckoff position data.**
+    
+    DO NOT use this tool if:
+    - The user only mentions a material name (e.g., "generate TiO2", "create silicon structure")
+    - The user doesn't provide specific Wyckoff positions
+    - The user asks for "standard" or "common" crystal structures
+    - You need to guess or look up crystallographic data
+    
+    USE build_bulk_structure_by_template() instead for standard materials without explicit Wyckoff data.
+    
+    This tool generates crystal structures from complete crystallographic specification using Wyckoff positions.
+    It requires the user to provide ALL crystallographic parameters: lattice parameters, space group, 
+    and exact Wyckoff site coordinates. This is for advanced crystallographic applications where 
+    precise atomic positioning is specified by the user.
 
-    This tool creates crystal structures by specifying the complete crystallographic information:
-    lattice parameters, space group, and atomic positions via Wyckoff sites. It uses pymatgen's
-    Structure.from_spacegroup() method to generate the complete crystal structure with proper
-    symmetry operations applied to the specified Wyckoff positions.
+    **Agent Guidelines:**
+    - Only call this tool when user provides: lattice parameters (a,b,c,α,β,γ), space group, AND Wyckoff positions
+    - If user provides incomplete data, ask them to provide missing information or suggest using the template tool
+    - This tool is for expert users who know exact crystallographic details
+    - For common materials (Al, Fe, SiO2, etc.), use build_bulk_structure_by_template() instead
 
     Args:
         a (float): Lattice parameter 'a' in Ångströms. Length of the first lattice vector.
@@ -230,7 +261,7 @@ def build_bulk_structure_by_wyckoff(
             - Integer: Space group number (1-230) from International Tables
             - String: International space group symbol (e.g., 'Fm-3m', 'P63/mmc', 'Pnma')
             Examples: 225, 'Fm-3m' (for FCC), 194, 'P63/mmc' (for HCP)
-        wyckoff_positions (List[Tuple[str, List[float], str]]): List of Wyckoff site specifications.
+        wyckoff_positions (List[Tuple[str, List[float], str]]): **REQUIRED** List of Wyckoff site specifications.
             Each tuple contains:
             - str: Element symbol (e.g., 'Si', 'O', 'Al')
             - List[float]: Fractional coordinates [x, y, z] in the unit cell (0-1 range)
@@ -250,24 +281,22 @@ def build_bulk_structure_by_wyckoff(
         - Converts final pymatgen Structure to ASE Atoms object for file output
         - Validates space group and Wyckoff position compatibility automatically
 
-    Example:
-        # Generate fluorite (CaF2) structure
-        generate_bulk_structure_by_wyckoff(
+    Example of CORRECT usage (when user provides complete data):
+        # User provides: "Generate CaF2 with space group Fm-3m (225), a=5.463 Å, 
+        # Ca at (0,0,0) 4a site, F at (0.25,0.25,0.25) 8c site"
+        build_bulk_structure_by_wyckoff(
             a=5.463, b=5.463, c=5.463,
             alpha=90.0, beta=90.0, gamma=90.0,
-            spacegroup='Fm-3m',  # or 225
+            spacegroup='Fm-3m',
             wyckoff_positions=[
                 ('Ca', [0.0, 0.0, 0.0], '4a'),
                 ('F', [0.25, 0.25, 0.25], '8c')
             ]
         )
 
-    Notes:
-        - Fractional coordinates are automatically expanded by space group symmetry
-        - The tolerance parameter (0.001 Å) controls symmetry detection precision
-        - Wyckoff position labels are for reference and don't affect structure generation
-        - All 230 space groups from International Tables are supported
-        - Generated structure includes all symmetry-equivalent atomic positions
+    Example of INCORRECT usage:
+        # User says: "Generate calcium fluoride structure" 
+        # -> Use build_bulk_structure_by_template() instead!
 
     Raises:
         ValueError: If space group is invalid or Wyckoff positions are incompatible
