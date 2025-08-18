@@ -6,7 +6,7 @@ import subprocess
 from pathlib import Path
 from random import randint
 from typing import List, Optional, Literal, Union
-
+import os
 # Third-party library imports
 import numpy as np
 from typing_extensions import TypedDict
@@ -901,6 +901,7 @@ def generate_crystalformer_structures(
 
 
 # ====== Run Server ======
-if __name__ == '__main__':
-    logging.info(f'Starting CrystalFormerServer on port {args.port}...')
-    mcp.run(transport='sse')
+if __name__ == "__main__":
+    # Get transport type from environment variable, default to SSE
+    transport_type = os.getenv('MCP_TRANSPORT', 'sse')
+    mcp.run(transport=transport_type)
