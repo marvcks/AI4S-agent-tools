@@ -5,7 +5,7 @@ import shutil
 import subprocess
 from pathlib import Path
 from random import randint
-from typing import List, Optional, Literal, Union
+from typing import List, Optional, Literal, Union, Tuple
 
 # Third-party library imports
 import numpy as np
@@ -19,6 +19,7 @@ from ase.data import chemical_symbols
 from ase.io import read, write
 
 # Pymatgen imports
+from pymatgen.core import Lattice, Structure
 from pymatgen.analysis.structure_analyzer import SpacegroupAnalyzer
 from pymatgen.io.ase import AseAtomsAdaptor
 
@@ -77,7 +78,7 @@ class StructureResult(TypedDict):
 
 
 @mcp.tool()
-def build_bulk_structure(
+def build_bulk_structure_by_template(
     element: str,
     conventional: bool = True,
     crystal_structure: Literal['sc', 'fcc', 'bcc', 'hcp',
@@ -88,22 +89,63 @@ def build_bulk_structure(
     output_file: str = 'structure_bulk.cif'
 ) -> StructureResult:
     '''
-    Build a bulk crystal structure using ASE.
+    Build a bulk crystal structure using ASE predefined structural templates.
+
+    This tool creates standard crystal structures by specifying element(s) and structural type.
+    It uses ASE's built-in bulk() function to generate common crystalline phases with proper
+    lattice parameters. The generated structure can be automatically converted to conventional
+    standard cell using pymatgen for better crystallographic representation.
 
     Args:
-        element (str): Element symbol or chemical formula.
-        conventional (bool): If True, convert to conventional standard cell. Default True.
-        crystal_structure (str): Crystal structure type. Must be one of 'sc', 'fcc', 'bcc', 
-            'hcp', 'diamond', 'zincblende', 'rocksalt'. Default 'fcc'.
-        a (Optional[float]): Lattice parameter 'a' in Ångströms. Required for all structures.
-        c (Optional[float]): Lattice parameter 'c' in Ångströms. Used for hcp structures.
-        alpha (Optional[float]): Lattice angle alpha in degrees.
-        output_file (str): Path to save the CIF file. Default 'structure_bulk.cif'.
+        element (str): Element symbol or chemical formula (e.g., 'Si', 'GaAs', 'NaCl').
+            Supports single elements and binary compounds compatible with ASE bulk templates.
+        conventional (bool): If True, converts primitive cell to conventional standard cell 
+            using pymatgen SpacegroupAnalyzer. This provides the standard crystallographic 
+            representation. Default True.
+        crystal_structure (str): Crystal structure template type. Supported options:
+            - 'sc': Simple cubic
+            - 'fcc': Face-centered cubic (e.g., Al, Cu, Au)
+            - 'bcc': Body-centered cubic (e.g., Fe, Cr, W)
+            - 'hcp': Hexagonal close-packed (e.g., Mg, Zn, Ti)
+            - 'diamond': Diamond structure (e.g., C, Si, Ge)
+            - 'zincblende': Zinc blende structure (e.g., GaAs, ZnS)
+            - 'rocksalt': Rock salt structure (e.g., NaCl, MgO)
+            Default 'fcc'.
+        a (Optional[float]): Lattice parameter 'a' in Ångströms. **Required for all structures**.
+            For cubic systems (sc, fcc, bcc, diamond, zincblende, rocksalt), this defines the 
+            cubic lattice constant. For hcp, this is the basal plane lattice parameter.
+        c (Optional[float]): Lattice parameter 'c' in Ångströms. Used specifically for hcp 
+            structures to define the height of the hexagonal unit cell. If not provided for 
+            hcp, ASE uses ideal c/a ratio.
+        alpha (Optional[float]): Lattice angle alpha in degrees. Used for non-orthogonal 
+            crystal systems when supported by the structure template.
+        output_file (str): Output filename for the generated structure. Supports various 
+            formats based on extension (.cif, .vasp, .xyz, etc.). Default 'structure_bulk.cif'.
 
     Returns:
         StructureResult: Dictionary containing:
             - structure_path (Path): Path to the generated structure file
-            - message (str): Success or error message
+            - message (str): Success message with structure details or error information
+
+    Implementation Details:
+        - Uses ASE bulk() function with appropriate parameters for each crystal system
+        - Applies cubic=True for cubic systems and orthorhombic=True for hcp
+        - Converts primitive to conventional cell using pymatgen when conventional=True
+        - Handles special parameters automatically based on crystal structure type
+        - Validates required lattice parameter 'a' before structure generation
+
+    Example:
+        # Generate FCC aluminum structure
+        build_bulk_structure_by_template(
+            element='Al', 
+            crystal_structure='fcc', 
+            a=4.05, 
+            conventional=True
+        )
+
+    Raises:
+        ValueError: If lattice parameter 'a' is not provided
+        Exception: If structure generation or file writing fails
     '''
     def _prim2conven(ase_atoms: Atoms) -> Atoms:
         '''
@@ -157,6 +199,106 @@ def build_bulk_structure(
             'message': f'Bulk structure building failed: {str(e)}'
         }
     
+@mcp.tool()
+def build_bulk_structure_by_wyckoff(
+    a: float,
+    b: float,
+    c: float,
+    alpha: float,
+    beta: float,
+    gamma: float,
+    spacegroup: str | int,
+    wyckoff_positions: List[Tuple[str, List[float], str]],
+    output_file: str = 'structure_bulk.cif'
+) -> StructureResult:
+    """
+    Generate crystal structure from complete crystallographic specification using Wyckoff positions.
+
+    This tool creates crystal structures by specifying the complete crystallographic information:
+    lattice parameters, space group, and atomic positions via Wyckoff sites. It uses pymatgen's
+    Structure.from_spacegroup() method to generate the complete crystal structure with proper
+    symmetry operations applied to the specified Wyckoff positions.
+
+    Args:
+        a (float): Lattice parameter 'a' in Ångströms. Length of the first lattice vector.
+        b (float): Lattice parameter 'b' in Ångströms. Length of the second lattice vector.
+        c (float): Lattice parameter 'c' in Ångströms. Length of the third lattice vector.
+        alpha (float): Lattice angle α in degrees. Angle between lattice vectors b and c.
+        beta (float): Lattice angle β in degrees. Angle between lattice vectors c and a.
+        gamma (float): Lattice angle γ in degrees. Angle between lattice vectors a and b.
+        spacegroup (str | int): Space group specification. Can be provided as:
+            - Integer: Space group number (1-230) from International Tables
+            - String: International space group symbol (e.g., 'Fm-3m', 'P63/mmc', 'Pnma')
+            Examples: 225, 'Fm-3m' (for FCC), 194, 'P63/mmc' (for HCP)
+        wyckoff_positions (List[Tuple[str, List[float], str]]): List of Wyckoff site specifications.
+            Each tuple contains:
+            - str: Element symbol (e.g., 'Si', 'O', 'Al')
+            - List[float]: Fractional coordinates [x, y, z] in the unit cell (0-1 range)
+            - str: Wyckoff position label (e.g., '4a', '8c', '24d') - for reference/validation
+        output_file (str): Output filename for the generated structure. Supports various formats
+            based on file extension (.cif, .vasp, .xyz, etc.). Default 'structure_bulk.cif'.
+
+    Returns:
+        StructureResult: Dictionary containing:
+            - structure_path (Path): Path to the generated crystal structure file
+            - message (str): Success message or detailed error information
+
+    Implementation Details:
+        - Creates pymatgen Lattice object from the six lattice parameters
+        - Uses pymatgen Structure.from_spacegroup() with tolerance of 0.001 Å
+        - Applies space group symmetry operations to generate all equivalent atomic positions
+        - Converts final pymatgen Structure to ASE Atoms object for file output
+        - Validates space group and Wyckoff position compatibility automatically
+
+    Example:
+        # Generate fluorite (CaF2) structure
+        generate_bulk_structure_by_wyckoff(
+            a=5.463, b=5.463, c=5.463,
+            alpha=90.0, beta=90.0, gamma=90.0,
+            spacegroup='Fm-3m',  # or 225
+            wyckoff_positions=[
+                ('Ca', [0.0, 0.0, 0.0], '4a'),
+                ('F', [0.25, 0.25, 0.25], '8c')
+            ]
+        )
+
+    Notes:
+        - Fractional coordinates are automatically expanded by space group symmetry
+        - The tolerance parameter (0.001 Å) controls symmetry detection precision
+        - Wyckoff position labels are for reference and don't affect structure generation
+        - All 230 space groups from International Tables are supported
+        - Generated structure includes all symmetry-equivalent atomic positions
+
+    Raises:
+        ValueError: If space group is invalid or Wyckoff positions are incompatible
+        Exception: If lattice parameters are invalid or structure generation fails
+    """
+    try:
+        lattice = Lattice.from_parameters(a=a, b=b, c=c, alpha=alpha, beta=beta, gamma=gamma)
+
+        crys_stru = Structure.from_spacegroup(
+            sg=spacegroup,
+            lattice=lattice,
+            species=[wyckoff_position[0] for wyckoff_position in wyckoff_positions],
+            coords=[wyckoff_position[1] for wyckoff_position in wyckoff_positions],
+            tol=0.001,
+        )
+
+        atoms = crys_stru.to_ase_atoms()
+        write(output_file, atoms)
+
+        logging.info(f'Bulk structure saved to: {output_file}')
+        return {
+            'structure_path': Path(output_file),
+            'message': f'Bulk structure built successfully.'
+        }
+    except Exception as e:
+        logging.error(
+            f'Bulk structure building failed: {str(e)}', exc_info=True)
+        return {
+            'structure_paths': None,
+            'message': f'Bulk structure building failed: {str(e)}'
+        }
 
 @mcp.tool()
 def make_supercell_structure(
