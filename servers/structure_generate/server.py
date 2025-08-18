@@ -15,7 +15,6 @@ from typing_extensions import TypedDict
 from ase import Atoms
 from ase.build import add_adsorbate, bulk, molecule, surface, stack
 from ase.collections import g2
-from ase.data import chemical_symbols
 from ase.io import read, write
 
 # Pymatgen imports
@@ -210,13 +209,10 @@ def make_supercell_structure(
 @mcp.tool()
 def build_molecule_structure(
     molecule_name: str,
-    cell: Optional[List[List[float]]] = [
-        [10.0, 0.0, 0.0], [0.0, 10.0, 0.0], [0.0, 0.0, 10.0]],
-    vacuum: Optional[float] = 5.0,
-    output_file: str = 'structure_molecule.cif'
+    output_file: str = 'structure_molecule.xyz'
 ) -> StructureResult:
     '''
-    Build a molecule structure using ASE with specified unit cell and vacuum.
+    Build a molecule structure using ASE.
 
     Args:
         molecule_name (str): Name of the molecule or element symbol. Supports:
@@ -237,11 +233,7 @@ def build_molecule_structure(
               C2H6SO, C5H8, H2CF2, Li2, CH2SCH2, C2Cl4, C3H4_C3v, CH3COCH3, F2, CH4, 
               SH, H2CCO, CH3CH2NH2, Li, N2, Cl2, H2O2, Na2, BeH, C3H4_C2v, NO2
             - Element symbols from periodic table (e.g., 'H', 'He', 'Li', etc.)
-        cell (Optional[List[List[float]]]): Unit cell matrix in Ångströms as 3x3 list. 
-            Default [[10.0, 0.0, 0.0], [0.0, 10.0, 0.0], [0.0, 0.0, 10.0]] (cubic 10 Å cell).
-        vacuum (Optional[float]): Vacuum spacing around the molecule in Ångströms. 
-            Applied when centering the molecule in the cell. Default 5.0.
-        output_file (str): Path to save the CIF structure file. Default 'structure_molecule.cif'.
+        output_file (str): Path to save the CIF structure file. Default 'structure_molecule.xyz'.
 
     Returns:
         StructureResult: Dictionary containing:
@@ -256,11 +248,6 @@ def build_molecule_structure(
     try:
         if molecule_name in g2.names:
             atoms = molecule(molecule_name)
-            atoms.set_cell(cell)
-            atoms.center(vacuum=vacuum)
-        elif molecule_name in chemical_symbols and molecule_name != 'X':
-            atoms = Atoms(symbol=molecule_name, positions=[
-                          [0, 0, 0]], cell=cell)
 
         write(output_file, atoms)
         logging.info(f'Molecule structure saved to: {output_file}')
@@ -274,6 +261,52 @@ def build_molecule_structure(
         return {
             'structure_paths': None,
             'message': f'Molecule structure building failed: {str(e)}'
+        }
+
+@mcp.tool()
+def add_cell_for_molecules(
+    molecule_path: Path = None,
+    cell: Optional[List[List[float]]] = [
+        [10.0, 0.0, 0.0], [0.0, 10.0, 0.0], [0.0, 0.0, 10.0]],
+    vacuum: Optional[float] = 5.0,
+    output_file: str = 'structure_molecule.cif'
+) -> StructureResult:
+    '''
+    Add a cell to an existing molecule structure, suitable for ABACUS molecular calculations.
+
+    When performing molecular calculations with ABACUS, it is essential to add a sufficiently large cell to the molecule to avoid interactions between periodic images. This tool adds a specified cell to an existing molecule structure, centers the molecule, and allows setting the vacuum thickness.
+
+    Args:
+        molecule_path (Path): Path to the existing molecule structure file.
+        cell (Optional[List[List[float]]]): 3x3 cell vectors in Ångströms. Default is a cubic cell with 10 Å sides.
+        vacuum (Optional[float]): Thickness of vacuum layer (Å) added around the molecule. Default is 5.0 Å.
+        output_file (str): Path to save the CIF file with the added cell. Default 'structure_molecule.cif'.
+
+    Returns:
+        StructureResult: Dictionary containing:
+            - structure_paths (Path): Path to the generated structure file
+            - message (str): Success or error message
+
+    Note:
+        For ABACUS molecular calculations, proper cell size and vacuum thickness are crucial to avoid artificial interactions between molecules. It is recommended to set the cell and vacuum large enough for isolated molecule calculations.
+    '''
+    try:
+        atoms = read(str(molecule_path))
+        atoms.set_cell(cell)
+        atoms.center(vacuum=vacuum)
+
+        write(output_file, atoms)
+        logging.info(f'Molecule with cell saved to: {output_file}')
+        return {
+            'structure_paths': Path(output_file),
+            'message': 'Molecule with cell built successfully!'
+        }
+    except Exception as e:
+        logging.error(
+            f'Molecule with cell building failed: {str(e)}', exc_info=True)
+        return {
+            'structure_paths': None,
+            'message': f'Molecule with cell building failed: {str(e)}'
         }
 
 
