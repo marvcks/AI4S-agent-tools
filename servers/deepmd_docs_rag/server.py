@@ -33,7 +33,7 @@ def parse_args():
     return args
 
 args = parse_args()
-backend = Client("https://api.fastgpt.in/api/mcp/app/wrSvRtDydWEb7faAP6uPooSX/mcp")
+backend = Client("https://zqibhdki.sealosbja.site/api/mcp/app/tRmg19AXvG2GL46rZXadjsIb/mcp")
 mcp = FastMCP.as_proxy(backend, name="FastGPT Proxy Server", port=args.port, host=args.host)
 
 
