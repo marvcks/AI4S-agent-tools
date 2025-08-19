@@ -25,6 +25,17 @@
       ]
     },
     {
+      "author": "@A-LOST-WAPITI",
+      "collections": [
+        "StructureGenerateServer"
+      ],
+      "collections_count": 1,
+      "tools_count": 9,
+      "categories": [
+        "materials"
+      ]
+    },
+    {
       "author": "@liuyuxiang92",
       "collections": [
         "SuperconductorServer",
@@ -61,6 +72,19 @@
       ]
     },
     {
+      "author": "@lhhhappy",
+      "collections": [
+        "PYSR-Symbolic-Regression",
+        "paper_search"
+      ],
+      "collections_count": 2,
+      "tools_count": 3,
+      "categories": [
+        "research",
+        "physics"
+      ]
+    },
+    {
       "author": "Haoming Yan",
       "collections": [
         "perovskite_literature_plot"
@@ -94,17 +118,6 @@
       ]
     },
     {
-      "author": "@Demo",
-      "collections": [
-        "paper_search"
-      ],
-      "collections_count": 1,
-      "tools_count": 2,
-      "categories": [
-        "research"
-      ]
-    },
-    {
       "author": "@PhelanShao",
       "collections": [
         "pubchem"
@@ -113,17 +126,6 @@
       "tools_count": 2,
       "categories": [
         "chemistry"
-      ]
-    },
-    {
-      "author": "@lhhhappy",
-      "collections": [
-        "PYSR-Symbolic-Regression"
-      ],
-      "collections_count": 1,
-      "tools_count": 1,
-      "categories": [
-        "physics"
       ]
     },
     {
@@ -150,6 +152,6 @@
     }
   ],
   "total_contributors": 13,
-  "total_collections": 17,
-  "total_tools": 63
+  "total_collections": 18,
+  "total_tools": 72
 }
