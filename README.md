@@ -83,3 +83,7 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 ## 🙏 Acknowledgments
 
 Built with ❤️ by the [DeepModeling](https://github.com/deepmodeling) community.
+
+## How to join us
+<img width="185" height="75" alt="image" src="https://github.com/user-attachments/assets/3eae5b5e-08ca-4e14-a4ed-2f3b7c9faa01" />
+
