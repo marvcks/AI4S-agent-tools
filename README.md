@@ -80,7 +80,9 @@ We welcome contributions from:
 
 Join our WeChat community group to discuss ideas and collaborate:
 
-![WeChat Community Group](data/image.png)
+<div align="center">
+  <img src="data/image.png" alt="WeChat Community Group" width="200">
+</div>
 
 ## 📄 License
 

@@ -195,7 +195,9 @@ See: `servers/Paper_Search/` - ArXiv paper search
 
 Join our WeChat community group to discuss and collaborate:
 
-![WeChat Community Group](data/image.png)
+<div align="center">
+  <img src="data/image.png" alt="WeChat Community Group" width="200">
+</div>
 
 ## 🌟 Your Tool on the Showcase
 
