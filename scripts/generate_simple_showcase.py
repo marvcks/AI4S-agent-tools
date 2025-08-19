@@ -975,11 +975,8 @@ def generate_showcase():
                     <div class="code-snippet"># Navigate to tool directory
 cd servers/&lt;toolname&gt;
 
-# Install dependencies
-uv sync
-
 # Run the server
-python server.py --port &lt;port&gt;</div>
+uv run python server.py --port &lt;port&gt;</div>
                 </div>
                 <div class="quick-start-card">
                     <h3>🛠️ Add Your Tool</h3>
@@ -991,9 +988,8 @@ cp -r servers/_example servers/my_tool
 cd servers/my_tool
 # ... edit server.py ...
 
-# Install and run
-uv sync
-python server.py --port &lt;port&gt;</div>
+# Run the server
+uv run python server.py --port &lt;port&gt;</div>
                 </div>
             </div>
         </div>
@@ -1062,7 +1058,6 @@ python server.py --port &lt;port&gt;</div>
             cat_info = categories[cat_id]
             html += f"""            <div class="category-section" data-category="{cat_id}">
                 <div class="category-header">
-                    <span class="category-icon">{cat_info['icon']}</span>
                     <h2 class="category-title">{cat_info['name']}</h2>
                 </div>
                 <div class="tools-row">
@@ -1075,7 +1070,10 @@ python server.py --port &lt;port&gt;</div>
                 html += f"""                    <div class="tool-card" onclick="showToolDetails('{tool['name']}')">
                         <div class="tool-header">
                             <div>
-                                <div class="tool-name">{tool['name']}</div>
+                                <div class="tool-name">
+                                    <span style="font-size: 1.1rem; margin-right: 0.5rem;">{cat_info['icon']}</span>
+                                    {tool['name']}
+                                </div>
                                 <div class="tool-author">{tool.get('author', '@unknown')}</div>
                             </div>
                         </div>
@@ -1258,7 +1256,7 @@ python server.py --port &lt;port&gt;</div>
     </div>
     
     <script>
-        const toolsData = {json.dumps(tools_data['tools'], indent=4)};
+        const toolsData = """ + json.dumps(tools_data['tools']) + """;
         
         // Theme toggle functionality
         function toggleTheme() {{
@@ -1331,33 +1329,33 @@ python server.py --port &lt;port&gt;</div>
             let content = `
                 <div class="modal-section">
                     <div class="modal-section-title">Description</div>
-                    <p>${{tool.description || 'No description available'}}</p>
+                    <p>${tool.description || 'No description available'}</p>
                 </div>
                 
                 <div class="modal-section">
                     <div class="modal-section-title">Author</div>
-                    <p>${{tool.author || '@unknown'}}</p>
+                    <p>${tool.author || '@unknown'}</p>
                 </div>
                 
                 <div class="modal-section">
-                    <div class="modal-section-title">Installation</div>
-                    <div class="code-block">${{tool.install_command || `cd ${{tool.path}} && uv sync`}}</div>
+                    <div class="modal-section-title">Transport</div>
+                    <p>${getTransportDisplay(tool.transport)}</p>
                 </div>
                 
                 <div class="modal-section">
                     <div class="modal-section-title">Start Command</div>
-                    <div class="code-block">${{tool.start_command}}</div>
+                    <div class="code-block">cd ${tool.path} && uv run python server.py --port &lt;PORT&gt;</div>
                 </div>
             `;
             
             if (tool.tools && tool.tools.length > 0) {{
                 content += `
                     <div class="modal-section">
-                        <div class="modal-section-title">Available Functions (${{tool.tools.length}})</div>
+                        <div class="modal-section-title">Available Functions (${tool.tools.length})</div>
                         <div class="tool-features">
                 `;
                 tool.tools.forEach(t => {{
-                    content += `<span class="tool-feature">${{t}}</span>`;
+                    content += `<span class="tool-feature">${t}</span>`;
                 }});
                 content += `
                         </div>
@@ -1367,6 +1365,20 @@ python server.py --port &lt;port&gt;</div>
             
             document.getElementById('modalContent').innerHTML = content;
             document.getElementById('toolModal').style.display = 'block';
+        }}
+        
+        function getTransportDisplay(transport) {{
+            if (!Array.isArray(transport)) {{
+                transport = [transport];
+            }}
+            const badges = [];
+            if (transport.includes('sse')) {{
+                badges.push('🔌 SSE (Port-based)');
+            }}
+            if (transport.includes('stdio')) {{
+                badges.push('📝 stdio (Standard I/O)');
+            }}
+            return badges.join(' | ') || '🔄 Both modes';
         }}
         
         function closeModal() {{
