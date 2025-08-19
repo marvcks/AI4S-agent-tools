@@ -1058,7 +1058,7 @@ uv run python server.py --port &lt;port&gt;</div>
             cat_info = categories[cat_id]
             html += f"""            <div class="category-section" data-category="{cat_id}">
                 <div class="category-header">
-                    <h2 class="category-title">{cat_info['name']}</h2>
+                    <h2 class="category-title">{cat_info['icon']} {cat_info['name']}</h2>
                 </div>
                 <div class="tools-row">
 """
@@ -1071,7 +1071,6 @@ uv run python server.py --port &lt;port&gt;</div>
                         <div class="tool-header">
                             <div>
                                 <div class="tool-name">
-                                    <span style="font-size: 1.1rem; margin-right: 0.5rem;">{cat_info['icon']}</span>
                                     {tool['name']}
                                 </div>
                                 <div class="tool-author">{tool.get('author', '@unknown')}</div>
