@@ -725,9 +725,11 @@ FixCell = F
             # Prepare calypso input.dat
             write_input(struct_dir, species, z_list, n_list, r_mat, volume)
         except Exception as e:
+            logging.error(
+                f'Interface structure building failed: {str(e)}', exc_info=True)
             return {
                 'poscar_paths': None,
-                'message': 'Input files generations for calypso failed!'
+                'message': f'Input files generations for calypso failed: {str(e)}'
             }
 
         # Execuate calypso calculation and screening
@@ -775,9 +777,11 @@ FixCell = F
             'message': f'Calypso generated {n_tot} structures with {species} successfully!'
         }
     except Exception as e:
+        logging.error(
+            f'Interface structure building failed: {str(e)}', exc_info=True)
         return {
             'structure_paths': None,
-            'message': 'Calypso generated POSCAR files collected failed!'
+            'message': f'Calypso generated POSCAR files collected failed: {str(e)}'
         }
 
 # ================ Tool to generate structures with conditional properties via CrystalFormer ===================
@@ -903,10 +907,12 @@ def generate_crystalformer_structures(
             'message': 'CrystalFormer structure generation successfully!'
         }
 
-    except Exception:
+    except Exception as e:
+        logging.error(
+            f'Interface structure building failed: {str(e)}', exc_info=True)
         return {
             'structure_paths': None,
-            'message': 'CrystalFormer Execution failed!'
+            'message': f'CrystalFormer Execution failed: {str(e)}'
         }
 
 
