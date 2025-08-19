@@ -114,8 +114,8 @@ def generate_all_configs(servers_dir: Path) -> Dict[str, Path]:
     """Generate MCP configurations for all tools in the servers directory."""
     generated_configs = {}
     
-    # Iterate through all subdirectories in servers/
-    for tool_dir in servers_dir.iterdir():
+    # Iterate through all subdirectories in servers/ (sorted alphabetically)
+    for tool_dir in sorted(servers_dir.iterdir()):
         if not tool_dir.is_dir():
             continue
         

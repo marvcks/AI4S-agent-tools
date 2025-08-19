@@ -261,13 +261,16 @@ def generate_tools_json(root_dir: Path) -> Dict[str, Any]:
             if tools_from_code:
                 logger.info(f"    Tools from code scanning: {tools_from_code}")
     
-    # Sort tools by name
-    tools.sort(key=lambda x: x['name'])
+    # Sort tools by name (case-insensitive)
+    tools.sort(key=lambda x: x['name'].lower())
+    
+    # Sort categories for consistent output
+    sorted_categories = dict(sorted(categories_config["categories"].items()))
     
     return {
         "version": "1.0.0",
         "description": "AI4S Agent Tools Registry - A collection of MCP servers for scientific computing",
-        "categories": categories_config["categories"],
+        "categories": sorted_categories,
         "tools": tools
     }
 
