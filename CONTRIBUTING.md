@@ -191,6 +191,14 @@ See: `servers/Paper_Search/` - ArXiv paper search
 - **Bugs?** Include error logs and steps to reproduce
 - **Ideas?** Start a discussion
 
+### 💬 Community
+
+Join our WeChat community group to discuss and collaborate:
+
+<div align="center">
+  <img src="data/image.png" alt="WeChat Community Group" width="200">
+</div>
+
 ## 🌟 Your Tool on the Showcase
 
 Once merged, your tool automatically appears at:

@@ -76,6 +76,14 @@ We welcome contributions from:
 - 🤖 AI researchers building science agents
 - 📚 Anyone passionate about open science
 
+### 💬 Community
+
+Join our WeChat community group to discuss ideas and collaborate:
+
+<div align="center">
+  <img src="data/image.png" alt="WeChat Community Group" width="200">
+</div>
+
 ## 📄 License
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
