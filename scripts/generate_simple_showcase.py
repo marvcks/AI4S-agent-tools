@@ -48,7 +48,7 @@ def generate_showcase():
     
     # Categorize tools using their metadata
     categorized_tools = {}
-    for tool in tools_data["tools"]:
+    for tool in sorted(tools_data["tools"], key=lambda x: x.get('name', '')):
         category = get_tool_category(tool, categories_config)
         if category not in categorized_tools:
             categorized_tools[category] = []
@@ -1039,7 +1039,7 @@ uv run python server.py --port &lt;port&gt;</div>
                 <span class="category-tag active" data-category="all">All</span>
 """
     
-    for cat_id, cat_info in categories.items():
+    for cat_id, cat_info in sorted(categories.items()):
         if cat_id in categorized_tools:
             html += f"""                <span class="category-tag" data-category="{cat_id}">{cat_info['icon']} {cat_info['name']}</span>
 """
@@ -1052,8 +1052,8 @@ uv run python server.py --port &lt;port&gt;</div>
         <div class="container">
 """
     
-    # Add tools by category
-    for cat_id, tools in categorized_tools.items():
+    # Add tools by category (sorted alphabetically)
+    for cat_id, tools in sorted(categorized_tools.items()):
         if cat_id in categories:
             cat_info = categories[cat_id]
             html += f"""            <div class="category-section" data-category="{cat_id}">
@@ -1137,7 +1137,7 @@ uv run python server.py --port &lt;port&gt;</div>
 """
         # 从配置文件获取类别图标映射
         category_icons = {}
-        for cat_id, cat_info in categories.items():
+        for cat_id, cat_info in sorted(categories.items()):
             category_icons[cat_id] = cat_info.get('icon', '📦')
         
         # 只展示前5名贡献者
