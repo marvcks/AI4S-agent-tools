@@ -51,6 +51,16 @@ def generate_tool_config(tool_dir: Path) -> Optional[Dict[str, Any]]:
     
     tool_name = metadata.get("name", tool_dir.name)
     
+    # Check transport support
+    transport = metadata.get("transport", ["sse", "stdio"])
+    if isinstance(transport, str):
+        transport = [transport]
+    
+    # Only generate stdio config if stdio is supported
+    if "stdio" not in transport:
+        print(f"  Skipping stdio config for {tool_name} (only supports {transport})")
+        return None
+    
     # Find the server script
     server_script = find_server_script(tool_dir)
     if not server_script:
@@ -94,7 +104,8 @@ def generate_tool_config(tool_dir: Path) -> Optional[Dict[str, Any]]:
         "name": metadata.get("name", tool_name),
         "description": metadata.get("description", ""),
         "author": metadata.get("author", ""),
-        "category": metadata.get("category", "general")
+        "category": metadata.get("category", "general"),
+        "transport": transport
     }
     
     return config
@@ -119,11 +130,17 @@ def generate_all_configs(servers_dir: Path) -> Dict[str, Path]:
         
         print(f"Processing {tool_dir.name}...")
         
+        # Check if mcp-config.json already exists
+        config_path = tool_dir / "mcp-config.json"
+        if config_path.exists():
+            print(f"  ✓ Using existing {config_path}")
+            generated_configs[tool_dir.name] = config_path
+            continue
+        
         # Generate configuration
         config = generate_tool_config(tool_dir)
         if config:
             # Write configuration to the tool directory
-            config_path = tool_dir / "mcp-config.json"
             with open(config_path, 'w', encoding='utf-8') as f:
                 json.dump(config, f, indent=2, ensure_ascii=False)
             
