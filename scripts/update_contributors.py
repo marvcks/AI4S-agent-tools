@@ -24,7 +24,7 @@ def get_tool_authors_with_details() -> Dict[str, Dict]:
     else:
         # 如果 tools.json 不存在，从 metadata 文件构建
         tools_data = {"tools": []}
-        for server_path in servers_dir.iterdir():
+        for server_path in sorted(servers_dir.iterdir()):
             if server_path.is_dir() and not server_path.name.startswith('_'):
                 metadata_path = server_path / "metadata.json"
                 if metadata_path.exists():
@@ -56,11 +56,11 @@ def get_tool_authors_with_details() -> Dict[str, Dict]:
     result = {}
     for author, info in author_info.items():
         result[author] = {
-            'collections': info['collections'],
+            'collections': sorted(info['collections']),  # Sort collections alphabetically
             'collections_count': len(info['collections']),
-            'tools': info['tools'],
+            'tools': sorted(info['tools']),  # Sort tools alphabetically
             'tools_count': len(info['tools']),
-            'categories': list(info['categories'])
+            'categories': sorted(list(info['categories']))  # Sort categories alphabetically
         }
     
     return result

@@ -134,6 +134,12 @@ def scan_server_directory(server_dir: Path) -> Optional[Dict[str, Any]]:
     # Add path information
     metadata['path'] = f"servers/{server_dir.name}"
     
+    # Extract transport support (default to both)
+    transport = metadata.get('transport', ['sse', 'stdio'])
+    if isinstance(transport, str):
+        transport = [transport]
+    metadata['transport'] = transport
+    
     # Enhance with pyproject.toml data
     pyproject_data = read_pyproject_toml(server_dir)
     
@@ -146,10 +152,16 @@ def scan_server_directory(server_dir: Path) -> Optional[Dict[str, Any]]:
     metadata.setdefault('description', f"{server_dir.name} MCP server")
     metadata.setdefault('author', '@unknown')
     
-    # Generate start command based on whether server.py exists
+    # Generate start command based on transport support and server.py existence
     server_py_path = server_dir / "server.py"
     if server_py_path.exists():
-        metadata['start_command'] = f"cd {metadata['path']} && python server.py --port <PORT>"
+        # Generate commands based on transport support
+        commands = []
+        if 'sse' in metadata['transport']:
+            commands.append(f"# SSE mode\ncd {metadata['path']} && python server.py --port <PORT>")
+        if 'stdio' in metadata['transport']:
+            commands.append(f"# stdio mode\ncd {metadata['path']} && MCP_TRANSPORT=stdio python server.py")
+        metadata['start_command'] = '\n'.join(commands) if commands else "See README for details"
     else:
         # For closed-source or external tools without server.py
         metadata['start_command'] = "See README for details"
@@ -249,13 +261,16 @@ def generate_tools_json(root_dir: Path) -> Dict[str, Any]:
             if tools_from_code:
                 logger.info(f"    Tools from code scanning: {tools_from_code}")
     
-    # Sort tools by name
-    tools.sort(key=lambda x: x['name'])
+    # Sort tools by name (case-insensitive)
+    tools.sort(key=lambda x: x['name'].lower())
+    
+    # Sort categories for consistent output
+    sorted_categories = dict(sorted(categories_config["categories"].items()))
     
     return {
         "version": "1.0.0",
         "description": "AI4S Agent Tools Registry - A collection of MCP servers for scientific computing",
-        "categories": categories_config["categories"],
+        "categories": sorted_categories,
         "tools": tools
     }
 
