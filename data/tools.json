@@ -92,6 +92,10 @@
         "abacus_cal_band",
         "abacus_modify_stru",
         "abacus_dos_run",
+        "abacus_modify_stru",
+        "abacus_cal_elastic",
+        "abacus_prepare",
+        "abacus_cal_band",
         "abacus_prepare_inputs_from_relax_results",
         "generate_bulk_structure",
         "abacus_do_relax",
@@ -117,9 +121,9 @@
       "start_command": "# SSE mode\ncd servers/catalysis && python server.py --port <PORT>\n# stdio mode\ncd servers/catalysis && MCP_TRANSPORT=stdio python server.py",
       "install_command": "cd servers/catalysis && uv sync",
       "tools": [
-        "cal_ads_energy",
+        "cal_surface_energy",
         "cal_vacancy_formation_energy",
-        "cal_surface_energy"
+        "cal_ads_energy"
       ]
     },
     {
@@ -227,8 +231,8 @@
       "author": "@Junshang Zhang",
       "category": "research",
       "tools": [
-        "HEA_data_extract",
-        "search_paper"
+        "search_paper",
+        "HEA_data_extract"
       ],
       "path": "servers/HEA_paper_extract",
       "transport": [
@@ -276,8 +280,8 @@
       "author": "marvcks",
       "category": "chemistry",
       "tools": [
-        "run_orca_calculation",
-        "retrieve_content_from_orca_output"
+        "retrieve_content_from_orca_output",
+        "run_orca_calculation"
       ],
       "path": "servers/ORCA_tools",
       "transport": [
@@ -293,8 +297,8 @@
       "author": "@lhhhappy",
       "category": "research",
       "tools": [
-        "search_papers",
-        "extract_info"
+        "extract_info",
+        "search_papers"
       ],
       "path": "servers/Paper_Search",
       "transport": [
