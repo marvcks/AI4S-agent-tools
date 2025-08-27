@@ -59,6 +59,17 @@
       ]
     },
     {
+      "author": "@lhappy",
+      "collections": [
+        "dna_sequence_analyzer"
+      ],
+      "collections_count": 1,
+      "tools_count": 3,
+      "categories": [
+        "biology"
+      ]
+    },
+    {
       "author": "@Junshang Zhang",
       "collections": [
         "HEA_extractTool",
@@ -151,7 +162,7 @@
       ]
     }
   ],
-  "total_contributors": 13,
-  "total_collections": 18,
-  "total_tools": 72
+  "total_contributors": 14,
+  "total_collections": 19,
+  "total_tools": 75
 }

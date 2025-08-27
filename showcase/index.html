@@ -899,7 +899,7 @@
                         <div class="stat-label">Tools</div>
                     </div>
                     <div class="stat">
-                        <div class="stat-value">13</div>
+                        <div class="stat-value">14</div>
                         <div class="stat-label">Contributors</div>
                     </div>
                 </div>
@@ -1032,9 +1032,9 @@ uv run python server.py --port &lt;port&gt;</div>
                         </div>
                         <p class="tool-description">Catalysis reaction calculations based on ADSEC workflow</p>
                         <div class="tool-features">
-                            <span class="tool-feature">cal_vacancy_formation_energy</span>
-                            <span class="tool-feature">cal_surface_energy</span>
                             <span class="tool-feature">cal_ads_energy</span>
+                            <span class="tool-feature">cal_surface_energy</span>
+                            <span class="tool-feature">cal_vacancy_formation_energy</span>
                         </div>
                     </div>
                     <div class="tool-card" onclick="showToolDetails('orca_tools')">
@@ -1048,8 +1048,8 @@ uv run python server.py --port &lt;port&gt;</div>
                         </div>
                         <p class="tool-description">运行 ORCA 计算。</p>
                         <div class="tool-features">
-                            <span class="tool-feature">run_orca_calculation</span>
                             <span class="tool-feature">retrieve_content_from_orca_output</span>
+                            <span class="tool-feature">run_orca_calculation</span>
                         </div>
                     </div>
                     <div class="tool-card" onclick="showToolDetails('pubchem')">
@@ -1063,8 +1063,8 @@ uv run python server.py --port &lt;port&gt;</div>
                         </div>
                         <p class="tool-description">PubChem compound data retrieval</p>
                         <div class="tool-features">
-                            <span class="tool-feature">get_pubchem_data</span>
                             <span class="tool-feature">download_structure</span>
+                            <span class="tool-feature">get_pubchem_data</span>
                         </div>
                     </div>
                 </div>
@@ -1100,8 +1100,8 @@ uv run python server.py --port &lt;port&gt;</div>
                         <p class="tool-description">Plot perovskite literature data</p>
                         <div class="tool-features">
                             <span class="tool-feature">plot_pce_vs_time_from_excel</span>
-                            <span class="tool-feature">plot_structure_count_vs_time</span>
                             <span class="tool-feature">plot_solar_cell_structure_vs_time</span>
+                            <span class="tool-feature">plot_structure_count_vs_time</span>
                         </div>
                     </div>
                 </div>
@@ -1143,9 +1143,9 @@ uv run python server.py --port &lt;port&gt;</div>
                         </div>
                         <p class="tool-description">First principles calculations bridge for AI models - ABACUS computational jobs</p>
                         <div class="tool-features">
-                            <span class="tool-feature">generate_bulk_structure</span>
-                            <span class="tool-feature">abacus_modify_input</span>
-                            <span class="tool-feature">generate_deeptb_config</span>
+                            <span class="tool-feature">abacus_badercharge_run</span>
+                            <span class="tool-feature">abacus_cal_band</span>
+                            <span class="tool-feature">abacus_cal_elastic</span>
                             <span class="tool-count">+10 more</span>
                         </div>
                     </div>
@@ -1174,9 +1174,9 @@ uv run python server.py --port &lt;port&gt;</div>
                         </div>
                         <p class="tool-description">Deep Potential Agent for atomistic simulation</p>
                         <div class="tool-features">
-                            <span class="tool-feature">optimize_crystal_structure</span>
-                            <span class="tool-feature">run_neb</span>
-                            <span class="tool-feature">calculate_phonon</span>
+                            <span class="tool-feature">build_bulk_structure</span>
+                            <span class="tool-feature">build_molecule_structure</span>
+                            <span class="tool-feature">build_surface_adsorbate</span>
                             <span class="tool-count">+8 more</span>
                         </div>
                     </div>
@@ -1191,9 +1191,9 @@ uv run python server.py --port &lt;port&gt;</div>
                         </div>
                         <p class="tool-description">A Server for DP model training/finetuning/inference and dataset manipulation.</p>
                         <div class="tool-features">
-                            <span class="tool-feature">infer_dp_model</span>
                             <span class="tool-feature">downsample_dataset</span>
-                            <span class="tool-feature">stat_efv</span>
+                            <span class="tool-feature">evaluate_error</span>
+                            <span class="tool-feature">filter_outliers</span>
                             <span class="tool-count">+6 more</span>
                         </div>
                     </div>
@@ -1208,8 +1208,8 @@ uv run python server.py --port &lt;port&gt;</div>
                         </div>
                         <p class="tool-description">Generate structures with ASE, CALYPSO, and CrystalFormer</p>
                         <div class="tool-features">
-                            <span class="tool-feature">generate_crystalformer_structures</span>
-                            <span class="tool-feature">build_surface_adsorbate</span>
+                            <span class="tool-feature">add_cell_for_molecules</span>
+                            <span class="tool-feature">build_bulk_structure</span>
                             <span class="tool-feature">build_molecule_structure</span>
                             <span class="tool-count">+6 more</span>
                         </div>
@@ -1225,9 +1225,9 @@ uv run python server.py --port &lt;port&gt;</div>
                         </div>
                         <p class="tool-description">Superconductor critical temperature prediction</p>
                         <div class="tool-features">
-                            <span class="tool-feature">generate_crystalformer_structures</span>
                             <span class="tool-feature">calculate_enthalpy</span>
                             <span class="tool-feature">generate_calypso_structure</span>
+                            <span class="tool-feature">generate_crystalformer_structures</span>
                             <span class="tool-count">+1 more</span>
                         </div>
                     </div>
@@ -1242,9 +1242,9 @@ uv run python server.py --port &lt;port&gt;</div>
                         </div>
                         <p class="tool-description">Thermoelectric materials screening with CALYPSO</p>
                         <div class="tool-features">
-                            <span class="tool-feature">generate_crystalformer_structures</span>
-                            <span class="tool-feature">screen_thermoelectric_candidate</span>
                             <span class="tool-feature">calculate_enthalpy</span>
+                            <span class="tool-feature">generate_calypso_structures</span>
+                            <span class="tool-feature">generate_crystalformer_structures</span>
                             <span class="tool-count">+2 more</span>
                         </div>
                     </div>
@@ -1259,8 +1259,8 @@ uv run python server.py --port &lt;port&gt;</div>
                         </div>
                         <p class="tool-description">DeepMD documentation RAG server</p>
                         <div class="tool-features">
-                            <span class="tool-feature">upload_single_file_to_deepmd_knowledge_base</span>
                             <span class="tool-feature">deepmd-docs-workflow</span>
+                            <span class="tool-feature">upload_single_file_to_deepmd_knowledge_base</span>
                         </div>
                     </div>
                     <div class="tool-card" onclick="showToolDetails('matbench_property_prediction')">
@@ -1331,8 +1331,8 @@ uv run python server.py --port &lt;port&gt;</div>
                         </div>
                         <p class="tool-description">Scientific literature search tool for arXiv papers</p>
                         <div class="tool-features">
-                            <span class="tool-feature">search_papers</span>
                             <span class="tool-feature">extract_info</span>
+                            <span class="tool-feature">search_papers</span>
                         </div>
                     </div>
                 </div>
@@ -1491,23 +1491,22 @@ uv run python server.py --port &lt;port&gt;</div>
                         </div>
                     </div>
                 </a>
-                <a href="https://github.com/Junshang Zhang" target="_blank" class="contributor-card">
+                <a href="https://github.com/lhappy" target="_blank" class="contributor-card">
                     
                     <div class="contributor-header">
                         <div class="contributor-avatar">
-                            <img src="https://github.com/Junshang Zhang.png?size=100" alt="@Junshang Zhang" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"><div style="display:none; width:100%; height:100%; align-items:center; justify-content:center; color:white; font-weight:bold; font-size:1.2rem;">JU</div>
+                            <img src="https://github.com/lhappy.png?size=100" alt="@lhappy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"><div style="display:none; width:100%; height:100%; align-items:center; justify-content:center; color:white; font-weight:bold; font-size:1.2rem;">LH</div>
                         </div>
                         <div class="contributor-info">
-                            <div class="contributor-name">@Junshang Zhang</div>
+                            <div class="contributor-name">@lhappy</div>
                             <div class="contributor-categories">
-                                <span class="contributor-category">🤖 machine-learning</span>
-                                <span class="contributor-category">📚 research</span>
+                                <span class="contributor-category">🧬 biology</span>
                             </div>
                         </div>
                     </div>
                     <div class="contributor-stats">
                         <div class="contributor-stat">
-                            <div class="contributor-stat-value">2</div>
+                            <div class="contributor-stat-value">1</div>
                             <div class="contributor-stat-label">Collections</div>
                         </div>
                         <div class="contributor-stat">
@@ -1517,7 +1516,7 @@ uv run python server.py --port &lt;port&gt;</div>
                     </div>
                 </a>
                 <div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: var(--text-light); font-style: italic;">
-                    <p style="font-size: 1.1rem;">and 7 more contributors...</p>
+                    <p style="font-size: 1.1rem;">and 8 more contributors...</p>
                     <a href="https://github.com/deepmodeling/AI4S-agent-tools/blob/main/data/CONTRIBUTORS.md" style="color: var(--primary); text-decoration: none; font-weight: 500;">View all contributors →</a>
                 </div>
                 </div>
@@ -1547,7 +1546,7 @@ uv run python server.py --port &lt;port&gt;</div>
     </div>
     
     <script>
-        const toolsData = [{"name": "ABACUS", "description": "First principles calculations bridge for AI models - ABACUS computational jobs", "author": "@ahxbcn", "category": "materials", "path": "servers/ABACUS-tools", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/ABACUS-tools && python server.py --port <PORT>\n# stdio mode\ncd servers/ABACUS-tools && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/ABACUS-tools && uv sync", "tools": ["generate_bulk_structure", "abacus_modify_input", "generate_deeptb_config", "run_abacus_onejob", "abacus_do_relax", "abacus_modify_stru", "abacus_prepare", "abacus_dos_run", "abacus_cal_band", "abacus_collect_data", "abacus_cal_elastic", "abacus_prepare_inputs_from_relax_results", "abacus_badercharge_run"]}, {"name": "CatalysisMCP", "description": "Catalysis reaction calculations based on ADSEC workflow", "author": "@Rasic2", "category": "chemistry", "path": "servers/catalysis", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/catalysis && python server.py --port <PORT>\n# stdio mode\ncd servers/catalysis && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/catalysis && uv sync", "tools": ["cal_vacancy_formation_energy", "cal_surface_energy", "cal_ads_energy"]}, {"name": "CompositionDART", "description": "Composition Optimization via DPA-based Adaptive Refinement Targeting (DART) for materials discovery.", "author": "@SchrodingersCattt", "category": "materials", "path": "servers/CompositionDART", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/CompositionDART && python server.py --port <PORT>\n# stdio mode\ncd servers/CompositionDART && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/CompositionDART && uv sync", "tools": ["run_ga"]}, {"name": "data_analysis", "description": "A simplified tool for data analysis", "author": "@nlz25", "category": "data", "tools": ["analyze_csv_data"], "path": "servers/data_analysis", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/data_analysis && python server.py --port <PORT>\n# stdio mode\ncd servers/data_analysis && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/data_analysis && uv sync"}, {"name": "deepmd_docs_rag", "description": "DeepMD documentation RAG server", "author": "@felix5572", "category": "materials", "tools": ["upload_single_file_to_deepmd_knowledge_base", "deepmd-docs-workflow"], "path": "servers/deepmd_docs_rag", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/deepmd_docs_rag && python server.py --port <PORT>\n# stdio mode\ncd servers/deepmd_docs_rag && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/deepmd_docs_rag && uv sync"}, {"name": "dna_sequence_analyzer", "description": "DNA\u5e8f\u5217\u57fa\u7840\u5206\u6790\u5de5\u5177\uff0c\u5305\u542b\u957f\u5ea6\u7edf\u8ba1\u3001\u78b1\u57fa\u8ba1\u6570\u3001GC\u542b\u91cf\u8ba1\u7b97\u3001\u53cd\u5411\u4e92\u8865\u5e8f\u5217\u751f\u6210\u548c\u9057\u4f20\u5bc6\u7801\u7ffb\u8bd1\u529f\u80fd\u3002\u652f\u6301\u6807\u51c6\u9057\u4f20\u5bc6\u7801\u8868\uff0c\u53ef\u9009\u62e9\u9047\u5230\u7ec8\u6b62\u5b50\u505c\u6b62\u7ffb\u8bd1\u3002", "author": "@lhappy", "category": "biology", "transport": ["sse", "stdio"], "tools": ["analyze_dna_sequence", "reverse_complement", "translate_dna"], "path": "servers/dna_sequence_analyzer", "start_command": "# SSE mode\ncd servers/dna_sequence_analyzer && python server.py --port <PORT>\n# stdio mode\ncd servers/dna_sequence_analyzer && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/dna_sequence_analyzer && uv sync"}, {"name": "DPACalculatorServer", "description": "Deep Potential Agent for atomistic simulation", "author": "@SchrodingersCattt", "category": "materials", "path": "servers/DPACalculator", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/DPACalculator && python server.py --port <PORT>\n# stdio mode\ncd servers/DPACalculator && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/DPACalculator && uv sync", "tools": ["optimize_crystal_structure", "run_neb", "calculate_phonon", "build_molecule_structure", "build_surface_adsorbate", "build_surface_interface", "calculate_elastic_constants", "make_supercell_structure", "run_molecular_dynamics", "build_surface_slab", "build_bulk_structure"]}, {"name": "DPComboServer", "description": "A Server for DP model training/finetuning/inference and dataset manipulation.", "author": "@SchrodingersCattt", "category": "materials", "path": "servers/DPCombo", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/DPCombo && python server.py --port <PORT>\n# stdio mode\ncd servers/DPCombo && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/DPCombo && uv sync", "tools": ["infer_dp_model", "downsample_dataset", "stat_efv", "stat_af", "evaluate_error", "train_dp_model", "identify_mixedtype", "filter_outliers", "parse_dpdata"]}, {"name": "HEA_extractTool", "description": "extract structural data of HEA materials from searched or given publications", "author": "@Junshang Zhang", "category": "research", "tools": ["HEA_data_extract", "search_paper"], "path": "servers/HEA_paper_extract", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/HEA_paper_extract && python server.py --port <PORT>\n# stdio mode\ncd servers/HEA_paper_extract && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/HEA_paper_extract && uv sync"}, {"name": "HEA_predictTool", "description": "predict the crystal structure of a type of high entropy alloy", "author": "@Junshang Zhang", "category": "machine-learning", "tools": ["HEA_predictor"], "path": "servers/HEA_predict", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/HEA_predict && python server.py --port <PORT>\n# stdio mode\ncd servers/HEA_predict && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/HEA_predict && uv sync"}, {"name": "matbench_property_prediction", "description": "Predict matbench properties using deep potential models", "author": "2043899742@qq.com", "category": "materials", "tools": ["predict_matbench_properties"], "path": "servers/matbench_property_prediction", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/matbench_property_prediction && python server.py --port <PORT>\n# stdio mode\ncd servers/matbench_property_prediction && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/matbench_property_prediction && uv sync"}, {"name": "orca_tools", "description": "\u8fd0\u884c ORCA \u8ba1\u7b97\u3002", "author": "marvcks", "category": "chemistry", "tools": ["run_orca_calculation", "retrieve_content_from_orca_output"], "path": "servers/ORCA_tools", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/ORCA_tools && python server.py --port <PORT>\n# stdio mode\ncd servers/ORCA_tools && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/ORCA_tools && uv sync"}, {"name": "paper_search", "description": "Scientific literature search tool for arXiv papers", "author": "@lhhhappy", "category": "research", "tools": ["search_papers", "extract_info"], "path": "servers/Paper_Search", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/Paper_Search && python server.py --port <PORT>\n# stdio mode\ncd servers/Paper_Search && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/Paper_Search && uv sync"}, {"name": "perovskite_literature_plot", "description": "Plot perovskite literature data", "author": "Haoming Yan", "category": "data", "tools": ["plot_pce_vs_time_from_excel", "plot_structure_count_vs_time", "plot_solar_cell_structure_vs_time"], "path": "servers/perovskite_literature_plot", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/perovskite_literature_plot && python server.py --port <PORT>\n# stdio mode\ncd servers/perovskite_literature_plot && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/perovskite_literature_plot && uv sync"}, {"name": "pubchem", "description": "PubChem compound data retrieval", "author": "@PhelanShao", "category": "chemistry", "path": "servers/pubchem", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/pubchem && python server.py --port <PORT>\n# stdio mode\ncd servers/pubchem && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/pubchem && uv sync", "tools": ["get_pubchem_data", "download_structure"]}, {"name": "PYSR-Symbolic-Regression", "description": "PYSR-Symbolic-Regression", "author": "@lhhhappy", "category": "physics", "tools": ["symbolic_regression"], "path": "servers/Symbolic_regression", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/Symbolic_regression && python server.py --port <PORT>\n# stdio mode\ncd servers/Symbolic_regression && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/Symbolic_regression && uv sync"}, {"name": "StructureGenerateServer", "description": "Generate structures with ASE, CALYPSO, and CrystalFormer", "author": "@A-LOST-WAPITI", "category": "materials", "tools": ["generate_crystalformer_structures", "build_surface_adsorbate", "build_molecule_structure", "build_surface_interface", "generate_calypso_structures", "make_supercell_structure", "build_surface_slab", "add_cell_for_molecules", "build_bulk_structure"], "path": "servers/structure_generate", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/structure_generate && python server.py --port <PORT>\n# stdio mode\ncd servers/structure_generate && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/structure_generate && uv sync"}, {"name": "SuperconductorServer", "description": "Superconductor critical temperature prediction", "author": "@liuyuxiang92", "category": "materials", "path": "servers/superconductor", "transport": ["sse", "stdio"], "start_command": "See README for details", "install_command": "Contact @liuyuxiang92 for access", "tools": ["generate_crystalformer_structures", "calculate_enthalpy", "generate_calypso_structure", "predict_superconductor_Tc"]}, {"name": "ThermoelectricMaterialsServer", "description": "Thermoelectric materials screening with CALYPSO", "author": "@liuyuxiang92", "category": "materials", "path": "servers/thermoelectric", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/thermoelectric && python server.py --port <PORT>\n# stdio mode\ncd servers/thermoelectric && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/thermoelectric && uv sync", "tools": ["generate_crystalformer_structures", "screen_thermoelectric_candidate", "calculate_enthalpy", "generate_calypso_structures", "predict_thermoelectric_properties"]}];
+        const toolsData = [{"name": "ABACUS", "description": "First principles calculations bridge for AI models - ABACUS computational jobs", "author": "@ahxbcn", "category": "materials", "path": "servers/ABACUS-tools", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/ABACUS-tools && python server.py --port <PORT>\n# stdio mode\ncd servers/ABACUS-tools && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/ABACUS-tools && uv sync", "tools": ["abacus_badercharge_run", "abacus_cal_band", "abacus_cal_elastic", "abacus_collect_data", "abacus_do_relax", "abacus_dos_run", "abacus_modify_input", "abacus_modify_stru", "abacus_prepare", "abacus_prepare_inputs_from_relax_results", "generate_bulk_structure", "generate_deeptb_config", "run_abacus_onejob"]}, {"name": "CatalysisMCP", "description": "Catalysis reaction calculations based on ADSEC workflow", "author": "@Rasic2", "category": "chemistry", "path": "servers/catalysis", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/catalysis && python server.py --port <PORT>\n# stdio mode\ncd servers/catalysis && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/catalysis && uv sync", "tools": ["cal_ads_energy", "cal_surface_energy", "cal_vacancy_formation_energy"]}, {"name": "CompositionDART", "description": "Composition Optimization via DPA-based Adaptive Refinement Targeting (DART) for materials discovery.", "author": "@SchrodingersCattt", "category": "materials", "path": "servers/CompositionDART", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/CompositionDART && python server.py --port <PORT>\n# stdio mode\ncd servers/CompositionDART && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/CompositionDART && uv sync", "tools": ["run_ga"]}, {"name": "data_analysis", "description": "A simplified tool for data analysis", "author": "@nlz25", "category": "data", "tools": ["analyze_csv_data"], "path": "servers/data_analysis", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/data_analysis && python server.py --port <PORT>\n# stdio mode\ncd servers/data_analysis && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/data_analysis && uv sync"}, {"name": "deepmd_docs_rag", "description": "DeepMD documentation RAG server", "author": "@felix5572", "category": "materials", "tools": ["deepmd-docs-workflow", "upload_single_file_to_deepmd_knowledge_base"], "path": "servers/deepmd_docs_rag", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/deepmd_docs_rag && python server.py --port <PORT>\n# stdio mode\ncd servers/deepmd_docs_rag && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/deepmd_docs_rag && uv sync"}, {"name": "dna_sequence_analyzer", "description": "DNA\u5e8f\u5217\u57fa\u7840\u5206\u6790\u5de5\u5177\uff0c\u5305\u542b\u957f\u5ea6\u7edf\u8ba1\u3001\u78b1\u57fa\u8ba1\u6570\u3001GC\u542b\u91cf\u8ba1\u7b97\u3001\u53cd\u5411\u4e92\u8865\u5e8f\u5217\u751f\u6210\u548c\u9057\u4f20\u5bc6\u7801\u7ffb\u8bd1\u529f\u80fd\u3002\u652f\u6301\u6807\u51c6\u9057\u4f20\u5bc6\u7801\u8868\uff0c\u53ef\u9009\u62e9\u9047\u5230\u7ec8\u6b62\u5b50\u505c\u6b62\u7ffb\u8bd1\u3002", "author": "@lhappy", "category": "biology", "transport": ["sse", "stdio"], "tools": ["analyze_dna_sequence", "reverse_complement", "translate_dna"], "path": "servers/dna_sequence_analyzer", "start_command": "# SSE mode\ncd servers/dna_sequence_analyzer && python server.py --port <PORT>\n# stdio mode\ncd servers/dna_sequence_analyzer && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/dna_sequence_analyzer && uv sync"}, {"name": "DPACalculatorServer", "description": "Deep Potential Agent for atomistic simulation", "author": "@SchrodingersCattt", "category": "materials", "path": "servers/DPACalculator", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/DPACalculator && python server.py --port <PORT>\n# stdio mode\ncd servers/DPACalculator && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/DPACalculator && uv sync", "tools": ["build_bulk_structure", "build_molecule_structure", "build_surface_adsorbate", "build_surface_interface", "build_surface_slab", "calculate_elastic_constants", "calculate_phonon", "make_supercell_structure", "optimize_crystal_structure", "run_molecular_dynamics", "run_neb"]}, {"name": "DPComboServer", "description": "A Server for DP model training/finetuning/inference and dataset manipulation.", "author": "@SchrodingersCattt", "category": "materials", "path": "servers/DPCombo", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/DPCombo && python server.py --port <PORT>\n# stdio mode\ncd servers/DPCombo && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/DPCombo && uv sync", "tools": ["downsample_dataset", "evaluate_error", "filter_outliers", "identify_mixedtype", "infer_dp_model", "parse_dpdata", "stat_af", "stat_efv", "train_dp_model"]}, {"name": "HEA_extractTool", "description": "extract structural data of HEA materials from searched or given publications", "author": "@Junshang Zhang", "category": "research", "tools": ["HEA_data_extract", "search_paper"], "path": "servers/HEA_paper_extract", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/HEA_paper_extract && python server.py --port <PORT>\n# stdio mode\ncd servers/HEA_paper_extract && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/HEA_paper_extract && uv sync"}, {"name": "HEA_predictTool", "description": "predict the crystal structure of a type of high entropy alloy", "author": "@Junshang Zhang", "category": "machine-learning", "tools": ["HEA_predictor"], "path": "servers/HEA_predict", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/HEA_predict && python server.py --port <PORT>\n# stdio mode\ncd servers/HEA_predict && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/HEA_predict && uv sync"}, {"name": "matbench_property_prediction", "description": "Predict matbench properties using deep potential models", "author": "2043899742@qq.com", "category": "materials", "tools": ["predict_matbench_properties"], "path": "servers/matbench_property_prediction", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/matbench_property_prediction && python server.py --port <PORT>\n# stdio mode\ncd servers/matbench_property_prediction && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/matbench_property_prediction && uv sync"}, {"name": "orca_tools", "description": "\u8fd0\u884c ORCA \u8ba1\u7b97\u3002", "author": "marvcks", "category": "chemistry", "tools": ["retrieve_content_from_orca_output", "run_orca_calculation"], "path": "servers/ORCA_tools", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/ORCA_tools && python server.py --port <PORT>\n# stdio mode\ncd servers/ORCA_tools && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/ORCA_tools && uv sync"}, {"name": "paper_search", "description": "Scientific literature search tool for arXiv papers", "author": "@lhhhappy", "category": "research", "tools": ["extract_info", "search_papers"], "path": "servers/Paper_Search", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/Paper_Search && python server.py --port <PORT>\n# stdio mode\ncd servers/Paper_Search && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/Paper_Search && uv sync"}, {"name": "perovskite_literature_plot", "description": "Plot perovskite literature data", "author": "Haoming Yan", "category": "data", "tools": ["plot_pce_vs_time_from_excel", "plot_solar_cell_structure_vs_time", "plot_structure_count_vs_time"], "path": "servers/perovskite_literature_plot", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/perovskite_literature_plot && python server.py --port <PORT>\n# stdio mode\ncd servers/perovskite_literature_plot && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/perovskite_literature_plot && uv sync"}, {"name": "pubchem", "description": "PubChem compound data retrieval", "author": "@PhelanShao", "category": "chemistry", "path": "servers/pubchem", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/pubchem && python server.py --port <PORT>\n# stdio mode\ncd servers/pubchem && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/pubchem && uv sync", "tools": ["download_structure", "get_pubchem_data"]}, {"name": "PYSR-Symbolic-Regression", "description": "PYSR-Symbolic-Regression", "author": "@lhhhappy", "category": "physics", "tools": ["symbolic_regression"], "path": "servers/Symbolic_regression", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/Symbolic_regression && python server.py --port <PORT>\n# stdio mode\ncd servers/Symbolic_regression && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/Symbolic_regression && uv sync"}, {"name": "StructureGenerateServer", "description": "Generate structures with ASE, CALYPSO, and CrystalFormer", "author": "@A-LOST-WAPITI", "category": "materials", "tools": ["add_cell_for_molecules", "build_bulk_structure", "build_molecule_structure", "build_surface_adsorbate", "build_surface_interface", "build_surface_slab", "generate_calypso_structures", "generate_crystalformer_structures", "make_supercell_structure"], "path": "servers/structure_generate", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/structure_generate && python server.py --port <PORT>\n# stdio mode\ncd servers/structure_generate && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/structure_generate && uv sync"}, {"name": "SuperconductorServer", "description": "Superconductor critical temperature prediction", "author": "@liuyuxiang92", "category": "materials", "path": "servers/superconductor", "transport": ["sse", "stdio"], "start_command": "See README for details", "install_command": "Contact @liuyuxiang92 for access", "tools": ["calculate_enthalpy", "generate_calypso_structure", "generate_crystalformer_structures", "predict_superconductor_Tc"]}, {"name": "ThermoelectricMaterialsServer", "description": "Thermoelectric materials screening with CALYPSO", "author": "@liuyuxiang92", "category": "materials", "path": "servers/thermoelectric", "transport": ["sse", "stdio"], "start_command": "# SSE mode\ncd servers/thermoelectric && python server.py --port <PORT>\n# stdio mode\ncd servers/thermoelectric && MCP_TRANSPORT=stdio python server.py", "install_command": "cd servers/thermoelectric && uv sync", "tools": ["calculate_enthalpy", "generate_calypso_structures", "generate_crystalformer_structures", "predict_thermoelectric_properties", "screen_thermoelectric_candidate"]}];
         
         // Theme toggle functionality
         function toggleTheme() {{

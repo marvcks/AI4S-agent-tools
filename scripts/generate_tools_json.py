@@ -111,7 +111,8 @@ def extract_tools_from_server(server_dir: Path) -> List[str]:
         except Exception as e:
             logger.debug(f"Failed to parse {py_file}: {e}")
     
-    return list(set(tools))  # Remove duplicates
+    # Remove duplicates and sort for consistent output
+    return sorted(list(set(tools)))
 
 
 def scan_server_directory(server_dir: Path) -> Optional[Dict[str, Any]]:
@@ -237,8 +238,8 @@ def generate_tools_json(root_dir: Path) -> Dict[str, Any]:
             if isinstance(tools_from_metadata, str):
                 tools_from_metadata = [tools_from_metadata]
             
-            # Combine tools from both sources (union)
-            all_tools = list(set(tools_from_code + tools_from_metadata))
+            # Combine tools from both sources (union) and sort for consistent output
+            all_tools = sorted(list(set(tools_from_code + tools_from_metadata)))
             metadata['tools'] = all_tools
             
             # Use category from decorator if available, otherwise auto-categorize
