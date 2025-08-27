@@ -1,0 +1,15 @@
+{
+  "name": "dna_sequence_analyzer",
+  "description": "DNA序列基础分析工具，包含长度统计、碱基计数、GC含量计算、反向互补序列生成和遗传密码翻译功能。支持标准遗传密码表，可选择遇到终止子停止翻译。",
+  "author": "@lhappy",
+  "category": "biology",
+  "transport": [
+    "sse",
+    "stdio"
+  ],
+  "tools": [
+    "analyze_dna_sequence",
+    "reverse_complement",
+    "translate_dna"
+  ]
+}

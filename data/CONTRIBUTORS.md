@@ -11,6 +11,7 @@ Thank you to all our contributors! 🎉
 | **[@A-LOST-WAPITI](https://github.com/A-LOST-WAPITI)** | 1 (StructureGenerateServer) | 9 | materials |
 | **[@liuyuxiang92](https://github.com/liuyuxiang92)** | 2 (SuperconductorServer, ThermoelectricMaterialsServer) | 9 | materials |
 | **[@Rasic2](https://github.com/Rasic2)** | 1 (CatalysisMCP) | 3 | chemistry |
+| **[@lhappy](https://github.com/lhappy)** | 1 (dna_sequence_analyzer) | 3 | biology |
 | **[@Junshang Zhang](https://github.com/Junshang Zhang)** | 2 (HEA_extractTool, HEA_predictTool) | 3 | machine-learning, research |
 | **[@lhhhappy](https://github.com/lhhhappy)** | 2 (PYSR-Symbolic-Regression, paper_search) | 3 | physics, research |
 | **Haoming Yan** | 1 (perovskite_literature_plot) | 3 | data |
@@ -23,9 +24,9 @@ Thank you to all our contributors! 🎉
 
 ## Stats
 
-- **Contributors**: 13
-- **Total Collections**: 18
-- **Total Tools**: 72
+- **Contributors**: 14
+- **Total Collections**: 19
+- **Total Tools**: 75
 
 ## How to Contribute
 

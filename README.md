@@ -59,6 +59,27 @@ uv sync
 python server.py --port 50002
 ```
 
+### 🆕 AI-Powered Tool Generator (Beta)
+
+Generate MCP tools automatically through conversational AI:
+
+```bash
+# Configure environment variable (create .env file)
+
+# Run the interactive tool generator
+adk web
+
+# Follow the conversational prompts to create your tool
+```
+
+The MCP Agent will guide you through creating a fully-configured MCP server that follows all project standards. This beta feature uses AI to:
+- Collect your tool requirements through friendly dialogue
+- Generate complete server code with proper error handling
+- Create all necessary configuration files (metadata.json, pyproject.toml)
+- Ensure compliance with project standards
+
+See [mcp-agent/README.md](mcp-agent/README.md) for more details.
+
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the complete guide.
 
 ## 🏗️ Architecture
