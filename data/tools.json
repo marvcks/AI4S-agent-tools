@@ -89,19 +89,19 @@
       "start_command": "# SSE mode\ncd servers/ABACUS-tools && python server.py --port <PORT>\n# stdio mode\ncd servers/ABACUS-tools && MCP_TRANSPORT=stdio python server.py",
       "install_command": "cd servers/ABACUS-tools && uv sync",
       "tools": [
-        "abacus_prepare",
-        "run_abacus_onejob",
-        "abacus_modify_input",
-        "abacus_prepare_inputs_from_relax_results",
-        "abacus_modify_stru",
+        "abacus_badercharge_run",
+        "abacus_cal_band",
+        "abacus_cal_elastic",
+        "abacus_collect_data",
         "abacus_do_relax",
         "abacus_dos_run",
-        "abacus_cal_band",
-        "abacus_badercharge_run",
-        "abacus_collect_data",
+        "abacus_modify_input",
+        "abacus_modify_stru",
+        "abacus_prepare",
+        "abacus_prepare_inputs_from_relax_results",
+        "generate_bulk_structure",
         "generate_deeptb_config",
-        "abacus_cal_elastic",
-        "generate_bulk_structure"
+        "run_abacus_onejob"
       ]
     },
     {
@@ -173,7 +173,7 @@
     },
     {
       "name": "dna_sequence_analyzer",
-      "description": "DNA序列基础分析工具，包含长度统计、碱基计数、GC含量计算、反向互补序列生成和遗传密码翻译功能。支持标准遗传密码表，可选择遇到终止子停止翻译。",
+      "description": "DNA sequence analysis tool with length calculation, base counting, GC content, reverse complement, and translation using the standard genetic code. Option to stop at stop codons.",
       "author": "@lhappy",
       "category": "biology",
       "transport": [
@@ -182,8 +182,8 @@
       ],
       "tools": [
         "analyze_dna_sequence",
-        "translate_dna",
-        "reverse_complement"
+        "reverse_complement",
+        "translate_dna"
       ],
       "path": "servers/dna_sequence_analyzer",
       "start_command": "# SSE mode\ncd servers/dna_sequence_analyzer && python server.py --port <PORT>\n# stdio mode\ncd servers/dna_sequence_analyzer && MCP_TRANSPORT=stdio python server.py",
@@ -202,17 +202,17 @@
       "start_command": "# SSE mode\ncd servers/DPACalculator && python server.py --port <PORT>\n# stdio mode\ncd servers/DPACalculator && MCP_TRANSPORT=stdio python server.py",
       "install_command": "cd servers/DPACalculator && uv sync",
       "tools": [
-        "optimize_crystal_structure",
         "build_bulk_structure",
-        "build_surface_slab",
+        "build_molecule_structure",
         "build_surface_adsorbate",
         "build_surface_interface",
-        "build_molecule_structure",
-        "run_neb",
-        "run_molecular_dynamics",
-        "make_supercell_structure",
+        "build_surface_slab",
         "calculate_elastic_constants",
-        "calculate_phonon"
+        "calculate_phonon",
+        "make_supercell_structure",
+        "optimize_crystal_structure",
+        "run_molecular_dynamics",
+        "run_neb"
       ]
     },
     {
@@ -228,14 +228,14 @@
       "start_command": "# SSE mode\ncd servers/DPCombo && python server.py --port <PORT>\n# stdio mode\ncd servers/DPCombo && MCP_TRANSPORT=stdio python server.py",
       "install_command": "cd servers/DPCombo && uv sync",
       "tools": [
-        "stat_af",
-        "identify_mixedtype",
+        "downsample_dataset",
         "evaluate_error",
         "filter_outliers",
-        "stat_efv",
-        "parse_dpdata",
+        "identify_mixedtype",
         "infer_dp_model",
-        "downsample_dataset",
+        "parse_dpdata",
+        "stat_af",
+        "stat_efv",
         "train_dp_model"
       ]
     },
@@ -329,8 +329,8 @@
       "category": "data",
       "tools": [
         "plot_pce_vs_time_from_excel",
-        "plot_structure_count_vs_time",
-        "plot_solar_cell_structure_vs_time"
+        "plot_solar_cell_structure_vs_time",
+        "plot_structure_count_vs_time"
       ],
       "path": "servers/perovskite_literature_plot",
       "transport": [
@@ -353,8 +353,8 @@
       "start_command": "# SSE mode\ncd servers/pubchem && python server.py --port <PORT>\n# stdio mode\ncd servers/pubchem && MCP_TRANSPORT=stdio python server.py",
       "install_command": "cd servers/pubchem && uv sync",
       "tools": [
-        "get_pubchem_data",
-        "download_structure"
+        "download_structure",
+        "get_pubchem_data"
       ]
     },
     {
@@ -379,15 +379,16 @@
       "author": "@A-LOST-WAPITI",
       "category": "materials",
       "tools": [
-        "build_bulk_structure",
-        "build_surface_slab",
+        "add_cell_for_molecules",
+        "build_bulk_structure_by_template",
+        "build_bulk_structure_by_wyckoff",
+        "build_molecule_structure",
         "build_surface_adsorbate",
         "build_surface_interface",
-        "build_molecule_structure",
+        "build_surface_slab",
+        "generate_calypso_structures",
         "generate_crystalformer_structures",
-        "add_cell_for_molecules",
-        "make_supercell_structure",
-        "generate_calypso_structures"
+        "make_supercell_structure"
       ],
       "path": "servers/structure_generate",
       "transport": [
@@ -410,10 +411,10 @@
       "start_command": "See README for details",
       "install_command": "Contact @liuyuxiang92 for access",
       "tools": [
-        "predict_superconductor_Tc",
-        "generate_crystalformer_structures",
         "calculate_enthalpy",
-        "generate_calypso_structure"
+        "generate_calypso_structure",
+        "generate_crystalformer_structures",
+        "predict_superconductor_Tc"
       ]
     },
     {
@@ -430,10 +431,10 @@
       "install_command": "cd servers/thermoelectric && uv sync",
       "tools": [
         "calculate_enthalpy",
-        "screen_thermoelectric_candidate",
-        "generate_crystalformer_structures",
         "generate_calypso_structures",
-        "predict_thermoelectric_properties"
+        "generate_crystalformer_structures",
+        "predict_thermoelectric_properties",
+        "screen_thermoelectric_candidate"
       ]
     }
   ]
