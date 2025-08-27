@@ -89,19 +89,19 @@
       "start_command": "# SSE mode\ncd servers/ABACUS-tools && python server.py --port <PORT>\n# stdio mode\ncd servers/ABACUS-tools && MCP_TRANSPORT=stdio python server.py",
       "install_command": "cd servers/ABACUS-tools && uv sync",
       "tools": [
-        "abacus_prepare",
-        "run_abacus_onejob",
-        "abacus_modify_input",
+        "abacus_cal_elastic",
         "abacus_prepare_inputs_from_relax_results",
-        "abacus_modify_stru",
-        "abacus_do_relax",
-        "abacus_dos_run",
-        "abacus_cal_band",
-        "abacus_badercharge_run",
         "abacus_collect_data",
         "generate_deeptb_config",
-        "abacus_cal_elastic",
-        "generate_bulk_structure"
+        "generate_bulk_structure",
+        "abacus_do_relax",
+        "run_abacus_onejob",
+        "abacus_modify_stru",
+        "abacus_badercharge_run",
+        "abacus_cal_band",
+        "abacus_dos_run",
+        "abacus_modify_input",
+        "abacus_prepare"
       ]
     },
     {
@@ -160,8 +160,8 @@
       "author": "@felix5572",
       "category": "materials",
       "tools": [
-        "deepmd-docs-workflow",
-        "upload_single_file_to_deepmd_knowledge_base"
+        "upload_single_file_to_deepmd_knowledge_base",
+        "deepmd-docs-workflow"
       ],
       "path": "servers/deepmd_docs_rag",
       "transport": [
@@ -182,8 +182,8 @@
       ],
       "tools": [
         "analyze_dna_sequence",
-        "translate_dna",
-        "reverse_complement"
+        "reverse_complement",
+        "translate_dna"
       ],
       "path": "servers/dna_sequence_analyzer",
       "start_command": "# SSE mode\ncd servers/dna_sequence_analyzer && python server.py --port <PORT>\n# stdio mode\ncd servers/dna_sequence_analyzer && MCP_TRANSPORT=stdio python server.py",
@@ -202,17 +202,17 @@
       "start_command": "# SSE mode\ncd servers/DPACalculator && python server.py --port <PORT>\n# stdio mode\ncd servers/DPACalculator && MCP_TRANSPORT=stdio python server.py",
       "install_command": "cd servers/DPACalculator && uv sync",
       "tools": [
-        "optimize_crystal_structure",
-        "build_bulk_structure",
-        "build_surface_slab",
-        "build_surface_adsorbate",
-        "build_surface_interface",
         "build_molecule_structure",
         "run_neb",
         "run_molecular_dynamics",
+        "build_surface_adsorbate",
         "make_supercell_structure",
         "calculate_elastic_constants",
-        "calculate_phonon"
+        "build_surface_slab",
+        "build_surface_interface",
+        "calculate_phonon",
+        "optimize_crystal_structure",
+        "build_bulk_structure"
       ]
     },
     {
@@ -228,14 +228,14 @@
       "start_command": "# SSE mode\ncd servers/DPCombo && python server.py --port <PORT>\n# stdio mode\ncd servers/DPCombo && MCP_TRANSPORT=stdio python server.py",
       "install_command": "cd servers/DPCombo && uv sync",
       "tools": [
-        "stat_af",
-        "identify_mixedtype",
-        "evaluate_error",
         "filter_outliers",
         "stat_efv",
-        "parse_dpdata",
-        "infer_dp_model",
         "downsample_dataset",
+        "infer_dp_model",
+        "stat_af",
+        "evaluate_error",
+        "parse_dpdata",
+        "identify_mixedtype",
         "train_dp_model"
       ]
     },
@@ -294,8 +294,8 @@
       "author": "marvcks",
       "category": "chemistry",
       "tools": [
-        "retrieve_content_from_orca_output",
-        "run_orca_calculation"
+        "run_orca_calculation",
+        "retrieve_content_from_orca_output"
       ],
       "path": "servers/ORCA_tools",
       "transport": [
@@ -311,8 +311,8 @@
       "author": "@lhhhappy",
       "category": "research",
       "tools": [
-        "extract_info",
-        "search_papers"
+        "search_papers",
+        "extract_info"
       ],
       "path": "servers/Paper_Search",
       "transport": [
@@ -328,9 +328,9 @@
       "author": "Haoming Yan",
       "category": "data",
       "tools": [
-        "plot_pce_vs_time_from_excel",
         "plot_structure_count_vs_time",
-        "plot_solar_cell_structure_vs_time"
+        "plot_solar_cell_structure_vs_time",
+        "plot_pce_vs_time_from_excel"
       ],
       "path": "servers/perovskite_literature_plot",
       "transport": [
@@ -379,15 +379,16 @@
       "author": "@A-LOST-WAPITI",
       "category": "materials",
       "tools": [
-        "build_bulk_structure",
-        "build_surface_slab",
+        "build_bulk_structure_by_template",
+        "build_bulk_structure_by_wyckoff",
+        "generate_calypso_structures",
         "build_surface_adsorbate",
-        "build_surface_interface",
-        "build_molecule_structure",
-        "generate_crystalformer_structures",
-        "add_cell_for_molecules",
         "make_supercell_structure",
-        "generate_calypso_structures"
+        "build_surface_slab",
+        "build_surface_interface",
+        "generate_crystalformer_structures",
+        "build_molecule_structure",
+        "add_cell_for_molecules"
       ],
       "path": "servers/structure_generate",
       "transport": [
@@ -410,10 +411,10 @@
       "start_command": "See README for details",
       "install_command": "Contact @liuyuxiang92 for access",
       "tools": [
-        "predict_superconductor_Tc",
-        "generate_crystalformer_structures",
+        "generate_calypso_structure",
         "calculate_enthalpy",
-        "generate_calypso_structure"
+        "generate_crystalformer_structures",
+        "predict_superconductor_Tc"
       ]
     },
     {
@@ -429,11 +430,11 @@
       "start_command": "# SSE mode\ncd servers/thermoelectric && python server.py --port <PORT>\n# stdio mode\ncd servers/thermoelectric && MCP_TRANSPORT=stdio python server.py",
       "install_command": "cd servers/thermoelectric && uv sync",
       "tools": [
+        "predict_thermoelectric_properties",
         "calculate_enthalpy",
-        "screen_thermoelectric_candidate",
-        "generate_crystalformer_structures",
         "generate_calypso_structures",
-        "predict_thermoelectric_properties"
+        "screen_thermoelectric_candidate",
+        "generate_crystalformer_structures"
       ]
     }
   ]
