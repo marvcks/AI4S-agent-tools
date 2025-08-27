@@ -89,23 +89,19 @@
       "start_command": "# SSE mode\ncd servers/ABACUS-tools && python server.py --port <PORT>\n# stdio mode\ncd servers/ABACUS-tools && MCP_TRANSPORT=stdio python server.py",
       "install_command": "cd servers/ABACUS-tools && uv sync",
       "tools": [
-        "abacus_cal_band",
+        "abacus_modify_input",
         "abacus_modify_stru",
-        "abacus_dos_run",
-        "abacus_modify_stru",
-        "abacus_cal_elastic",
+        "abacus_do_relax",
         "abacus_prepare",
+        "generate_deeptb_config",
+        "abacus_collect_data",
+        "abacus_badercharge_run",
         "abacus_cal_band",
+        "abacus_cal_elastic",
+        "run_abacus_onejob",
         "abacus_prepare_inputs_from_relax_results",
         "generate_bulk_structure",
-        "abacus_do_relax",
-        "run_abacus_onejob",
-        "abacus_badercharge_run",
-        "generate_deeptb_config",
-        "abacus_modify_input",
-        "abacus_prepare",
-        "abacus_collect_data",
-        "abacus_cal_elastic"
+        "abacus_dos_run"
       ]
     },
     {
@@ -176,6 +172,24 @@
       "install_command": "cd servers/deepmd_docs_rag && uv sync"
     },
     {
+      "name": "dna_sequence_analyzer",
+      "description": "DNA序列基础分析工具，包含长度统计、碱基计数、GC含量计算、反向互补序列生成和遗传密码翻译功能。支持标准遗传密码表，可选择遇到终止子停止翻译。",
+      "author": "@lhappy",
+      "category": "biology",
+      "transport": [
+        "sse",
+        "stdio"
+      ],
+      "tools": [
+        "analyze_dna_sequence",
+        "translate_dna",
+        "reverse_complement"
+      ],
+      "path": "servers/dna_sequence_analyzer",
+      "start_command": "# SSE mode\ncd servers/dna_sequence_analyzer && python server.py --port <PORT>\n# stdio mode\ncd servers/dna_sequence_analyzer && MCP_TRANSPORT=stdio python server.py",
+      "install_command": "cd servers/dna_sequence_analyzer && uv sync"
+    },
+    {
       "name": "DPACalculatorServer",
       "description": "Deep Potential Agent for atomistic simulation",
       "author": "@SchrodingersCattt",
@@ -188,17 +202,17 @@
       "start_command": "# SSE mode\ncd servers/DPACalculator && python server.py --port <PORT>\n# stdio mode\ncd servers/DPACalculator && MCP_TRANSPORT=stdio python server.py",
       "install_command": "cd servers/DPACalculator && uv sync",
       "tools": [
-        "optimize_crystal_structure",
-        "run_neb",
-        "build_surface_slab",
-        "build_surface_adsorbate",
-        "calculate_phonon",
-        "build_bulk_structure",
-        "build_molecule_structure",
-        "run_molecular_dynamics",
         "calculate_elastic_constants",
+        "optimize_crystal_structure",
+        "make_supercell_structure",
+        "build_surface_slab",
+        "calculate_phonon",
+        "run_neb",
+        "build_bulk_structure",
+        "build_surface_adsorbate",
+        "build_molecule_structure",
         "build_surface_interface",
-        "make_supercell_structure"
+        "run_molecular_dynamics"
       ]
     },
     {
@@ -214,15 +228,15 @@
       "start_command": "# SSE mode\ncd servers/DPCombo && python server.py --port <PORT>\n# stdio mode\ncd servers/DPCombo && MCP_TRANSPORT=stdio python server.py",
       "install_command": "cd servers/DPCombo && uv sync",
       "tools": [
-        "downsample_dataset",
+        "infer_dp_model",
         "filter_outliers",
-        "stat_efv",
         "identify_mixedtype",
-        "stat_af",
         "train_dp_model",
         "parse_dpdata",
         "evaluate_error",
-        "infer_dp_model"
+        "stat_efv",
+        "stat_af",
+        "downsample_dataset"
       ]
     },
     {
@@ -297,8 +311,8 @@
       "author": "@lhhhappy",
       "category": "research",
       "tools": [
-        "extract_info",
-        "search_papers"
+        "search_papers",
+        "extract_info"
       ],
       "path": "servers/Paper_Search",
       "transport": [
@@ -339,8 +353,8 @@
       "start_command": "# SSE mode\ncd servers/pubchem && python server.py --port <PORT>\n# stdio mode\ncd servers/pubchem && MCP_TRANSPORT=stdio python server.py",
       "install_command": "cd servers/pubchem && uv sync",
       "tools": [
-        "download_structure",
-        "get_pubchem_data"
+        "get_pubchem_data",
+        "download_structure"
       ]
     },
     {
@@ -365,15 +379,15 @@
       "author": "@A-LOST-WAPITI",
       "category": "materials",
       "tools": [
-        "build_surface_slab",
-        "build_surface_adsorbate",
-        "generate_crystalformer_structures",
-        "build_bulk_structure",
-        "build_molecule_structure",
-        "build_surface_interface",
-        "generate_calypso_structures",
         "make_supercell_structure",
-        "add_cell_for_molecules"
+        "build_surface_slab",
+        "build_bulk_structure",
+        "add_cell_for_molecules",
+        "build_molecule_structure",
+        "build_surface_adsorbate",
+        "build_surface_interface",
+        "generate_crystalformer_structures",
+        "generate_calypso_structures"
       ],
       "path": "servers/structure_generate",
       "transport": [
@@ -396,10 +410,10 @@
       "start_command": "See README for details",
       "install_command": "Contact @liuyuxiang92 for access",
       "tools": [
-        "predict_superconductor_Tc",
-        "generate_crystalformer_structures",
+        "calculate_enthalpy",
         "generate_calypso_structure",
-        "calculate_enthalpy"
+        "predict_superconductor_Tc",
+        "generate_crystalformer_structures"
       ]
     },
     {
@@ -415,10 +429,10 @@
       "start_command": "# SSE mode\ncd servers/thermoelectric && python server.py --port <PORT>\n# stdio mode\ncd servers/thermoelectric && MCP_TRANSPORT=stdio python server.py",
       "install_command": "cd servers/thermoelectric && uv sync",
       "tools": [
-        "predict_thermoelectric_properties",
+        "calculate_enthalpy",
         "generate_crystalformer_structures",
         "screen_thermoelectric_candidate",
-        "calculate_enthalpy",
+        "predict_thermoelectric_properties",
         "generate_calypso_structures"
       ]
     }
