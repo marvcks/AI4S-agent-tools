@@ -380,7 +380,8 @@
       "category": "materials",
       "tools": [
         "add_cell_for_molecules",
-        "build_bulk_structure",
+        "build_bulk_structure_by_template",
+        "build_bulk_structure_by_wyckoff",
         "build_molecule_structure",
         "build_surface_adsorbate",
         "build_surface_interface",
