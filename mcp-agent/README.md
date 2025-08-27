@@ -7,8 +7,12 @@
 ### 安装依赖
 
 ```bash
-# 在项目根目录安装 ADK
-pip install google-adk python-dotenv
+# 在 mcp-agent 目录安装依赖
+cd mcp-agent
+pip install -r requirements.txt
+
+# 或者直接安装各个包
+pip install google-adk>=1.7.0 python-dotenv>=1.0.0 litellm>=1.74.3
 ```
 
 ### 配置环境
@@ -65,7 +69,7 @@ mcp-agent/
 ├── tools.py           # 工具函数实现
 ├── prompt.py          # 交互提示词
 ├── __init__.py        # 模块入口
-├── pyproject.toml     # 项目依赖
+├── pyproject.toml     # 项目依赖配置
 ├── requirements.txt   # Python依赖
 └── README.md          # 本文件
 ```
