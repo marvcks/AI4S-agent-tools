@@ -8,7 +8,7 @@ Thank you to all our contributors! 🎉
 |--------|------------|-------|------------|
 | **[@SchrodingersCattt](https://github.com/SchrodingersCattt)** | 3 (CompositionDART, DPACalculatorServer, DPComboServer) | 21 | materials |
 | **[@ahxbcn](https://github.com/ahxbcn)** | 1 (ABACUS) | 13 | materials |
-| **[@A-LOST-WAPITI](https://github.com/A-LOST-WAPITI)** | 1 (StructureGenerateServer) | 10 | materials |
+| **[@A-LOST-WAPITI](https://github.com/A-LOST-WAPITI)** | 1 (StructureGenerateServer) | 11 | materials |
 | **[@liuyuxiang92](https://github.com/liuyuxiang92)** | 2 (SuperconductorServer, ThermoelectricMaterialsServer) | 9 | materials |
 | **[@Rasic2](https://github.com/Rasic2)** | 1 (CatalysisMCP) | 3 | chemistry |
 | **[@lhappy](https://github.com/lhappy)** | 1 (dna_sequence_analyzer) | 3 | biology |
@@ -26,7 +26,7 @@ Thank you to all our contributors! 🎉
 
 - **Contributors**: 14
 - **Total Collections**: 19
-- **Total Tools**: 76
+- **Total Tools**: 77
 
 ## How to Contribute
 
