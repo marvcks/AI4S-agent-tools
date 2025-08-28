@@ -2,14 +2,20 @@
 name = "askcos-mcp-server"
 version = "0.1.0"
 description = "ASKCOS MCP server for computer-aided synthesis planning"
+authors = [
+    { name = "jiaodu" }
+]
+readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "mcp",
     "fastmcp",
-    "requests",
+    "requests>=2.25.0",
     "numpy",
-    "rdkit"
 ]
+
+[project.optional-dependencies]
+rdkit = ["rdkit>=2022.9.1"]
 
 [project.scripts]
 askcos-mcp = "server:main"
