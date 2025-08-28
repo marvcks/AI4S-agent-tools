@@ -17,6 +17,9 @@ from ase.build import add_adsorbate, bulk, molecule, surface, stack
 from ase.collections import g2
 from ase.io import read, write
 
+# Open Babel imports
+import openbabel.openbabel as ob
+
 # Pymatgen imports
 from pymatgen.analysis.structure_analyzer import SpacegroupAnalyzer
 from pymatgen.io.ase import AseAtomsAdaptor
@@ -280,7 +283,7 @@ def make_supercell_structure(
 
 
 @mcp.tool()
-def build_molecule_structure(
+def build_molecule_structure_from_g2database(
     molecule_name: str,
     output_file: str = 'structure_molecule.xyz'
 ) -> StructureResult:
@@ -335,6 +338,66 @@ def build_molecule_structure(
             'structure_paths': None,
             'message': f'Molecule structure building failed: {str(e)}'
         }
+
+
+@mcp.tool()
+def build_molecule_structures_from_smiles(
+    smiles: str,
+    output_file: str = 'structure_molecule.xyz'
+) -> StructureResult:
+    '''
+    Build a molecule structure from SMILES string using Open Babel.
+
+    This tool generates a single conformation of a molecule from a SMILES string.
+    It adds hydrogens and generates 3D coordinates, but does not perform any
+    structure optimization.
+
+    Args:
+        smiles (str): A valid SMILES string representing the molecule.
+        output_file (str): Path to save the XYZ structure file. Default 'structure_molecule.xyz'.
+
+    Returns:
+        StructureResult: Dictionary containing:
+            - structure_paths (Path): Path to the generated structure file
+            - message (str): Success or error message
+    '''
+    try:
+        # Initialize converters
+        smi_to_xyz = ob.OBConversion()
+        smi_to_xyz.SetInAndOutFormats("smi", "xyz")
+
+        # Initialize 3D builder
+        ob_builder = ob.OBBuilder()
+
+        # Create molecule object from SMILES
+        mol = ob.OBMol()
+        if not smi_to_xyz.ReadString(mol, smiles):
+            raise ValueError(f"Cannot parse SMILES: {smiles}")
+
+        # Add hydrogens
+        mol.AddHydrogens()
+
+        # Generate 3D structure
+        if not ob_builder.Build(mol):
+            logging.warning("3D structure build may be incomplete")
+
+        # Write to file
+        if not smi_to_xyz.WriteFile(mol, str(output_file)):
+            raise RuntimeError("Failed to write XYZ file")
+
+        logging.info(f'Molecule structure saved to: {output_file}')
+        return {
+            'structure_paths': Path(output_file),
+            'message': f'Molecule structure from SMILES "{smiles}" built successfully.'
+        }
+    except Exception as e:
+        logging.error(
+            f'Molecule structure building failed: {str(e)}', exc_info=True)
+        return {
+            'structure_paths': None,
+            'message': f'Molecule structure building failed: {str(e)}'
+        }
+
 
 @mcp.tool()
 def add_cell_for_molecules(
