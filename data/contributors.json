@@ -48,6 +48,17 @@
       ]
     },
     {
+      "author": "@jiaodu",
+      "collections": [
+        "ASKCOS"
+      ],
+      "collections_count": 1,
+      "tools_count": 4,
+      "categories": [
+        "chemistry"
+      ]
+    },
+    {
       "author": "@Rasic2",
       "collections": [
         "CatalysisMCP"
@@ -162,7 +173,7 @@
       ]
     }
   ],
-  "total_contributors": 14,
-  "total_collections": 19,
-  "total_tools": 77
+  "total_contributors": 15,
+  "total_collections": 20,
+  "total_tools": 81
 }

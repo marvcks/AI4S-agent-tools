@@ -10,6 +10,7 @@ Thank you to all our contributors! 🎉
 | **[@ahxbcn](https://github.com/ahxbcn)** | 1 (ABACUS) | 13 | materials |
 | **[@A-LOST-WAPITI](https://github.com/A-LOST-WAPITI)** | 1 (StructureGenerateServer) | 11 | materials |
 | **[@liuyuxiang92](https://github.com/liuyuxiang92)** | 2 (SuperconductorServer, ThermoelectricMaterialsServer) | 9 | materials |
+| **[@jiaodu](https://github.com/jiaodu)** | 1 (ASKCOS) | 4 | chemistry |
 | **[@Rasic2](https://github.com/Rasic2)** | 1 (CatalysisMCP) | 3 | chemistry |
 | **[@lhappy](https://github.com/lhappy)** | 1 (dna_sequence_analyzer) | 3 | biology |
 | **[@Junshang Zhang](https://github.com/Junshang Zhang)** | 2 (HEA_extractTool, HEA_predictTool) | 3 | machine-learning, research |
@@ -24,9 +25,9 @@ Thank you to all our contributors! 🎉
 
 ## Stats
 
-- **Contributors**: 14
-- **Total Collections**: 19
-- **Total Tools**: 77
+- **Contributors**: 15
+- **Total Collections**: 20
+- **Total Tools**: 81
 
 ## How to Contribute
 

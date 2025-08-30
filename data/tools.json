@@ -105,6 +105,25 @@
       ]
     },
     {
+      "name": "ASKCOS",
+      "description": "Computer-aided synthesis planning tool for retrosynthesis analysis",
+      "author": "@jiaodu",
+      "category": "chemistry",
+      "transport": [
+        "sse",
+        "stdio"
+      ],
+      "tools": [
+        "reaction_prediction",
+        "retrosynthesis_planning",
+        "single_step_retrosynthesis",
+        "synthesis_route_analysis"
+      ],
+      "path": "servers/ASKCOS",
+      "start_command": "# SSE mode\ncd servers/ASKCOS && python server.py --port <PORT>\n# stdio mode\ncd servers/ASKCOS && MCP_TRANSPORT=stdio python server.py",
+      "install_command": "cd servers/ASKCOS && uv sync"
+    },
+    {
       "name": "CatalysisMCP",
       "description": "Catalysis reaction calculations based on ADSEC workflow",
       "author": "@Rasic2",
