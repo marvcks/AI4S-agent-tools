@@ -462,7 +462,7 @@ def build_surface_slab(
     termination: Union[int, float, str, Callable, None] = "auto",
     return_all: bool = False,
     algo_opts: dict = None,
-    bonds: dict = None,
+    bonds: Dict = None,
     repair: bool = True,
     output_file: str = 'structure_slab.cif'
 ) -> dict:
@@ -526,13 +526,13 @@ def build_surface_slab(
             pmg_bulk = Structure.from_file(str(material_path))
         else:
             raise ValueError("No input structure provided.")
-        print(pmg_bulk)
+        
         # --- Slab size and vacuum ---
         min_slab_size = layers if thickness is None else thickness
         if vacuum is None and vacuum_mode == 'auto':
             c_len = pmg_bulk.lattice.c
             vacuum = max(10.0, 0.12 * c_len)
-        print(vacuum)
+            
         algo_opts = algo_opts or {}
         slab_gen = SlabGenerator(
             initial_structure=pmg_bulk,
@@ -543,7 +543,21 @@ def build_surface_slab(
             max_normal_search=algo_opts.get("max_normal_search", 5),
         )
         # --- Generate slabs ---
-        all_slabs = slab_gen.get_slabs(bonds=bonds, repair=repair)
+        # Process bonds parameter to handle JSON serialization issues
+        processed_bonds = None
+        if bonds is not None:
+            # Convert bonds dictionary to the format expected by pymatgen
+            processed_bonds = {}
+            for key, distance in bonds.items():
+                # Handle case where keys might be strings like "C,H" due to JSON serialization
+                if isinstance(key, str) and ',' in key:
+                    elements = key.split(',', 1)
+                    processed_bonds[(elements[0].strip(), elements[1].strip())] = distance
+                else:
+                    # Key is already in correct format (tuple or other)
+                    processed_bonds[key] = distance
+                    
+        all_slabs = slab_gen.get_slabs(bonds=processed_bonds, repair=repair)
         print(len(all_slabs))
         if not all_slabs:
             raise ValueError("No slabs generated.")
