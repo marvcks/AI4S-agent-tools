@@ -5,7 +5,8 @@ import shutil
 import subprocess
 from pathlib import Path
 from random import randint
-from typing import List, Optional, Literal, Union
+from typing import List, Optional, Literal, Union, Tuple, Dict, Callable
+from tqdm import tqdm
 import os
 # Third-party library imports
 import numpy as np
@@ -17,9 +18,15 @@ from ase.build import add_adsorbate, bulk, molecule, surface, stack
 from ase.collections import g2
 from ase.io import read, write
 
+# Open Babel imports
+import openbabel.openbabel as ob
+
 # Pymatgen imports
 from pymatgen.analysis.structure_analyzer import SpacegroupAnalyzer
 from pymatgen.io.ase import AseAtomsAdaptor
+from pymatgen.core.structure import Structure
+from pymatgen.core.surface import SlabGenerator
+from pymatgen.analysis.local_env import CrystalNN
 
 # Local/custom imports
 from dp.agent.server import CalculationMCPServer
@@ -76,7 +83,7 @@ class StructureResult(TypedDict):
 
 
 @mcp.tool()
-def build_bulk_structure(
+def build_bulk_structure_by_template(
     element: str,
     conventional: bool = True,
     crystal_structure: Literal['sc', 'fcc', 'bcc', 'hcp',
@@ -158,6 +165,79 @@ def build_bulk_structure(
     
 
 @mcp.tool()
+def build_bulk_structure_by_wyckoff(
+    a: float,
+    b: float,
+    c: float,
+    alpha: float,
+    beta: float,
+    gamma: float,
+    spacegroup: str | int,
+    wyckoff_positions: list,
+    output_file: str = 'structure_bulk.cif'
+) -> StructureResult:
+    '''
+    Generates crystal structures from complete crystallographic specification using Wyckoff positions.
+    Requires user to provide ALL crystallographic parameters: lattice parameters, space group, 
+    and exact Wyckoff site coordinates.
+
+    Args:
+        a (float): Lattice parameter 'a' in Ångströms. Length of the first lattice vector.
+        b (float): Lattice parameter 'b' in Ångströms. Length of the second lattice vector.
+        c (float): Lattice parameter 'c' in Ångströms. Length of the third lattice vector.
+        alpha (float): Lattice angle α in degrees. Angle between lattice vectors b and c.
+        beta (float): Lattice angle β in degrees. Angle between lattice vectors c and a.
+        gamma (float): Lattice angle γ in degrees. Angle between lattice vectors a and b.
+        spacegroup (str | int): Space group specification. Can be provided as:
+            - Integer: Space group number (1-230) from International Tables
+            - String: International space group symbol (e.g., 'Fm-3m', 'P63/mmc', 'Pnma')
+        wyckoff_positions (list): List of Wyckoff site specifications.
+            Each tuple contains:
+            - str: Element symbol (e.g., 'Si', 'O', 'Al')
+            - List[float]: Fractional coordinates [x, y, z] in the unit cell (0-1 range)
+            - str: Wyckoff position label (e.g., '4a', '8c', '24d')
+            - Optional[str]: Optional element label (e.g., 'Fe', 'O')
+        output_file (str): Output filename for the generated structure. Supports various formats
+            based on file extension (.cif, .vasp, .xyz, etc.). Default 'structure_bulk.cif'.
+
+    Returns:
+        StructureResult: Dictionary containing:
+            - structure_path (Path): Path to the generated crystal structure file
+            - message (str): Success message or detailed error information
+
+    Raises:
+        ValueError: If space group is invalid or Wyckoff positions are incompatible
+        Exception: If lattice parameters are invalid or structure generation fails
+    '''
+    try:
+        lattice = Lattice.from_parameters(a=a, b=b, c=c, alpha=alpha, beta=beta, gamma=gamma)
+
+        crys_stru = Structure.from_spacegroup(
+            sg=spacegroup,
+            lattice=lattice,
+            species=[wyckoff_position[0] for wyckoff_position in wyckoff_positions],
+            coords=[wyckoff_position[1] for wyckoff_position in wyckoff_positions],
+            tol=0.001,
+        )
+
+        atoms = crys_stru.to_ase_atoms()
+        write(output_file, atoms)
+
+        logging.info(f'Bulk structure saved to: {output_file}')
+        return {
+            'structure_path': Path(output_file),
+            'message': f'Bulk structure built successfully.'
+        }
+    except Exception as e:
+        logging.error(
+            f'Bulk structure building failed: {str(e)}', exc_info=True)
+        return {
+            'structure_paths': None,
+            'message': f'Bulk structure building failed: {str(e)}'
+        }
+
+
+@mcp.tool()
 def make_supercell_structure(
     structure_path: Path,
     supercell_matrix: list[int] = [1, 1, 1],
@@ -207,7 +287,7 @@ def make_supercell_structure(
 
 
 @mcp.tool()
-def build_molecule_structure(
+def build_molecule_structure_from_g2database(
     molecule_name: str,
     output_file: str = 'structure_molecule.xyz'
 ) -> StructureResult:
@@ -263,6 +343,66 @@ def build_molecule_structure(
             'message': f'Molecule structure building failed: {str(e)}'
         }
 
+
+@mcp.tool()
+def build_molecule_structures_from_smiles(
+    smiles: str,
+    output_file: str = 'structure_molecule.xyz'
+) -> StructureResult:
+    '''
+    Build a molecule structure from SMILES string using Open Babel.
+
+    This tool generates a single conformation of a molecule from a SMILES string.
+    It adds hydrogens and generates 3D coordinates, but does not perform any
+    structure optimization.
+
+    Args:
+        smiles (str): A valid SMILES string representing the molecule.
+        output_file (str): Path to save the XYZ structure file. Default 'structure_molecule.xyz'.
+
+    Returns:
+        StructureResult: Dictionary containing:
+            - structure_paths (Path): Path to the generated structure file
+            - message (str): Success or error message
+    '''
+    try:
+        # Initialize converters
+        smi_to_xyz = ob.OBConversion()
+        smi_to_xyz.SetInAndOutFormats("smi", "xyz")
+
+        # Initialize 3D builder
+        ob_builder = ob.OBBuilder()
+
+        # Create molecule object from SMILES
+        mol = ob.OBMol()
+        if not smi_to_xyz.ReadString(mol, smiles):
+            raise ValueError(f"Cannot parse SMILES: {smiles}")
+
+        # Add hydrogens
+        mol.AddHydrogens()
+
+        # Generate 3D structure
+        if not ob_builder.Build(mol):
+            logging.warning("3D structure build may be incomplete")
+
+        # Write to file
+        if not smi_to_xyz.WriteFile(mol, str(output_file)):
+            raise RuntimeError("Failed to write XYZ file")
+
+        logging.info(f'Molecule structure saved to: {output_file}')
+        return {
+            'structure_paths': Path(output_file),
+            'message': f'Molecule structure from SMILES "{smiles}" built successfully.'
+        }
+    except Exception as e:
+        logging.error(
+            f'Molecule structure building failed: {str(e)}', exc_info=True)
+        return {
+            'structure_paths': None,
+            'message': f'Molecule structure building failed: {str(e)}'
+        }
+
+
 @mcp.tool()
 def add_cell_for_molecules(
     molecule_path: Path = None,
@@ -312,44 +452,168 @@ def add_cell_for_molecules(
 
 @mcp.tool()
 def build_surface_slab(
+    input: Union[Path, str, Structure] = None,
     material_path: Path = None,
     miller_index: List[int] = (1, 0, 0),
     layers: int = 4,
-    vacuum: float = 10.0,
+    thickness: float = None,
+    vacuum: float = None,
+    vacuum_mode: str = 'auto',
+    termination: Union[int, float, str, Callable, None] = "auto",
+    return_all: bool = False,
+    algo_opts: dict = None,
+    bonds: Dict = None,
+    repair: bool = True,
     output_file: str = 'structure_slab.cif'
-) -> StructureResult:
-    '''
-    Build a surface slab structure using ASE.
+) -> dict:
+    """
+    Build a surface slab structure using pymatgen's `SlabGenerator`.
+
+    Supports multiple input formats and can generate 
+    multiple slab terminations. If no termination is specified, 
+    a heuristic is applied to choose a default.
 
     Args:
-        material_path (Path): Path to existing bulk structure file.
-        miller_index (List[int]): Miller indices as list of 3 integers (h, k, l). Default (1, 0, 0).
-        layers (int): Number of atomic layers in the slab. Default 4.
-        vacuum (float): Vacuum spacing above and below the slab in Ångströms. Default 10.0.
-        output_file (str): Path to save the CIF file. Default 'structure_slab.cif'.
+        input (Path | str | Structure):  
+            Input structure (pymatgen Structure, file path, or ASE-readable file).  
+        material_path (Path):  
+            Legacy argument for bulk structure file path.  
+        miller_index (List[int]):  
+            Miller indices (h, k, l). Default `(1, 0, 0)`.  
+        layers (int):  
+            Minimum number of atomic layers in the slab. Ignored if `thickness` is set.  
+        thickness (float):  
+            Slab thickness in Å. Overrides `layers` if provided.  
+        vacuum (float):  
+            Vacuum thickness in Å. If `None` and `vacuum_mode='auto'`, 
+            a heuristic is applied.  
+        vacuum_mode (str):  
+            Vacuum mode, one of `'absolute'`, `'relative'`, `'auto'`.  
+        termination (int | float | Callable | str | None):  
+            Termination selection strategy:  
+              - `int`: index of the slab in the generated list  
+              - `float`: match by slab.shift value  
+              - `'auto'` or `None`: automatically select using default heuristic  
+              - `Callable`: custom selector `(List[Slab]) -> Slab`  
+        return_all (bool):  
+            If True, return all generated slabs.  
+        algo_opts (dict):  
+            Extra options for `SlabGenerator`.  
+        bonds (dict):  
+            Optional bond length dict for slab generation.  
+        repair (bool):  
+            Whether to repair broken bonds in slab generation.  
+        output_file (str):  
+            Output CIF filename. If `return_all=True`, multiple files will be created.  
 
     Returns:
-        StructureResult: Dictionary containing:
-            - structure_paths (Path): Path to the generated structure file
-            - message (str): Success or error message
-    '''
+        dict: with keys  
+            - `structure_paths` (Path | List[Path]): generated CIF file(s).  
+            - `message` (str): status message.  
+            - `meta` (dict): metadata including number of terminations and shift values.  
+    """
     try:
-        bulk_atoms = read(str(material_path))
-        slab = surface(bulk_atoms, miller_index, layers)
-        slab.center(vacuum=vacuum, axis=2)
-        write(output_file, slab)
-        logging.info(f'Surface structure saved to: {output_file}')
+        # --- Input normalization ---
+        if isinstance(input, Structure):
+            pmg_bulk = input
+        elif input is not None:
+            try:
+                pmg_bulk = Structure.from_file(str(input))
+            except Exception:
+                ase_atoms = read(str(input))
+                pmg_bulk = AseAtomsAdaptor.get_structure(ase_atoms)
+        elif material_path is not None:
+            pmg_bulk = Structure.from_file(str(material_path))
+        else:
+            raise ValueError("No input structure provided.")
+        
+        # --- Slab size and vacuum ---
+        min_slab_size = layers if thickness is None else thickness
+        if vacuum is None and vacuum_mode == 'auto':
+            c_len = pmg_bulk.lattice.c
+            vacuum = max(10.0, 0.12 * c_len)
+            
+        algo_opts = algo_opts or {}
+        slab_gen = SlabGenerator(
+            initial_structure=pmg_bulk,
+            miller_index=tuple(int(x) for x in miller_index),
+            min_slab_size=min_slab_size,
+            min_vacuum_size=vacuum,
+            primitive=algo_opts.get("primitive", False),
+            max_normal_search=algo_opts.get("max_normal_search", 5),
+        )
+        # --- Generate slabs ---
+        # Process bonds parameter to handle JSON serialization issues
+        processed_bonds = None
+        if bonds is not None:
+            # Convert bonds dictionary to the format expected by pymatgen
+            processed_bonds = {}
+            for key, distance in bonds.items():
+                # Handle case where keys might be strings like "C,H" due to JSON serialization
+                if isinstance(key, str) and ',' in key:
+                    elements = key.split(',', 1)
+                    processed_bonds[(elements[0].strip(), elements[1].strip())] = distance
+                else:
+                    # Key is already in correct format (tuple or other)
+                    processed_bonds[key] = distance
+                    
+        all_slabs = slab_gen.get_slabs(bonds=processed_bonds, repair=repair)
+        print(len(all_slabs))
+        if not all_slabs:
+            raise ValueError("No slabs generated.")
+
+        # --- Default selector ---
+        def default_selector(slabs):
+            candidates = [s for s in slabs if not s.is_polar()]
+            if not candidates:
+                candidates = slabs
+            nn = CrystalNN()
+            scores = []
+            for s in tqdm(candidates, desc="Scoring slabs"):
+                stoich_penalty = len(s.composition.elements)  # placeholder heuristic
+                sym_penalty = 0 if s.is_symmetric() else 1
+                try:
+                    sg = nn.get_bonded_structure(s)
+                    avg_cn = np.mean([len(sg.get_connected_sites(i)) for i in range(len(s.sites))])
+                except Exception:
+                    avg_cn = 0
+                score = -10 * stoich_penalty - sym_penalty + avg_cn
+                scores.append(score)
+            return candidates[int(np.argmax(scores))]
+
+        # --- Termination selection ---
+        if return_all:
+            chosen_slabs = all_slabs
+        elif isinstance(termination, int):
+            chosen_slabs = [all_slabs[termination]]
+        elif isinstance(termination, float):
+            chosen_slabs = [s for s in all_slabs if abs(s.shift - termination) < 1e-3] or [all_slabs[0]]
+        elif callable(termination):
+            chosen_slabs = [termination(all_slabs)]
+        else:
+            chosen_slabs = [default_selector(all_slabs)]
+
+        # --- Write output ---
+        output_paths = []
+        for i, slab in enumerate(chosen_slabs):
+            slab_atoms = AseAtomsAdaptor.get_atoms(slab)
+            slab_atoms.center(vacuum=vacuum, axis=2)
+            out = output_file if not return_all else f"{Path(output_file).stem}_{i}.cif"
+            write(out, slab_atoms)
+            output_paths.append(Path(out))
+
         return {
-            'structure_paths': Path(output_file),
-            'message': 'Surface slab structure built successfully!'
+            "structure_paths": output_paths if return_all else output_paths[0],
+            "message": "Surface slab successfully generated.",
+            "meta": {
+                "num_terminations": len(all_slabs),
+                "shifts": [s.shift for s in all_slabs],
+                "chosen_shifts": [s.shift for s in chosen_slabs],
+            },
         }
     except Exception as e:
-        logging.error(
-            f'Surface structure building failed: {str(e)}', exc_info=True)
-        return {
-            'structure_paths': None,
-            'message': f'Surface structure building failed: {str(e)}'
-        }
+        logging.error(f"Slab generation failed: {e}", exc_info=True)
+        return {"structure_paths": None, "message": str(e), "meta": {}}
 
 
 @mcp.tool()

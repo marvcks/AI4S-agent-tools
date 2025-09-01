@@ -30,7 +30,7 @@
         "StructureGenerateServer"
       ],
       "collections_count": 1,
-      "tools_count": 9,
+      "tools_count": 11,
       "categories": [
         "materials"
       ]
@@ -48,6 +48,17 @@
       ]
     },
     {
+      "author": "@jiaodu",
+      "collections": [
+        "ASKCOS"
+      ],
+      "collections_count": 1,
+      "tools_count": 4,
+      "categories": [
+        "chemistry"
+      ]
+    },
+    {
       "author": "@Rasic2",
       "collections": [
         "CatalysisMCP"
@@ -56,6 +67,17 @@
       "tools_count": 3,
       "categories": [
         "chemistry"
+      ]
+    },
+    {
+      "author": "@lhappy",
+      "collections": [
+        "dna_sequence_analyzer"
+      ],
+      "collections_count": 1,
+      "tools_count": 3,
+      "categories": [
+        "biology"
       ]
     },
     {
@@ -151,7 +173,7 @@
       ]
     }
   ],
-  "total_contributors": 13,
-  "total_collections": 18,
-  "total_tools": 72
+  "total_contributors": 15,
+  "total_collections": 20,
+  "total_tools": 81
 }
