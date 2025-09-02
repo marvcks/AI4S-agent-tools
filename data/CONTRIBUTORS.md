@@ -9,9 +9,8 @@ Thank you to all our contributors! 🎉
 | **[@SchrodingersCattt](https://github.com/SchrodingersCattt)** | 3 (CompositionDART, DPACalculatorServer, DPComboServer) | 21 | materials |
 | **[@ahxbcn](https://github.com/ahxbcn)** | 1 (ABACUS) | 13 | materials |
 | **[@A-LOST-WAPITI](https://github.com/A-LOST-WAPITI)** | 1 (StructureGenerateServer) | 11 | materials |
+| **[@jiaodu1307](https://github.com/jiaodu1307)** | 2 (ASKCOS, RDKit Toolkit) | 9 | chemistry |
 | **[@liuyuxiang92](https://github.com/liuyuxiang92)** | 2 (SuperconductorServer, ThermoelectricMaterialsServer) | 9 | materials |
-| **[@AI4S-community](https://github.com/AI4S-community)** | 1 (RDKit Toolkit) | 5 | chemistry |
-| **[@jiaodu](https://github.com/jiaodu)** | 1 (ASKCOS) | 4 | chemistry |
 | **[@Rasic2](https://github.com/Rasic2)** | 1 (CatalysisMCP) | 3 | chemistry |
 | **[@lhappy](https://github.com/lhappy)** | 1 (dna_sequence_analyzer) | 3 | biology |
 | **[@Junshang Zhang](https://github.com/Junshang Zhang)** | 2 (HEA_extractTool, HEA_predictTool) | 3 | machine-learning, research |
@@ -26,7 +25,7 @@ Thank you to all our contributors! 🎉
 
 ## Stats
 
-- **Contributors**: 16
+- **Contributors**: 15
 - **Total Collections**: 21
 - **Total Tools**: 86
 

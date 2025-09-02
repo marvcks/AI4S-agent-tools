@@ -36,6 +36,18 @@
       ]
     },
     {
+      "author": "@jiaodu1307",
+      "collections": [
+        "ASKCOS",
+        "RDKit Toolkit"
+      ],
+      "collections_count": 2,
+      "tools_count": 9,
+      "categories": [
+        "chemistry"
+      ]
+    },
+    {
       "author": "@liuyuxiang92",
       "collections": [
         "SuperconductorServer",
@@ -45,28 +57,6 @@
       "tools_count": 9,
       "categories": [
         "materials"
-      ]
-    },
-    {
-      "author": "@AI4S-community",
-      "collections": [
-        "RDKit Toolkit"
-      ],
-      "collections_count": 1,
-      "tools_count": 5,
-      "categories": [
-        "chemistry"
-      ]
-    },
-    {
-      "author": "@jiaodu",
-      "collections": [
-        "ASKCOS"
-      ],
-      "collections_count": 1,
-      "tools_count": 4,
-      "categories": [
-        "chemistry"
       ]
     },
     {
@@ -184,7 +174,7 @@
       ]
     }
   ],
-  "total_contributors": 16,
+  "total_contributors": 15,
   "total_collections": 21,
   "total_tools": 86
 }
