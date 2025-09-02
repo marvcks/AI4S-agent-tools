@@ -48,6 +48,17 @@
       ]
     },
     {
+      "author": "@AI4S-community",
+      "collections": [
+        "RDKit Toolkit"
+      ],
+      "collections_count": 1,
+      "tools_count": 5,
+      "categories": [
+        "chemistry"
+      ]
+    },
+    {
       "author": "@jiaodu",
       "collections": [
         "ASKCOS"
@@ -173,7 +184,7 @@
       ]
     }
   ],
-  "total_contributors": 15,
-  "total_collections": 20,
-  "total_tools": 81
+  "total_contributors": 16,
+  "total_collections": 21,
+  "total_tools": 86
 }

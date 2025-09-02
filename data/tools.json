@@ -393,6 +393,26 @@
       "install_command": "cd servers/Symbolic_regression && uv sync"
     },
     {
+      "name": "RDKit Toolkit",
+      "description": "Provides fundamental cheminformatics capabilities like molecule handling, descriptor calculation, and visualization.",
+      "author": "@AI4S-community",
+      "category": "chemistry",
+      "transport": [
+        "stdio",
+        "sse"
+      ],
+      "tools": [
+        "draw_molecule_svg",
+        "generate_fingerprint",
+        "get_basic_properties",
+        "substructure_search",
+        "validate_smiles"
+      ],
+      "path": "servers/RDKit",
+      "start_command": "# SSE mode\ncd servers/RDKit && python server.py --port <PORT>\n# stdio mode\ncd servers/RDKit && MCP_TRANSPORT=stdio python server.py",
+      "install_command": "cd servers/RDKit && uv sync"
+    },
+    {
       "name": "StructureGenerateServer",
       "description": "Generate structures with ASE, CALYPSO, and CrystalFormer",
       "author": "@A-LOST-WAPITI",
