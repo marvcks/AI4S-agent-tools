@@ -4,26 +4,5 @@
     "author": "@AI4S-community",
     "category": "chemistry",
     "transport": ["stdio", "sse"],
-    "tools": {
-        "validate_smiles": {
-            "name": "validate_smiles",
-            "description": "Checks if a SMILES string is chemically valid."
-        },
-        "get_basic_properties": {
-            "name": "get_basic_properties",
-            "description": "Calculates basic molecular properties (MW, LogP, TPSA, HBD, HBA) for a given SMILES."
-        },
-        "generate_fingerprint": {
-            "name": "generate_fingerprint",
-            "description": "Generates a Morgan fingerprint for a molecule."
-        },
-        "substructure_search": {
-            "name": "substructure_search",
-            "description": "Performs a substructure search to see if a molecule contains a given pattern (SMARTS)."
-        },
-        "draw_molecule_svg": {
-            "name": "draw_molecule_svg",
-            "description": "Generates a 2D SVG image of a molecule from its SMILES string."
-        }
-    }
+    "tools": ["validate_smiles", "get_basic_properties", "generate_fingerprint", "substructure_search", "draw_molecule_svg"]
 }
