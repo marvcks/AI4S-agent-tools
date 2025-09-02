@@ -18,9 +18,6 @@ from ase.build import add_adsorbate, bulk, molecule, surface, stack
 from ase.collections import g2
 from ase.io import read, write
 
-# Open Babel imports
-import openbabel.openbabel as ob
-
 # Pymatgen imports
 from pymatgen.analysis.structure_analyzer import SpacegroupAnalyzer
 from pymatgen.io.ase import AseAtomsAdaptor
@@ -80,87 +77,59 @@ class StructureResult(TypedDict):
     message: str
 
 # ================ Tool to build structures via ASE ===================
+def _prim2conven(ase_atoms: Atoms) -> Atoms:
+    '''
+    Convert a primitive cell (ASE Atoms) to a conventional standard cell using pymatgen.
+
+    Args:
+        ase_atoms (ase.Atoms): Input primitive cell structure.
+
+    Returns:
+        ase.Atoms: Conventional standard cell structure.
+    '''
+    structure = AseAtomsAdaptor.get_structure(ase_atoms)
+    analyzer = SpacegroupAnalyzer(structure, symprec=1e-3)
+    conven_structure = analyzer.get_conventional_standard_structure()
+    conven_atoms = AseAtomsAdaptor.get_atoms(conven_structure)
+    return conven_atoms
 
 
 @mcp.tool()
 def build_bulk_structure_by_template(
-    element: str,
+    material: str,
     conventional: bool = True,
-    crystal_structure: Literal['sc', 'fcc', 'bcc', 'hcp',
-                               'diamond', 'zincblende', 'rocksalt'] = 'fcc',
+    crystal_structure: str = 'fcc',
     a: Optional[float] = None,
+    b: Optional[float] = None,
     c: Optional[float] = None,
     alpha: Optional[float] = None,
-    output_file: str = 'structure_bulk.cif'
+    output_file: str = "structure_bulk.cif"
 ) -> StructureResult:
-    '''
+    """
     Build a bulk crystal structure using ASE.
 
     Args:
-        element (str): Element symbol or chemical formula.
-        conventional (bool): If True, convert to conventional standard cell. Default True.
-        crystal_structure (str): Crystal structure type. Must be one of 'sc', 'fcc', 'bcc', 
-            'hcp', 'diamond', 'zincblende', 'rocksalt'. Default 'fcc'.
-        a (Optional[float]): Lattice parameter 'a' in Ångströms. Required for all structures.
-        c (Optional[float]): Lattice parameter 'c' in Ångströms. Used for hcp structures.
-        alpha (Optional[float]): Lattice angle alpha in degrees.
-        output_file (str): Path to save the CIF file. Default 'structure_bulk.cif'.
+        material (str): Element or chemical formula.
+        conventional (bool): If True, convert to conventional standard cell.
+        crystal_structure (str): Crystal structure type for material1. Must be one of sc, fcc, bcc, tetragonal, bct, hcp, rhombohedral, orthorhombic, mcl, diamond, zincblende, rocksalt, cesiumchloride, fluorite or wurtzite. Default 'fcc'.
+        a, b, c, alpha: Lattice parameters.
+        output_file (str): Path to save CIF.
 
     Returns:
-        StructureResult: Dictionary containing:
-            - structure_path (Path): Path to the generated structure file
-            - message (str): Success or error message
-    '''
-    def _prim2conven(ase_atoms: Atoms) -> Atoms:
-        '''
-        Convert a primitive cell (ASE Atoms) to a conventional standard cell using pymatgen.
-
-        Args:
-            ase_atoms (ase.Atoms): Input primitive cell structure.
-
-        Returns:
-            ase.Atoms: Conventional standard cell structure.
-        '''
-        structure = AseAtomsAdaptor.get_structure(ase_atoms)
-        analyzer = SpacegroupAnalyzer(structure, symprec=1e-3)
-        conven_structure = analyzer.get_conventional_standard_structure()
-        conven_atoms = AseAtomsAdaptor.get_atoms(conven_structure)
-        return conven_atoms
-
+        dict with structure_file (Path)
+    """
     try:
-        if a is None:
-            raise ValueError(
-                'Lattice constant \'a\' must be provided for all crystal structures.')
-        
-        special_params = {}
-        if crystal_structure == 'hcp':
-            if c is not None:
-                special_params['c'] = c
-            special_params['orthorhombic'] = True
-        elif crystal_structure in ['fcc', 'bcc', 'diamond', 'zincblende']:
-            special_params['cubic'] = True
-
-        atoms = bulk(
-            element,
-            crystal_structure,
-            a=a, alpha=alpha,
-            **special_params
-        )
+        atoms = bulk(material, crystal_structure, a=a, b=b, c=c, alpha=alpha)
         if conventional:
             atoms = _prim2conven(atoms)
         write(output_file, atoms)
-
-        logging.info(f'Bulk structure saved to: {output_file}')
-        return {
-            'structure_path': Path(output_file),
-            'message': f'Bulk structure {crystal_structure} for {element} built successfully.'
-        }
+        logging.info(f"Bulk structure saved to: {output_file}")
+        return {"structure_paths": Path(output_file)}
     except Exception as e:
-        logging.error(
-            f'Bulk structure building failed: {str(e)}', exc_info=True)
+        logging.error(f"Bulk structure building failed: {str(e)}", exc_info=True)
         return {
-            'structure_paths': None,
-            'message': f'Bulk structure building failed: {str(e)}'
+            "structure_paths": Path(""), 
+            "message": f"Bulk structure building failed: {str(e)}"
         }
     
 
@@ -365,6 +334,8 @@ def build_molecule_structures_from_smiles(
             - structure_paths (Path): Path to the generated structure file
             - message (str): Success or error message
     '''
+    # Open Babel imports
+    import openbabel.openbabel as ob
     try:
         # Initialize converters
         smi_to_xyz = ob.OBConversion()
@@ -556,7 +527,7 @@ def build_surface_slab(
                 else:
                     # Key is already in correct format (tuple or other)
                     processed_bonds[key] = distance
-                    
+        print(processed_bonds)
         all_slabs = slab_gen.get_slabs(bonds=processed_bonds, repair=repair)
         print(len(all_slabs))
         if not all_slabs:
