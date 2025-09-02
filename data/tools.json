@@ -107,7 +107,7 @@
     {
       "name": "ASKCOS",
       "description": "Computer-aided synthesis planning tool for retrosynthesis analysis",
-      "author": "@jiaodu",
+      "author": "@jiaodu1307",
       "category": "chemistry",
       "transport": [
         "sse",
@@ -395,7 +395,7 @@
     {
       "name": "RDKit Toolkit",
       "description": "Provides fundamental cheminformatics capabilities like molecule handling, descriptor calculation, and visualization.",
-      "author": "@AI4S-community",
+      "author": "@jiaodu1307",
       "category": "chemistry",
       "transport": [
         "stdio",
