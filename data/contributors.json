@@ -25,6 +25,17 @@
       ]
     },
     {
+      "author": "@dogeplusplus",
+      "collections": [
+        "bio-agents-mcp"
+      ],
+      "collections_count": 1,
+      "tools_count": 17,
+      "categories": [
+        "biology"
+      ]
+    },
+    {
       "author": "@ahxbcn",
       "collections": [
         "ABACUS"
@@ -185,7 +196,7 @@
       ]
     }
   ],
-  "total_contributors": 16,
-  "total_collections": 22,
-  "total_tools": 104
+  "total_contributors": 17,
+  "total_collections": 23,
+  "total_tools": 121
 }
