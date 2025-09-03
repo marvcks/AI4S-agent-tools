@@ -111,6 +111,30 @@ Check out our [Contributing Guide](CONTRIBUTING.md) to get started!
     
     return content
 
+def merge_contributors_data(existing_data: List[Dict], new_data: List[Dict]) -> List[Dict]:
+    """Merge new contributors data with existing data."""
+    # Create mapping by author name
+    existing_map = {c['author']: c for c in existing_data}
+    merged = []
+    
+    # Process new contributors
+    for new_contributor in new_data:
+        author = new_contributor['author']
+        if author in existing_map:
+            # Update existing contributor
+            existing = existing_map[author]
+            # Update counts and lists from new data
+            existing['collections'] = new_contributor['collections']
+            existing['collections_count'] = new_contributor['collections_count']
+            existing['tools_count'] = new_contributor['tools_count']
+            existing['categories'] = new_contributor['categories']
+            merged.append(existing)
+        else:
+            # Add new contributor
+            merged.append(new_contributor)
+    
+    return merged
+
 def save_contributors_json(authors_details: Dict[str, Dict]):
     """保存贡献者数据为 JSON 供前端使用"""
     root_dir = Path(__file__).parent.parent
@@ -129,6 +153,23 @@ def save_contributors_json(authors_details: Dict[str, Dict]):
     # 按工具数量排序
     contributors_list.sort(key=lambda x: x['tools_count'], reverse=True)
     
+    contributors_json = root_dir / "data" / "contributors.json"
+    
+    # Load existing data if exists
+    existing_data = None
+    if contributors_json.exists():
+        try:
+            with open(contributors_json, 'r', encoding='utf-8') as f:
+                existing_data = json.load(f)
+        except Exception as e:
+            print(f"⚠️ 无法加载现有 contributors.json: {e}")
+    
+    # Merge if existing data found
+    if existing_data and 'contributors' in existing_data:
+        contributors_list = merge_contributors_data(existing_data['contributors'], contributors_list)
+        # Re-sort after merge
+        contributors_list.sort(key=lambda x: x['tools_count'], reverse=True)
+    
     data = {
         'contributors': contributors_list,
         'total_contributors': len(authors_details),
@@ -136,7 +177,6 @@ def save_contributors_json(authors_details: Dict[str, Dict]):
         'total_tools': sum(d['tools_count'] for d in authors_details.values())
     }
     
-    contributors_json = root_dir / "data" / "contributors.json"
     with open(contributors_json, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     

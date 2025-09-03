@@ -276,6 +276,75 @@ def generate_tools_json(root_dir: Path) -> Dict[str, Any]:
     }
 
 
+def merge_tools_data(existing_data: Dict[str, Any], new_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Merge new tools data with existing data, preserving structure."""
+    # Start with existing data as base
+    merged = existing_data.copy()
+    
+    # Update version and description
+    merged['version'] = new_data['version']
+    merged['description'] = new_data['description']
+    
+    # Merge categories (new categories override old ones)
+    merged['categories'] = new_data['categories']
+    
+    # Create a mapping of existing tools by name for efficient lookup
+    existing_tools = {tool['name']: tool for tool in existing_data.get('tools', [])}
+    
+    # Merge tools
+    merged_tools = []
+    for new_tool in new_data['tools']:
+        tool_name = new_tool['name']
+        if tool_name in existing_tools:
+            # Merge with existing tool, preserving manual edits
+            existing_tool = existing_tools[tool_name]
+            merged_tool = existing_tool.copy()
+            
+            # Update fields that are auto-generated
+            merged_tool['tools'] = new_tool['tools']  # Update tool list
+            merged_tool['path'] = new_tool['path']     # Update path
+            merged_tool['transport'] = new_tool['transport']  # Update transport
+            merged_tool['start_command'] = new_tool['start_command']
+            merged_tool['install_command'] = new_tool['install_command']
+            
+            # Preserve manually edited fields if they exist
+            if 'description' in existing_tool and existing_tool['description'] != f"{tool_name} MCP server":
+                # Keep existing description if it's been customized
+                pass
+            else:
+                merged_tool['description'] = new_tool['description']
+            
+            # Preserve author if it's been customized
+            if 'author' in existing_tool and existing_tool['author'] != '@unknown':
+                # Keep existing author
+                pass
+            else:
+                merged_tool['author'] = new_tool['author']
+            
+            # Preserve category if it's been manually set
+            if 'category' in existing_tool:
+                # Validate category still exists
+                if existing_tool['category'] in new_data['categories']:
+                    # Keep existing category
+                    pass
+                else:
+                    # Category no longer valid, use new one
+                    merged_tool['category'] = new_tool['category']
+            else:
+                merged_tool['category'] = new_tool['category']
+            
+            merged_tools.append(merged_tool)
+        else:
+            # New tool, add it
+            merged_tools.append(new_tool)
+    
+    # Sort tools for consistent output
+    merged_tools.sort(key=lambda x: x['name'].lower())
+    merged['tools'] = merged_tools
+    
+    return merged
+
+
 def main():
     """Main function to generate TOOLS.json."""
     # Get the repository root
@@ -283,15 +352,34 @@ def main():
     
     logger.info(f"Generating TOOLS.json for repository: {root_dir}")
     
-    # Generate the data
-    tools_data = generate_tools_json(root_dir)
+    # Generate the new data
+    new_tools_data = generate_tools_json(root_dir)
     
-    if not tools_data.get('tools'):
+    if not new_tools_data.get('tools'):
         logger.error("No tools found!")
         return 1
     
-    # Write to file
+    # Check if existing file exists
     output_path = root_dir / "data" / "tools.json"
+    if output_path.exists():
+        # Load existing data
+        try:
+            with open(output_path, 'r', encoding='utf-8') as f:
+                existing_data = json.load(f)
+            logger.info("Loaded existing tools.json for incremental update")
+            
+            # Merge with new data
+            tools_data = merge_tools_data(existing_data, new_tools_data)
+            logger.info("Merged new tools with existing data")
+        except Exception as e:
+            logger.warning(f"Failed to load existing tools.json: {e}")
+            logger.info("Falling back to complete regeneration")
+            tools_data = new_tools_data
+    else:
+        # No existing file, use new data
+        tools_data = new_tools_data
+    
+    # Write to file
     with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(tools_data, f, indent=2, ensure_ascii=False)
     
