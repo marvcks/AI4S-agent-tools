@@ -8,7 +8,6 @@ Thank you to all our contributors! 🎉
 |--------|------------|-------|------------|
 | **[@SchrodingersCattt](https://github.com/SchrodingersCattt)** | 3 (CompositionDART, DPACalculatorServer, DPComboServer) | 21 | materials |
 | **[@54yyyu](https://github.com/54yyyu)** | 1 (Zotero) | 18 | research |
-| **[@dogeplusplus](https://github.com/dogeplusplus)** | 1 (bio-agents-mcp) | 17 | biology |
 | **[@ahxbcn](https://github.com/ahxbcn)** | 1 (ABACUS) | 13 | materials |
 | **[@A-LOST-WAPITI](https://github.com/A-LOST-WAPITI)** | 1 (StructureGenerateServer) | 11 | materials |
 | **[@jiaodu1307](https://github.com/jiaodu1307)** | 2 (ASKCOS, RDKit Toolkit) | 9 | chemistry |
@@ -27,9 +26,9 @@ Thank you to all our contributors! 🎉
 
 ## Stats
 
-- **Contributors**: 17
-- **Total Collections**: 23
-- **Total Tools**: 121
+- **Contributors**: 16
+- **Total Collections**: 22
+- **Total Tools**: 104
 
 ## How to Contribute
 

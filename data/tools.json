@@ -124,38 +124,6 @@
       "install_command": "cd servers/ASKCOS && uv sync"
     },
     {
-      "name": "bio-agents-mcp",
-      "description": "A collection of microservices for natural language interaction with biological databases, including Protein Data Bank (PDB) and ChEMBL APIs",
-      "author": "@dogeplusplus",
-      "category": "biology",
-      "transport": [
-        "sse",
-        "stdio"
-      ],
-      "tools": [
-        "aggregation_group_provenance",
-        "branched_entity",
-        "branched_entity_instance",
-        "chemical_component",
-        "drugbank_annotations",
-        "get_residue_chains",
-        "non_polymer_entity",
-        "non_polymer_entity_instance",
-        "pairwise_polymeric_interface_description",
-        "pdb_cluster_data_aggregation",
-        "pdb_cluster_data_aggregation_method",
-        "polymer_entity",
-        "polymer_entity_instance",
-        "pubmed_annotations",
-        "structural_assembly_description",
-        "structure",
-        "uniprot_annotations"
-      ],
-      "path": "servers/bio-agents-mcp",
-      "start_command": "# SSE mode\ncd servers/bio-agents-mcp && python server.py --port <PORT>\n# stdio mode\ncd servers/bio-agents-mcp && MCP_TRANSPORT=stdio python server.py",
-      "install_command": "cd servers/bio-agents-mcp && uv sync"
-    },
-    {
       "name": "CatalysisMCP",
       "description": "Catalysis reaction calculations based on ADSEC workflow",
       "author": "@Rasic2",
