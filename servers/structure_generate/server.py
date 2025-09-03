@@ -66,7 +66,7 @@ args = parse_args()
 
 # Initialize MCP server
 mcp = CalculationMCPServer(
-    'CrystalFormerServer',
+    'StructureGenerateServer',
     host=args.host,
     port=args.port
 )
@@ -960,9 +960,11 @@ FixCell = F
             # Prepare calypso input.dat
             write_input(struct_dir, species, z_list, n_list, r_mat, volume)
         except Exception as e:
+            logging.error(
+                f'Interface structure building failed: {str(e)}', exc_info=True)
             return {
                 'poscar_paths': None,
-                'message': 'Input files generations for calypso failed!'
+                'message': f'Input files generations for calypso failed: {str(e)}'
             }
 
         # Execuate calypso calculation and screening
@@ -1010,9 +1012,11 @@ FixCell = F
             'message': f'Calypso generated {n_tot} structures with {species} successfully!'
         }
     except Exception as e:
+        logging.error(
+            f'Interface structure building failed: {str(e)}', exc_info=True)
         return {
             'structure_paths': None,
-            'message': 'Calypso generated POSCAR files collected failed!'
+            'message': f'Calypso generated POSCAR files collected failed: {str(e)}'
         }
 
 # ================ Tool to generate structures with conditional properties via CrystalFormer ===================
@@ -1038,6 +1042,16 @@ def generate_crystalformer_structures(
     Args:
         cond_model_type_list (List[str]): List of conditional model types. Supported types:
             'bandgap', 'shear_modulus', 'bulk_modulus', 'ambient_pressure', 'high_pressure', 'sound'.
+            'bandgap' returns the bandgap value in eV,
+            'shear_modulus' returns the shear modulus in log10 GPa,
+            'bulk_modulus' returns the bulk modulus in log10 GPa,
+            'ambient_pressure' returns the superconducting critical temperature at ambient pressure in K,
+            'high_pressure' returns the superconducting critical temperature at high pressure in K,
+            'sound' returns the sound velocity in m/s.
+            Note: All model types must be supported by the CrystalFormer model.
+            - When multiple properties are provided, they will be optimized together in a multi-objective manner.
+            - When only one property is provided, it will be optimized as a single objective.
+            - The agent should ensure that the provided model types are valid and supported by CrystalFormer.
         target_value_list (List[float]): Target values for each property in cond_model_type_list.
         target_type_list (List[str]): Type of target optimization for each property. Options:
             'equal', 'greater', 'less', 'minimize'. Note: for 'minimize', use small target values
@@ -1128,10 +1142,12 @@ def generate_crystalformer_structures(
             'message': 'CrystalFormer structure generation successfully!'
         }
 
-    except Exception:
+    except Exception as e:
+        logging.error(
+            f'Interface structure building failed: {str(e)}', exc_info=True)
         return {
             'structure_paths': None,
-            'message': 'CrystalFormer Execution failed!'
+            'message': f'CrystalFormer Execution failed: {str(e)}'
         }
 
 
