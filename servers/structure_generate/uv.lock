@@ -977,6 +977,24 @@ wheels = [
 ]
 
 [[package]]
+name = "openbabel-wheel"
+version = "3.1.1.22"
+source = { registry = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple/" }
+sdist = { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/75/55/c916675c49beb64256bd108f4a797111cedca592c9be0c931014b8654806/openbabel-wheel-3.1.1.22.tar.gz", hash = "sha256:d12e07f8e2b2a8a9007b486087fdeb731cedb5b14129bf93ad3d2c5a72e54d08", size = 13246, upload-time = "2025-05-20T14:27:41.725Z" }
+wheels = [
+    { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/ef/c3/33947aadfba41478e04776d613c2f677bfe263e69653d406f13147b49373/openbabel_wheel-3.1.1.22-cp313-cp313-macosx_13_0_arm64.whl", hash = "sha256:1d442a81e2b39c9b1d24a3bea010ef779542056160b8a6d9e7184d72a34152d4", size = 11518042, upload-time = "2025-05-20T14:26:48.543Z" },
+    { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/ee/3c/287dd7f2233f83244314ed39968de0593140df052a350508318ce7caa13e/openbabel_wheel-3.1.1.22-cp313-cp313-macosx_13_0_x86_64.whl", hash = "sha256:537fa4e3a48e092eea3aeb3f5eb064330d38ac6e2d1db293b22d9832160c0f21", size = 12390390, upload-time = "2025-05-20T14:26:50.756Z" },
+    { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/44/3f/c72e325490393b463e5ae7446253aab140b5e5e407d97c7de064f341975e/openbabel_wheel-3.1.1.22-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:21d1ea864f987f93033720c3847f653f60e502cb07cbb8bcb4965da11a4976f5", size = 15632171, upload-time = "2025-05-20T14:26:52.971Z" },
+    { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/13/ea/5f81cd018bf60301fcca9e133d3a47b8caca14576266dcdc9b38f96c7879/openbabel_wheel-3.1.1.22-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a9986f9f5c64f69b27c416fd38f551bb00da037fe66f69dc6b0d2ef10dfc9f40", size = 16075915, upload-time = "2025-05-20T14:26:55.216Z" },
+    { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/80/1d/8e88918fe6047d8eee9a53aa9b153bf9e098fc871cfd5c86a2a5b16e38a1/openbabel_wheel-3.1.1.22-cp313-cp313-win_amd64.whl", hash = "sha256:e98ccbc75c3fcfa225554e6def913e949aff1c6ac9bad178e47bc313ce16d596", size = 5094724, upload-time = "2025-05-20T14:26:57.818Z" },
+    { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/2c/7b/bdb2b375120e762681f2607b402c16f0d61cb7e96904f6237b9c17cf5000/openbabel_wheel-3.1.1.22-cp313-cp313t-macosx_13_0_arm64.whl", hash = "sha256:d74da8ad712f1313dab74b5cddd40895581324f16d3a9116e8f193c926df3242", size = 11534313, upload-time = "2025-05-20T14:26:59.472Z" },
+    { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/96/61/e8dbf08e562055ac4c7f9bf7afab4cd812eeae31a56fe17344388009873f/openbabel_wheel-3.1.1.22-cp313-cp313t-macosx_13_0_x86_64.whl", hash = "sha256:f2666af5edf3085b8b2daa64597842efa74e817c94d20f0bb9a065123b13de0d", size = 12414740, upload-time = "2025-05-20T14:27:02.082Z" },
+    { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/08/68/d8c305508547a25800c07913e13ed99f91d840206b562393210c9d488e96/openbabel_wheel-3.1.1.22-cp313-cp313t-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:336a8aa2f7a7fa6056a63c1d40d5c0e1e0d9bacae2c3d377468e9fab34e247a5", size = 15633699, upload-time = "2025-05-20T14:27:04.768Z" },
+    { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/4c/8b/8f4c902400ec1897afad8b27d7abf6b06ee0c00cfb73337016091a6d221b/openbabel_wheel-3.1.1.22-cp313-cp313t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:23fada177808451a7d22f39f9e2e198c889d118ad4861b34d8fdbc1e987ad8b4", size = 16058611, upload-time = "2025-05-20T14:27:07.496Z" },
+    { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/de/35/3c9a03a69211d71e8a1be693a498553a9bc70f0c8eebd7cbbe7d5ae5c0f3/openbabel_wheel-3.1.1.22-cp313-cp313t-win_amd64.whl", hash = "sha256:28863c6b7e169f26d6d2d58c46ec6e51492f7a82712e22a2262b6255c0935417", size = 5183064, upload-time = "2025-05-20T14:27:10.089Z" },
+]
+
+[[package]]
 name = "orjson"
 version = "3.11.2"
 source = { registry = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple/" }
@@ -1779,6 +1797,7 @@ dependencies = [
     { name = "bohr-agent-sdk" },
     { name = "bohrium-sdk" },
     { name = "numpy" },
+    { name = "openbabel-wheel" },
     { name = "pymatgen" },
 ]
 
@@ -1788,6 +1807,7 @@ requires-dist = [
     { name = "bohr-agent-sdk", specifier = ">=0.1.101" },
     { name = "bohrium-sdk", specifier = ">=0.13.0" },
     { name = "numpy", specifier = ">=2.3.2" },
+    { name = "openbabel-wheel", specifier = ">=3.1.1.22" },
     { name = "pymatgen", specifier = ">=2025.6.14" },
 ]
 
