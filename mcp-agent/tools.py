@@ -158,7 +158,7 @@ def create_pyproject(tool_name: str, description: str, dependencies: List[str] =
         description: 项目描述
         dependencies: Python包依赖列表，格式如:
                      - ["numpy>=1.20.0", "pandas", "scipy==1.9.0"]
-                     - 会自动添加fastmcp>=0.5.0作为基础依赖
+                     - 会自动添加fastmcp>=2.3.0作为基础依赖
         
     Returns:
         str: 操作结果消息，包含文件路径
@@ -173,7 +173,7 @@ def create_pyproject(tool_name: str, description: str, dependencies: List[str] =
     deps = dependencies or []
     # 确保fastmcp是第一个依赖
     if not any("fastmcp" in dep for dep in deps):
-        deps.insert(0, "fastmcp>=0.5.0")
+        deps.insert(0, "fastmcp>=2.3.0")
     
     deps_str = ",\n    ".join([f'"{dep}"' for dep in deps])
     

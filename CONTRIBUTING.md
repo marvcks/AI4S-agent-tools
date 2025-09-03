@@ -78,7 +78,7 @@ version = "0.1.0"
 description = "Your tool description"
 requires-python = ">=3.8"
 dependencies = [
-    "fastmcp>=0.5.0",
+    "fastmcp>=2.3.0",
     # Add your dependencies here
 ]
 ```
