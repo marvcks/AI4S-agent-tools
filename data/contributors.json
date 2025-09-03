@@ -14,17 +14,6 @@
       ]
     },
     {
-      "author": "@54yyyu",
-      "collections": [
-        "Zotero"
-      ],
-      "collections_count": 1,
-      "tools_count": 18,
-      "categories": [
-        "research"
-      ]
-    },
-    {
       "author": "@ahxbcn",
       "collections": [
         "ABACUS"
@@ -185,7 +174,7 @@
       ]
     }
   ],
-  "total_contributors": 16,
-  "total_collections": 22,
-  "total_tools": 104
+  "total_contributors": 15,
+  "total_collections": 21,
+  "total_tools": 86
 }
