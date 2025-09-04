@@ -374,7 +374,11 @@
       ],
       "start_command": "# SSE mode\ncd servers/Optimade_Server && python server.py --port <PORT>\n# stdio mode\ncd servers/Optimade_Server && MCP_TRANSPORT=stdio python server.py",
       "install_command": "cd servers/Optimade_Server && uv sync",
-      "tools": []
+      "tools": [
+        "fetch_structures_with_bandgap",
+        "fetch_structures_with_filter",
+        "fetch_structures_with_spg"
+      ]
     },
     {
       "name": "orca_tools",

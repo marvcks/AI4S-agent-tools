@@ -118,6 +118,17 @@
       ]
     },
     {
+      "author": "@NingWang-art",
+      "collections": [
+        "OptimadeServer"
+      ],
+      "collections_count": 1,
+      "tools_count": 3,
+      "categories": [
+        "materials"
+      ]
+    },
+    {
       "author": "@lhhhappy",
       "collections": [
         "PYSR-Symbolic-Regression",
@@ -206,20 +217,9 @@
       "categories": [
         "chemistry"
       ]
-    },
-    {
-      "author": "@NingWang-art",
-      "collections": [
-        "OptimadeServer"
-      ],
-      "collections_count": 1,
-      "tools_count": 0,
-      "categories": [
-        "materials"
-      ]
     }
   ],
   "total_contributors": 19,
   "total_collections": 26,
-  "total_tools": 130
+  "total_tools": 133
 }
