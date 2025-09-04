@@ -16,6 +16,7 @@ Thank you to all our contributors! 🎉
 | **[@Rasic2](https://github.com/Rasic2)** | 1 (CatalysisMCP) | 3 | chemistry |
 | **[@lhappy](https://github.com/lhappy)** | 1 (dna_sequence_analyzer) | 3 | biology |
 | **[@Junshang Zhang](https://github.com/Junshang Zhang)** | 2 (HEA_extractTool, HEA_predictTool) | 3 | machine-learning, research |
+| **[@NingWang-art](https://github.com/NingWang-art)** | 1 (OptimadeServer) | 3 | materials |
 | **[@lhhhappy](https://github.com/lhhhappy)** | 2 (PYSR-Symbolic-Regression, paper_search) | 3 | physics, research |
 | **Haoming Yan** | 1 (perovskite_literature_plot) | 3 | data |
 | **[@felix5572](https://github.com/felix5572)** | 1 (deepmd_docs_rag) | 2 | materials |
@@ -24,14 +25,13 @@ Thank you to all our contributors! 🎉
 | **[@nlz25](https://github.com/nlz25)** | 1 (data_analysis) | 1 | data |
 | **2043899742@qq.com** | 1 (matbench_property_prediction) | 1 | materials |
 | **[@vrtejus](https://github.com/vrtejus)** | 1 (PyMOL) | 1 | chemistry |
-| **[@NingWang-art](https://github.com/NingWang-art)** | 1 (OptimadeServer) | 0 | materials |
 
 
 ## Stats
 
 - **Contributors**: 19
 - **Total Collections**: 26
-- **Total Tools**: 130
+- **Total Tools**: 133
 
 ## How to Contribute
 
