@@ -423,7 +423,6 @@ def add_cell_for_molecules(
 
 @mcp.tool()
 def build_surface_slab(
-    input: Union[Path, str, Structure] = None,
     material_path: Path = None,
     miller_index: List[int] = (1, 0, 0),
     layers: int = 4,
@@ -445,8 +444,6 @@ def build_surface_slab(
     a heuristic is applied to choose a default.
 
     Args:
-        input (Path | str | Structure):  
-            Input structure (pymatgen Structure, file path, or ASE-readable file).  
         material_path (Path):  
             Legacy argument for bulk structure file path.  
         miller_index (List[int]):  
@@ -485,15 +482,7 @@ def build_surface_slab(
     """
     try:
         # --- Input normalization ---
-        if isinstance(input, Structure):
-            pmg_bulk = input
-        elif input is not None:
-            try:
-                pmg_bulk = Structure.from_file(str(input))
-            except Exception:
-                ase_atoms = read(str(input))
-                pmg_bulk = AseAtomsAdaptor.get_structure(ase_atoms)
-        elif material_path is not None:
+        if material_path is not None:
             pmg_bulk = Structure.from_file(str(material_path))
         else:
             raise ValueError("No input structure provided.")
