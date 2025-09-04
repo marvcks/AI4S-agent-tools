@@ -340,6 +340,29 @@
       "install_command": "cd servers/matbench_property_prediction && uv sync"
     },
     {
+      "name": "NMRglue Toolkit",
+      "description": "NMR data processing and analysis toolkit using nmrglue library for reading, processing, and visualizing NMR spectroscopy data",
+      "author": "@jiaodu1307",
+      "category": "chemistry",
+      "transport": [
+        "sse",
+        "stdio"
+      ],
+      "tools": [
+        "apply_apodization",
+        "baseline_correction",
+        "get_spectrum_info",
+        "peak_picking",
+        "phase_correction",
+        "plot_spectrum",
+        "read_nmr_data",
+        "write_nmr_data"
+      ],
+      "path": "servers/nmrglue",
+      "start_command": "# SSE mode\ncd servers/nmrglue && python server.py --port <PORT>\n# stdio mode\ncd servers/nmrglue && MCP_TRANSPORT=stdio python server.py",
+      "install_command": "cd servers/nmrglue && uv sync"
+    },
+    {
       "name": "orca_tools",
       "description": "运行 ORCA 计算。",
       "author": "marvcks",

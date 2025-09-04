@@ -8,10 +8,10 @@ Thank you to all our contributors! 🎉
 |--------|------------|-------|------------|
 | **[@SchrodingersCattt](https://github.com/SchrodingersCattt)** | 3 (CompositionDART, DPACalculatorServer, DPComboServer) | 21 | materials |
 | **[@54yyyu](https://github.com/54yyyu)** | 1 (Zotero) | 18 | research |
+| **[@jiaodu1307](https://github.com/jiaodu1307)** | 3 (ASKCOS, NMRglue Toolkit, RDKit Toolkit) | 17 | chemistry |
 | **[@dogeplusplus](https://github.com/dogeplusplus)** | 1 (bio-agents-mcp) | 17 | biology |
 | **[@ahxbcn](https://github.com/ahxbcn)** | 1 (ABACUS) | 13 | materials |
 | **[@A-LOST-WAPITI](https://github.com/A-LOST-WAPITI)** | 1 (StructureGenerateServer) | 11 | materials |
-| **[@jiaodu1307](https://github.com/jiaodu1307)** | 2 (ASKCOS, RDKit Toolkit) | 9 | chemistry |
 | **[@liuyuxiang92](https://github.com/liuyuxiang92)** | 2 (SuperconductorServer, ThermoelectricMaterialsServer) | 9 | materials |
 | **[@Rasic2](https://github.com/Rasic2)** | 1 (CatalysisMCP) | 3 | chemistry |
 | **[@lhappy](https://github.com/lhappy)** | 1 (dna_sequence_analyzer) | 3 | biology |
@@ -29,8 +29,8 @@ Thank you to all our contributors! 🎉
 ## Stats
 
 - **Contributors**: 18
-- **Total Collections**: 24
-- **Total Tools**: 122
+- **Total Collections**: 25
+- **Total Tools**: 130
 
 ## How to Contribute
 
