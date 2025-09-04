@@ -25,6 +25,19 @@
       ]
     },
     {
+      "author": "@jiaodu1307",
+      "collections": [
+        "ASKCOS",
+        "NMRglue Toolkit",
+        "RDKit Toolkit"
+      ],
+      "collections_count": 3,
+      "tools_count": 17,
+      "categories": [
+        "chemistry"
+      ]
+    },
+    {
       "author": "@dogeplusplus",
       "collections": [
         "bio-agents-mcp"
@@ -55,18 +68,6 @@
       "tools_count": 11,
       "categories": [
         "materials"
-      ]
-    },
-    {
-      "author": "@jiaodu1307",
-      "collections": [
-        "ASKCOS",
-        "RDKit Toolkit"
-      ],
-      "collections_count": 2,
-      "tools_count": 9,
-      "categories": [
-        "chemistry"
       ]
     },
     {
@@ -114,6 +115,17 @@
       "categories": [
         "machine-learning",
         "research"
+      ]
+    },
+    {
+      "author": "@NingWang-art",
+      "collections": [
+        "OptimadeServer"
+      ],
+      "collections_count": 1,
+      "tools_count": 3,
+      "categories": [
+        "materials"
       ]
     },
     {
@@ -207,7 +219,7 @@
       ]
     }
   ],
-  "total_contributors": 18,
-  "total_collections": 24,
-  "total_tools": 122
+  "total_contributors": 19,
+  "total_collections": 26,
+  "total_tools": 133
 }
