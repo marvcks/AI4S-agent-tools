@@ -324,7 +324,7 @@ def apply_apodization(data_id: str, function: str = "exponential", lb: float = 1
             apodized_data = ng.proc_base.em(data, lb=lb)
         elif function == "gaussian":
             # 高斯窗函数
-            apodized_data = ng.proc_base.gm(data, g1=0, g2=lb)
+            apodized_data = ng.proc_base.gm(data, g1=0, g2=lb, g3=0.5)
         elif function == "sine_bell":
             # 正弦钟窗函数
             apodized_data = ng.proc_base.sp(data, off=0.5, end=1.0, pow=1.0)
