@@ -24,12 +24,13 @@ Thank you to all our contributors! 🎉
 | **[@nlz25](https://github.com/nlz25)** | 1 (data_analysis) | 1 | data |
 | **2043899742@qq.com** | 1 (matbench_property_prediction) | 1 | materials |
 | **[@vrtejus](https://github.com/vrtejus)** | 1 (PyMOL) | 1 | chemistry |
+| **[@NingWang-art](https://github.com/NingWang-art)** | 1 (OptimadeServer) | 0 | materials |
 
 
 ## Stats
 
-- **Contributors**: 18
-- **Total Collections**: 25
+- **Contributors**: 19
+- **Total Collections**: 26
 - **Total Tools**: 130
 
 ## How to Contribute

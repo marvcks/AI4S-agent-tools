@@ -363,6 +363,20 @@
       "install_command": "cd servers/nmrglue && uv sync"
     },
     {
+      "name": "OptimadeServer",
+      "description": "Optimade Server for materials database",
+      "author": "@NingWang-art",
+      "category": "materials",
+      "path": "servers/Optimade_Server",
+      "transport": [
+        "sse",
+        "stdio"
+      ],
+      "start_command": "# SSE mode\ncd servers/Optimade_Server && python server.py --port <PORT>\n# stdio mode\ncd servers/Optimade_Server && MCP_TRANSPORT=stdio python server.py",
+      "install_command": "cd servers/Optimade_Server && uv sync",
+      "tools": []
+    },
+    {
       "name": "orca_tools",
       "description": "运行 ORCA 计算。",
       "author": "marvcks",
