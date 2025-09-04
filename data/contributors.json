@@ -194,9 +194,20 @@
       "categories": [
         "materials"
       ]
+    },
+    {
+      "author": "@vrtejus",
+      "collections": [
+        "PyMOL"
+      ],
+      "collections_count": 1,
+      "tools_count": 1,
+      "categories": [
+        "chemistry"
+      ]
     }
   ],
-  "total_contributors": 17,
-  "total_collections": 23,
-  "total_tools": 121
+  "total_contributors": 18,
+  "total_collections": 24,
+  "total_tools": 122
 }

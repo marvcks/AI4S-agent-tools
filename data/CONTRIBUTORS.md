@@ -23,13 +23,14 @@ Thank you to all our contributors! 🎉
 | **[@PhelanShao](https://github.com/PhelanShao)** | 1 (pubchem) | 2 | chemistry |
 | **[@nlz25](https://github.com/nlz25)** | 1 (data_analysis) | 1 | data |
 | **2043899742@qq.com** | 1 (matbench_property_prediction) | 1 | materials |
+| **[@vrtejus](https://github.com/vrtejus)** | 1 (PyMOL) | 1 | chemistry |
 
 
 ## Stats
 
-- **Contributors**: 17
-- **Total Collections**: 23
-- **Total Tools**: 121
+- **Contributors**: 18
+- **Total Collections**: 24
+- **Total Tools**: 122
 
 ## How to Contribute
 

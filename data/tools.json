@@ -409,6 +409,22 @@
       ]
     },
     {
+      "name": "PyMOL",
+      "description": "PyMOL molecular visualization and analysis tool integration",
+      "author": "@vrtejus",
+      "category": "chemistry",
+      "transport": [
+        "sse",
+        "stdio"
+      ],
+      "tools": [
+        "parse_and_execute"
+      ],
+      "path": "servers/pymol-mcp",
+      "start_command": "# SSE mode\ncd servers/pymol-mcp && python server.py --port <PORT>\n# stdio mode\ncd servers/pymol-mcp && MCP_TRANSPORT=stdio python server.py",
+      "install_command": "cd servers/pymol-mcp && uv sync"
+    },
+    {
       "name": "PYSR-Symbolic-Regression",
       "description": "PYSR-Symbolic-Regression",
       "author": "@lhhhappy",
