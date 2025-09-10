@@ -111,7 +111,7 @@ def build_bulk_structure_by_template(
     Args:
         material (str): Element or chemical formula.
         conventional (bool): If True, convert to conventional standard cell.
-        crystal_structure (str): Crystal structure type for material1. Must be one of sc, fcc, bcc, tetragonal, bct, hcp, rhombohedral, orthorhombic, mcl, diamond, zincblende, rocksalt, cesiumchloride, fluorite or wurtzite. Default 'fcc'.
+        crystal_structure (str): Crystal structure type for material1. Must be one of sc, fcc, bcc, hcp, rhombohedral, orthorhombic, mcl, diamond, zincblende, rocksalt, cesiumchloride, fluorite or wurtzite. Default 'fcc'.
         a, b, c, alpha: Lattice parameters.
         output_file (str): Path to save CIF.
 
