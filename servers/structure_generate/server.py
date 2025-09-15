@@ -24,6 +24,7 @@ from pymatgen.io.ase import AseAtomsAdaptor
 from pymatgen.core.structure import Structure
 from pymatgen.core.surface import SlabGenerator
 from pymatgen.analysis.local_env import CrystalNN
+from pymatgen.core import Lattice
 
 # Local/custom imports
 from dp.agent.server import CalculationMCPServer
