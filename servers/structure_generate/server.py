@@ -1017,9 +1017,8 @@ def generate_crystalformer_structures(
     cond_model_type_list: List[str],
     target_value_list: List[float],
     target_type_list: List[str],
-    space_group: int,
+    space_group_list: List[int],
     sample_num: int,
-    random_spacegroup_num: int = 0,
     mc_steps: int = 500
 ) -> StructureResult:
     '''
@@ -1046,18 +1045,13 @@ def generate_crystalformer_structures(
         target_type_list (List[str]): Type of target optimization for each property. Options:
             'equal', 'greater', 'less', 'minimize'. Note: for 'minimize', use small target values
             to avoid division by zero.
-        space_group (int): **MUST BE PROVIDED BY USER** - Space group number (1-230) that the 
-            agent should obtain by asking the user. The agent should never guess or automatically 
-            select this value.
-            - When random_spacegroup_num=0: Only this user-specified space group will be used
-            - When random_spacegroup_num>0: This serves as the minimum space group number
-        sample_num (int): Total initial number of samples to generate. When random_spacegroup_num=0,
-            all samples use the specified space group. When random_spacegroup_num>0, this total is
-            divided equally among the randomly selected space groups.
-        random_spacegroup_num (int): Number of random space groups to sample. Default 0.
-            - If 0: Generate structures only using the user-specified space_group
-            - If >0: Randomly sample this many space groups from the range [space_group, 230]
-              where space_group is the user-provided minimum value
+        space_group_list (List[int]): **MUST BE PROVIDED BY USER** - List of space group numbers (1-230) 
+            that the agent should obtain by asking the user. The agent should never guess or 
+            automatically select these values. Each space group number corresponds to a specific 
+            crystallographic symmetry, and structures will be generated for each specified space group.
+        sample_num (int): Total number of initial samples to generate. This number will be divided 
+            equally among all specified space groups. For example, if sample_num=100 and 2 space 
+            groups are provided, 50 samples will be generated for each space group.
         mc_steps (int): Number of Monte Carlo steps for structure optimization. Default 500.
 
     Returns:
@@ -1066,11 +1060,12 @@ def generate_crystalformer_structures(
             - message (str): Success or error message
 
     Critical Agent Instructions:
-        - ALWAYS ask the user to specify the space group number before using this tool
-        - DO NOT make assumptions about which space group to use
-        - DO NOT automatically select a space group based on other parameters
-        - The user must explicitly provide the space_group parameter value
+        - ALWAYS ask the user to specify the space group number(s) before using this tool
+        - DO NOT make assumptions about which space group(s) to use
+        - DO NOT automatically select space groups based on other parameters
+        - The user must explicitly provide the space_group parameter value(s)
         - If the user doesn't know which space group to use, help them understand the options (1-230)
+        - Multiple space groups can be specified to generate structures with different symmetries
         - All input lists (cond_model_type_list, target_value_list, target_type_list) must have 
           the same length for consistency in multi-objective optimization.
         - Alpha weighting values are automatically set to 1.0 for most targets and 0.01 for 'minimize' targets.
@@ -1105,7 +1100,7 @@ def generate_crystalformer_structures(
         for (idx, target_type) in enumerate(target_type_list):
             if target_type == 'minimize':
                 alpha[idx] = 0.01  # Lower alpha for minimize targets
-        sample_num_per_spg = sample_num if random_spacegroup_num == 0 else sample_num // random_spacegroup_num
+        sample_num_per_spg = sample_num // len(space_group_list)
 
         cmd = [
             'uv', 'run', 'python',
@@ -1115,9 +1110,8 @@ def generate_crystalformer_structures(
             '--target', *[str(item) for item in target_value_list],
             '--target_type', *target_type_list,
             '--alpha', *[str(item) for item in alpha],
-            '--spacegroup', str(space_group),
+            '--spacegroup', *[str(item) for item in space_group_list],
             '--init_sample_num', str(sample_num_per_spg),
-            '--random_spacegroup_num', str(random_spacegroup_num),
             '--mc_steps', str(mc_steps),
             '--output_path', str(cal_output_path)
         ]
