@@ -1,0 +1,10 @@
+! HF 6-31G* OPT FREQ
+%maxcore 3000
+%pal nprocs 6 end
+%output
+   Print[P_Basis] 2
+   Print[P_MOs] 1
+   Print[P_Mulliken] 1
+   Print[P_Loewdin] 1
+   Print[P_Hirshfeld] 1
+end* XYZFILE 0 1 ../inputs/mol_xyz/CH4.xyz
