@@ -154,9 +154,24 @@ def SinglePointHandler(job: Dict[str, Any], logger) -> Dict[str, Any]:
         logger.error(f"SCF did not converge: {e}")
         return {"error": "SCF did not converge"}
     
+    tddft_flag = job.get("tddft", False)
+    if tddft_flag:
+        nstates = job.get("n_states", 5)
+        triplet = job.get("triplet", False)
+        logger.info(f"Performing TDDFT calculation with {nstates} states")
+        mf = tddft.TDA(mf)
+        mf.nstates = nstates 
+        mf.singlet = not triplet
+
+
+    energy = mf.kernel()
+    
     energy = float(energy)
     
     result = {"energy": energy}
+    if tddft_flag:
+        TDDFTAnalyzer(mf, result, logger)
+
     return result
 
 
@@ -238,6 +253,15 @@ def _SinglePointHandler(job: Dict[str, Any], logger) -> Any:
         mf = mf.SMD()
         mf.with_solvent.solvent = solvent
 
+    tddft_flag = job.get("tddft", False)
+    if tddft_flag:
+        nstates = job.get("n_states", 5)
+        triplet = job.get("triplet", False)
+        logger.info(f"Performing TDDFT calculation with {nstates} states")
+        mf = tddft.TDA(mf)
+        mf.nstates = nstates 
+        mf.singlet = not triplet
+
     try:
         energy = mf.kernel()
     except Exception as e:
@@ -291,8 +315,19 @@ def GeometryOptimizationHandler(job: Dict[str, Any], logger) -> Dict[str, Any]:
 
     if isinstance(mf, dict) and "error" in mf:
         return mf
+    
 
-    mol_eq = optimize(mf, maxsteps=max_steps, **conv_params)
+    tddft_flag = job.get("tddft", False)
+    if tddft_flag:
+        i_state = job.get("i_state", 1)
+        if i_state < 1 or i_state > mf.nstates:
+            logger.error(f"Invalid excited state index: {i_state}")
+            return {"error": f"Invalid excited state index: {i_state}"}
+        logger.info(f"Optimizing geometry for excited state {i_state}")
+        excited_grad = mf.nuc_grad_method().as_scanner(state=i_state)
+        mol_eq = optimize(excited_grad, maxsteps=max_steps, **conv_params)
+    else:
+        mol_eq = optimize(mf, maxsteps=max_steps, **conv_params)
 
     #write optimized geometry to xyz file
     hashed = hashlib.md5(mol_eq.tostring("xyz").encode()).hexdigest()
@@ -336,6 +371,11 @@ def FrequencyAnalysisHandler(job: Dict[str, Any], logger) -> Dict[str, Any]:
     if T <= 0 or P <= 0:
         logger.error("Temperature and Pressure must be positive values")
         return {"error": "Temperature and Pressure must be positive values"}
+    
+    tddft_flag = job.get("tddft", False)
+    if tddft_flag:
+        logger.error("Frequency analysis for excited states is not supported")
+        return {"error": "Frequency analysis for excited states is not supported"}
 
     mf = _SinglePointHandler(job, logger)
 
@@ -406,6 +446,12 @@ def PropAnalysisHandler(job: Dict[str, Any], logger) -> Dict[str, Any]:
     if not prop_type:
         logger.error("No population properties specified")
         return {"error": "No population properties specified"}
+    
+    tddft_flag = job.get("tddft", False)
+    if tddft_flag:
+        logger.error("Population analysis for excited states is not supported")
+        return {"error": "Population analysis for excited states is not supported"}
+
     mf = _SinglePointHandler(job, logger) 
 
     if isinstance(mf, dict) and "error" in mf:
@@ -435,6 +481,10 @@ def PropAnalysisHandler(job: Dict[str, Any], logger) -> Dict[str, Any]:
         elif prop == "orbitals":
             orbitals = mf.mo_energy
             result["orbitals"] = [float(e) for e in orbitals]
+            homo_index = mf.mol.nelectron // 2 - 1
+            result["HOMO_energy"] = float(orbitals[homo_index])
+            lumo_index = homo_index + 1
+            result["LUMO_energy"] = float(orbitals[lumo_index])
         else:
             logger.warning(f"Unsupported property: {prop}")
             result[f"{prop}"] = f"Unsupported property: {prop}"
@@ -445,6 +495,12 @@ def NMRHandler(job: Dict[str, Any], logger) -> Dict[str, Any]:
     处理NMR化学位移计算任务
     """
     result = {}
+
+    tddft_flag = job.get("tddft", False)
+    if tddft_flag:
+        logger.error("Population analysis for excited states is not supported")
+        return {"error": "Population analysis for excited states is not supported"}
+
     mf = _SinglePointHandler(job, logger)
 
     if isinstance(mf, dict) and "error" in mf:
@@ -480,28 +536,10 @@ def NMRHandler(job: Dict[str, Any], logger) -> Dict[str, Any]:
     np.savez(nmr_file, x=result["nmr_shifts"], y= y)
     return result
 
-def TDDFTHandler(job: Dict[str, Any], logger) -> Dict[str, Any]:
+def TDDFTAnalyzer(mf_td, result, logger):
     """
     处理TDDFT计算任务
     """
-    result = {}
-    n_states = job.get("n_states", 5)
-    if n_states <= 0:
-        logger.error("Number of excited states must be a positive integer")
-        return {"error": "Number of excited states must be a positive integer"}
-
-    mf = _SinglePointHandler(job, logger)
-
-    if isinstance(mf, dict) and "error" in mf:
-        return mf
-    
-    mf_td = tddft.TDA(mf)
-    mf_td.nstates = n_states
-    try:
-        mf_td.kernel()
-    except Exception as e:
-        logger.error(f"TDDFT calculation failed: {e}")
-        return {"error": f"TDDFT calculation failed: {e}"}
     e_list = mf_td.e
     e_list_ev = [float(e * 27.2114) for e in e_list]  # Convert from Hartree to eV
     result["excitation_energies"] = e_list_ev
@@ -512,9 +550,10 @@ def TDDFTHandler(job: Dict[str, Any], logger) -> Dict[str, Any]:
     #save excitation energies and oscillator strengths to a npz file
     id = nanoid.generate()
     tddft_file = SCRATCH_DIR / f"tddft_{id}.npz"
+    logger.info(f"Saving TDDFT results to {tddft_file}")
     np.savez(tddft_file, x=result["excitation_energies"], y=result["oscillator_strengths"])
     result["tddft_file"] = str(tddft_file)
-    return result
+
     
 if __name__ == "__main__":
     import loguru

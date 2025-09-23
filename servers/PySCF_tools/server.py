@@ -79,7 +79,6 @@ JOB_LIST_REGISTRY = {
     "geometry_optimization": GeometryOptimizationHandler,
     "frequency_analysis": FrequencyAnalysisHandler,
     "population_analysis": PropAnalysisHandler,
-    "TDDFT": TDDFTHandler,
     "NMR": NMRHandler,
 }
 
@@ -101,6 +100,7 @@ def process_job(job_data: str) -> str:
                     "solvent": "water", // e.g., "water", "ethanol", etc. Can be None for gas phase.
                     "solvent_model": "PCM", // e.g., "PCM", "SMD", etc. Can be None for default (PCM)
                     "solvent_dielectric": 78.4, // Dielectric constant for the solvent. required if PCM is used.
+                    "tddft": false, // Whether to perform TDDFT calculation.
                     "charge": 0, // Molecular charge. Default is 0.
                     "multiplicity": 1, // Spin multiplicity. Default is 1 (singlet).
                     "max_iterations": 100, // Maximum SCF iterations. Default is 50
@@ -109,7 +109,9 @@ def process_job(job_data: str) -> str:
                     "max_optimization_steps": 100, // Maximum optimization steps. Only for geometry_optimization jobs. Default is 100.
                     "population_analysis_method": "Mulliken", // e.g., "Mulliken", or "Hirshfeld". Only for population_analysis jobs. Default is "Mulliken".
                     "population_properties": ["charges", "dipole", "orbitals"], // List of properties to calculate. Options include "charges", "dipole", "orbitals".
-                    "n_states": 5, // Number of excited states to calculate. Only for TDDFT jobs.
+                    "n_states": 5, // Number of excited states to calculate. Only for TDDFT jobs. Can be None for default (5).
+                    "i_state": 1, // Interested excited state index (1-based). Only for TDDFT jobs. Can be None for default (1).
+                    "triplet": false, // Whether to calculate triplet states. Only for TDDFT jobs. Default is false.
                     "Temperature": 298.15, // Temperature in Kelvin for thermochemical analysis. Only for frequency_analysis jobs.
                     "Pressure": 101325, // Pressure in Pa for thermochemical analysis. Only for
                 }
