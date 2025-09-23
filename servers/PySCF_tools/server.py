@@ -33,7 +33,6 @@ from handler import (
     GeometryOptimizationHandler,
     FrequencyAnalysisHandler,
     PropAnalysisHandler,
-    TDDFTHandler,
     NMRHandler,
 )
 
@@ -46,7 +45,9 @@ import nanoid
 # 设置环境变量
 os.environ["AUTODE_LOG_LEVEL"] = "INFO"
 os.environ["AUTODE_LOG_FILE"] = "autode.log"
-os.environ["MCP_SCRATCH"] = "/home/zhouoh/scratch" 
+os.environ["MCP_SCRATCH"] = "/home/zhouoh/scratch"
+
+CONTEXT7_API_KEY = os.getenv("CONTEXT7_API_KEY", "")
 
 
 def parse_args():
@@ -186,6 +187,29 @@ def _generate_safe_prompt(task_description, params):
     Focus on calculating the primary objective and returning the key results in a dictionary.
     """
     return prompt
+
+@mcp.tool()
+def retrieve_pyscf_doc(keywords: str) -> str:
+    """
+    Retrieve documentation for PySCF functions or classes based on keywords.
+    Args:
+        keywords (str): Keywords to search for in the PySCF documentation.
+    Returns:
+        str: The relevant documentation or an error message if not found.        
+    """
+    #replace spaces with +
+    keywords = urllib.parse.quote_plus(keywords)
+    url = f"https://context7.com/api/v1/pyscf/pyscf.github.io?type=txt&topic={keywords}&tokens=1000"
+
+    headers = {"Authorization": f"Bearer {CONTEXT7_API_KEY}"}
+
+    try:
+        result = requests.get(url, headers=headers, timeout=10)
+        return result.text
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error retrieving PySCF documentation: {e}")
+        return f"Error retrieving PySCF documentation: {e}"
+
 
 @mcp.tool()
 def run_dynamic_job(code: str, molecule_xyz: str, params: dict) -> dict:
