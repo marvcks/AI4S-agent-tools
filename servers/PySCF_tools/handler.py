@@ -20,6 +20,7 @@ import pathlib
 from urllib.parse import urlparse
 
 os.environ["MCP_SCRATCH"] = "/home/zhouoh/scratch" 
+os.environ['OMP_NUM_THREADS'] = "4" 
 SCRATCH_DIR = Path(os.getenv("MCP_SCRATCH"))
 
 def build_mol(job: Dict[str, Any], logger) -> gto.M:
@@ -27,7 +28,7 @@ def build_mol(job: Dict[str, Any], logger) -> gto.M:
     根据输入的job数据构建pyscf的分子对象
     """
     molecule_data = job.get("molecule")
-    basis_set = job.get("basis_set", "def2-svp")
+    basis_set = job.get("parameters", {}).get("basis", "def2-svp")
     logger.info(f"Building molecule with basis set: {basis_set}")
 
     if not molecule_data:
@@ -41,17 +42,19 @@ def build_mol(job: Dict[str, Any], logger) -> gto.M:
             xyz_path = urlparse(molecule_data).path
         logger.info(f"Parsed molecule path: {xyz_path}")
         #convert 
-        mol = gto.M(atom=xyz_path)
+        charge = job.get("parameters", {}).get("charge", 0)
+        spin = job.get("parameters", {}).get("multiplicity", 1) - 1
+        logger.info(f"Charge: {charge}, Spin: {spin}")
+        mol = gto.M(atom=xyz_path, charge=charge, spin=spin)
     except Exception as e:
-        logger.error(f"Failed to read molecule file: {e}")
-        raise ValueError("Failed to read molecule file")
+        logger.error(f"Failed to read molecule file, file does not exist: {e}")
+        raise ValueError(f"Failed to construct molecule from file, : {e}")
     try:
         mol.basis = basis_set
     except Exception as e:
         logger.error(f"Unsupported basis set: {basis_set}")
         raise ValueError(f"Unsupported basis_set: {basis_set}")
-    mol.charge = job.get("charge", 0)
-    mol.spin = job.get("spin", 1) - 1
+
     logger.info(f"Built molecule with {len(mol.atom)} atoms, charge={mol.charge}, spin={mol.spin}, basis={mol.basis}")
     return mol
 
@@ -76,11 +79,11 @@ def SinglePointHandler(job: Dict[str, Any], logger) -> Dict[str, Any]:
         mol = build_mol(job, logger)
     except Exception as e:
         return {"error": str(e)}
-    method = job.get("method", "b3lyp-d3bj")
-    max_iterations = job.get("max_iterations", 128)
-    solvent = job.get("solvent", "water")
-    solvent_model = job.get("solvent_model", None)
-    solvent_dielectric = job.get("solvent_dielectric", None)
+    method = job.get("parameters", {}).get("method", "b3lyp-d3bj")
+    max_iterations = job.get("parameters", {}).get("max_iterations", 128)
+    solvent = job.get("parameters", {}).get("solvent", "water")
+    solvent_model = job.get("parameters", {}).get("solvent_model", None)
+    solvent_dielectric = job.get("parameters", {}).get("solvent_dielectric", None)
 
     if solvent_model not in [None, "PCM", "SMD"]:
         logger.error(f"Unsupported solvent model: {solvent_model}")
@@ -130,7 +133,7 @@ def SinglePointHandler(job: Dict[str, Any], logger) -> Dict[str, Any]:
             return {"error": "MP2 calculation failed"}
     else:
         try:
-            mf = dft.KS(mol).density_fit()
+            mf = dft.KS(mol)
             mf.xc = method
             mf.chkfile = chkfile
             mf.max_cycle = max_iterations
@@ -154,7 +157,8 @@ def SinglePointHandler(job: Dict[str, Any], logger) -> Dict[str, Any]:
         logger.error(f"SCF did not converge: {e}")
         return {"error": "SCF did not converge"}
     
-    tddft_flag = job.get("tddft", False)
+    tddft_flag = job.get("parameters", {}).get("tddft", False)
+    logger.info(f"TDDFT flag is set to: {tddft_flag}")
     if tddft_flag:
         nstates = job.get("n_states", 5)
         triplet = job.get("triplet", False)
@@ -162,9 +166,8 @@ def SinglePointHandler(job: Dict[str, Any], logger) -> Dict[str, Any]:
         mf = tddft.TDA(mf)
         mf.nstates = nstates 
         mf.singlet = not triplet
+        mf.kernel()
 
-
-    energy = mf.kernel()
     
     energy = float(energy)
     
@@ -181,11 +184,11 @@ def _SinglePointHandler(job: Dict[str, Any], logger) -> Any:
         mol = build_mol(job, logger)
     except Exception as e:
         return {"error": str(e)}
-    method = job.get("method", "b3lyp-d3bj")
-    max_iterations = job.get("max_iterations", 128)
-    solvent = job.get("solvent", "water")
-    solvent_model = job.get("solvent_model", None)
-    solvent_dielectric = job.get("solvent_dielectric", None)
+    method = job.get("parameters", {}).get("method", "b3lyp-d3bj")
+    max_iterations = job.get("parameters", {}).get("max_iterations", 128)
+    solvent = job.get("parameters", {}).get("solvent", "water")
+    solvent_model = job.get("parameters", {}).get("solvent_model", None)
+    solvent_dielectric = job.get("parameters", {}).get("solvent_dielectric", None)
 
     if solvent_model not in [None, "PCM", "SMD"]:
         logger.error(f"Unsupported solvent model: {solvent_model}")
@@ -235,7 +238,7 @@ def _SinglePointHandler(job: Dict[str, Any], logger) -> Any:
             return {"error": "MP2 calculation failed"}
     else:
         try:
-            mf = dft.KS(mol).density_fit()
+            mf = dft.KS(mol)
             mf.xc = method
             mf.chkfile = chkfile
             mf.max_cycle = max_iterations
@@ -253,7 +256,9 @@ def _SinglePointHandler(job: Dict[str, Any], logger) -> Any:
         mf = mf.SMD()
         mf.with_solvent.solvent = solvent
 
-    tddft_flag = job.get("tddft", False)
+    mf.kernel()
+
+    tddft_flag = job.get("parameters", {}).get("tddft", False)
     if tddft_flag:
         nstates = job.get("n_states", 5)
         triplet = job.get("triplet", False)
@@ -261,6 +266,7 @@ def _SinglePointHandler(job: Dict[str, Any], logger) -> Any:
         mf = tddft.TDA(mf)
         mf.nstates = nstates 
         mf.singlet = not triplet
+        mf.kernel()
 
     try:
         energy = mf.kernel()
@@ -317,17 +323,21 @@ def GeometryOptimizationHandler(job: Dict[str, Any], logger) -> Dict[str, Any]:
         return mf
     
 
-    tddft_flag = job.get("tddft", False)
-    if tddft_flag:
-        i_state = job.get("i_state", 1)
-        if i_state < 1 or i_state > mf.nstates:
-            logger.error(f"Invalid excited state index: {i_state}")
-            return {"error": f"Invalid excited state index: {i_state}"}
-        logger.info(f"Optimizing geometry for excited state {i_state}")
-        excited_grad = mf.nuc_grad_method().as_scanner(state=i_state)
-        mol_eq = optimize(excited_grad, maxsteps=max_steps, **conv_params)
-    else:
-        mol_eq = optimize(mf, maxsteps=max_steps, **conv_params)
+    tddft_flag = job.get("parameters", {}).get("tddft", False)
+    try:
+        if tddft_flag:
+            i_state = job.get("i_state", 1)
+            if i_state < 1 or i_state > mf.nstates:
+                logger.error(f"Invalid excited state index: {i_state}")
+                return {"error": f"Invalid excited state index: {i_state}"}
+            logger.info(f"Optimizing geometry for excited state {i_state}")
+            excited_grad = mf.nuc_grad_method().as_scanner(state=i_state)
+            mol_eq = optimize(excited_grad, maxsteps=max_steps, **conv_params)
+        else:
+            mol_eq = optimize(mf, maxsteps=max_steps, **conv_params)
+    except Exception as e:
+        logger.error(f"Geometry optimization failed: {e}")
+        result["error"] = f"Geometry optimization failed: {e}"
 
     #write optimized geometry to xyz file
     hashed = hashlib.md5(mol_eq.tostring("xyz").encode()).hexdigest()
@@ -336,8 +346,12 @@ def GeometryOptimizationHandler(job: Dict[str, Any], logger) -> Dict[str, Any]:
         f.write(mol_eq.tostring("xyz"))
 
     mf.mol = mol_eq
-    energy = mf.kernel()
-    energy = float(energy)
+    mf.kernel()
+    energy = mf.e_tot
+    if tddft_flag:
+        TDDFTAnalyzer(mf, result, logger)
+
+    energy = float(energy[0]) if tddft_flag else float(energy)
     result["energy"] = energy
     logger.info(f"Optimization completed. Final energy: {energy} Ha")
     logger.info(f"Final optimized geometry written to: {str(opt_xyz_file)}")
@@ -372,7 +386,7 @@ def FrequencyAnalysisHandler(job: Dict[str, Any], logger) -> Dict[str, Any]:
         logger.error("Temperature and Pressure must be positive values")
         return {"error": "Temperature and Pressure must be positive values"}
     
-    tddft_flag = job.get("tddft", False)
+    tddft_flag = job.get("parameters", {}).get("tddft", False)
     if tddft_flag:
         logger.error("Frequency analysis for excited states is not supported")
         return {"error": "Frequency analysis for excited states is not supported"}
@@ -447,7 +461,7 @@ def PropAnalysisHandler(job: Dict[str, Any], logger) -> Dict[str, Any]:
         logger.error("No population properties specified")
         return {"error": "No population properties specified"}
     
-    tddft_flag = job.get("tddft", False)
+    tddft_flag = job.get("parameters", {}).get("tddft", False)
     if tddft_flag:
         logger.error("Population analysis for excited states is not supported")
         return {"error": "Population analysis for excited states is not supported"}
@@ -496,10 +510,10 @@ def NMRHandler(job: Dict[str, Any], logger) -> Dict[str, Any]:
     """
     result = {}
 
-    tddft_flag = job.get("tddft", False)
+    tddft_flag = job.get("parameters", {}).get("tddft", False)
     if tddft_flag:
-        logger.error("Population analysis for excited states is not supported")
-        return {"error": "Population analysis for excited states is not supported"}
+        logger.error("NMR analysis for excited states is not supported")
+        return {"error": "NMR analysis for excited states is not supported"}
 
     mf = _SinglePointHandler(job, logger)
 
@@ -558,8 +572,8 @@ def TDDFTAnalyzer(mf_td, result, logger):
 if __name__ == "__main__":
     import loguru
     logger = loguru.logger
-    job ="{ \"job_type\": \"population_analysis\", \"molecule\": \"/home/zhouoh/scratch/opt_89cd19c8814ffbbfeec61ed3611bcded.xyz\", \"parameters\": { \"method\": \"B3LYP\", \"basis\": \"def2-SVP\", \"charge\": 0, \"multiplicity\": 1, \"population_analysis_method\": \"Hirshfeld\", \"population_properties\": [\"charges\"] } }"
+    job ="{\"job_type\": \"geometry_optimization\", \"molecule\": \"local:///home/zhouoh/data/AISI/AI4S-agent-tools/servers/PySCF_tools/2025-09-25-20:36:34.284963/804dcbee-65e2-4a2f-b9a2-f73a5b6747c7/outputs/xyz_file/CH3.xyz\", \"parameters\": {\"method\": \"pbe0\", \"basis\": \"def2-SVP\", \"charge\": 1, \"multiplicity\": 1}}"
     import json
     job = json.loads(job)
-    result = PropAnalysisHandler(job, logger)
+    result = GeometryOptimizationHandler(job, logger)
     print(result)
