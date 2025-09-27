@@ -254,12 +254,12 @@ def run_dynamic_job(code: str) -> dict:
     return result
                     
 @mcp.tool()
-def convert_xyz_to_molstar_html(input_xyz_file: Path):
+def convert_xyz_to_molstar_html(input_xyz_file: str):
     """
     读取 .xyz 文件，将其转换为 Mol* HTML 格式.。
 
     参数:
-    input_xyz_file (Path): 输入的 .xyz 文件路径。
+    input_xyz_file (str): 输入的 .xyz 文件路径。
 
     返回:
     Path: 生成的 HTML 文件路径。如果转换失败，则返回 None。
@@ -292,7 +292,7 @@ def convert_xyz_to_molstar_html(input_xyz_file: Path):
 
         return {
             "status": "success",
-            "html_file": Path(output_html_file)
+            "html_file": output_html_file
         }
 
     except Exception as e:
@@ -306,7 +306,7 @@ def convert_xyz_to_molstar_html(input_xyz_file: Path):
 async def write_xyz_file(
     xyz_content: str,
     mol_name: str,
-    ) -> Tuple[Path, str]:
+    ) -> Tuple[str, str]:
     """
     Write an XYZ file from the given content.
 
@@ -331,7 +331,7 @@ async def write_xyz_file(
         A tuple containing the path to the generated XYZ file and a message indicating success or failure.
     """
     try:
-        xyz_path = Path(f"{MCP_SCRATCH}/{mol_name}.xyz")
+        xyz_path = f"{MCP_SCRATCH}/{mol_name}.xyz"
         with open(xyz_path, "w") as f:
             f.write(xyz_content.strip())
             f.write("\n\n")
@@ -347,7 +347,7 @@ async def write_xyz_file(
         }
 
 @mcp.tool()
-def read_xyz_file(xyz_file: Path) -> str:
+def read_xyz_file(xyz_file: str) -> str:
     """
     Read an XYZ file and return its content as a string. Can be used to get the coordinates and atom types for further processing and analysis.
 
@@ -409,12 +409,11 @@ async def smiles_to_xyz(
     try:
         mol = ade.Molecule(smiles=smiles, charge=charge, mult=multiplicity)
         mol.optimise(method=ade.methods.XTB())
-        xyz_path = Path(f"{mol.name}.xyz")
+        xyz_path = f"{MCP_SCRATCH}/{mol_name}.xyz"
         logger.info(f"Converting SMILES to XYZ for molecule: {mol.name}")
         logger.debug(f"SMILES: {smiles}, Charge: {charge}, Multiplicity: {multiplicity}")
         logger.info(f"saving to {xyz_path}")
         mol.print_xyz_file(filename=str(xyz_path))
-        xyz_path = xyz_path.resolve()
         return {
             "xyz_file": xyz_path,
             "message": f"Successfully converted SMILES to XYZ."
