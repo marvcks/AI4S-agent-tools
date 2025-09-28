@@ -17,6 +17,8 @@ from ase.io import read, write
 import requests
 import numpy as np
 import urllib.parse
+import boto3
+from botocore.exceptions import NoCredentialsError, ClientError
 
 # 导入MCP相关
 from dp.agent.server import CalculationMCPServer
@@ -48,8 +50,30 @@ os.environ["AUTODE_LOG_FILE"] = "autode.log"
 os.environ["MCP_SCRATCH"] = "/home/zhouoh/scratch"
 os.environ['OMP_NUM_THREADS'] = "12" 
 
+
 CONTEXT7_API_KEY = os.getenv("CONTEXT7_API_KEY", "")
 MCP_SCRATCH = os.getenv("MCP_SCRATCH", "/home/zhouoh/scratch")
+
+# --- 1. 配置您的 R2 凭证和信息 ---
+# 替换成您自己的信息
+ACCOUNT_ID = ''
+ACCESS_KEY_ID = ''
+SECRET_ACCESS_KEY = ''
+BUCKET_NAME = 'mcp'
+
+# 构建 Endpoint URL
+ENDPOINT_URL = f'https://{ACCOUNT_ID}.r2.cloudflarestorage.com'
+
+# --- 2. 创建 S3 客户端 ---
+# 我们使用 boto3 的 S3 客户端，但将其指向 R2 的 endpoint
+s3_client = boto3.client(
+    's3',
+    endpoint_url=ENDPOINT_URL,
+    aws_access_key_id=ACCESS_KEY_ID,
+    aws_secret_access_key=SECRET_ACCESS_KEY,
+    region_name='auto'  # 对于 R2，region 通常设置为 'auto'
+)
+
 
 
 def parse_args():
@@ -381,7 +405,7 @@ async def smiles_to_xyz(
     mol_name: str,
     charge: int = 0,
     multiplicity: int = 1,
-    n_cores: int = 4,
+    n_cores: int = 2,
     ) -> Tuple[Path, str]:
     """
     Convert a SMILES string to an XYZ file.
@@ -651,6 +675,45 @@ def execute_python(code: str) -> Dict[str, Any]:
             "status": "error",
             "message": f"Error executing code: {str(e)}"
         }
+    
+@mcp.tool()
+def local_file_to_r2_url(local_file: str) -> Dict[str, str]:
+    """
+    Upload a local file to Cloudflare R2 and return the public URL.
+
+    Parameters:
+    ----------
+    local_file : str
+        The path to the local file to upload.
+
+    Returns:
+    -------
+    dict
+        A dictionary containing the status and the public URL of the uploaded file or an error message.
+    """
+    try:
+        if not os.path.isfile(local_file):
+            return {
+                "status": "error",
+                "message": f"Local file does not exist: {local_file}"
+            }
+
+        file_name = os.path.basename(local_file)
+        s3_client.upload_file(local_file, BUCKET_NAME, file_name, ExtraArgs={'ACL': 'public-read'})
+        #https://pyscftoolmcp.cc/1-A.inp
+        public_url = f"https://pyscftoolmcp.cc/{file_name}"
+
+        return {
+            "status": "success",
+            "url": public_url
+        }
+    except (NoCredentialsError, ClientError) as e:
+        logger.error(f"Error uploading file to R2: {e}")
+        return {
+            "status": "error",
+            "message": f"Error uploading file to R2: {str(e)}"
+        }
+
 
 if __name__ == "__main__":
     logger.info("Starting the MCP server...")
