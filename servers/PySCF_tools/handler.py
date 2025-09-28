@@ -19,8 +19,8 @@ import nanoid
 import pathlib
 from urllib.parse import urlparse
 
-os.environ["MCP_SCRATCH"] = "/home/zhouoh/scratch" 
-os.environ['OMP_NUM_THREADS'] = "4" 
+os.environ["MCP_SCRATCH"] = "/tmp" 
+os.environ['OMP_NUM_THREADS'] = "2" 
 SCRATCH_DIR = Path(os.getenv("MCP_SCRATCH"))
 
 def build_mol(job: Dict[str, Any], logger) -> gto.M:

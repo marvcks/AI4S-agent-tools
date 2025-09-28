@@ -47,8 +47,8 @@ import nanoid
 # 设置环境变量
 os.environ["AUTODE_LOG_LEVEL"] = "INFO"
 os.environ["AUTODE_LOG_FILE"] = "autode.log"
-os.environ["MCP_SCRATCH"] = "/home/zhouoh/scratch"
-os.environ['OMP_NUM_THREADS'] = "12" 
+os.environ["MCP_SCRATCH"] = "/tmp"
+os.environ['OMP_NUM_THREADS'] = "2" 
 
 
 CONTEXT7_API_KEY = os.getenv("CONTEXT7_API_KEY", "")
