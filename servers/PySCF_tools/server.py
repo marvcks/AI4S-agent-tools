@@ -406,7 +406,7 @@ async def smiles_to_xyz(
     charge: int = 0,
     multiplicity: int = 1,
     n_cores: int = 2,
-    ) -> Tuple[Path, str]:
+    ) -> Dict[str, Union[str, None]]:
     """
     Convert a SMILES string to an XYZ file.
 
@@ -549,7 +549,7 @@ def _plot_spectrum(npz_file: Path, spectrum_type: Literal["IR", "UV-Vis", "NMR"]
 
         
 @mcp.tool()
-def plot_spectrum(npz_file: List[Path], spectrum_type: Literal["IR", "UV-Vis", "NMR"], output_file: str) -> Dict[str, Union[str, Path]]:
+def plot_spectrum(npz_file: List[Path], spectrum_type: Literal["IR", "UV-Vis", "NMR"], output_file: str) -> Dict[str, Any]:
     """
     Plot and save the IR or UV-Vis spectrum from a .npz file.
 
@@ -605,8 +605,8 @@ def plot_spectrum(npz_file: List[Path], spectrum_type: Literal["IR", "UV-Vis", "
         plt.legend()
         plt.tight_layout()
         if output_file is None:
-            output_file = Path(f"{MCP_SCRATCH}/spectrum.png")
-        output_file = Path(f"{MCP_SCRATCH}/{output_file}")
+            output_file = f"{MCP_SCRATCH}/spectrum.png"
+        output_file = f"{MCP_SCRATCH}/{output_file}"
         plt.savefig(output_file, dpi=300)
         plt.close()
         return {

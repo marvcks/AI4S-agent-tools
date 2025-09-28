@@ -18,7 +18,8 @@ import sys
 from mcp.server.fastmcp import FastMCP
 
 import autode as ade
-import anyio
+import urllib
+import requests
 
 from langchain_core.vectorstores import InMemoryVectorStore
 from langchain_community.document_loaders import TextLoader
@@ -28,6 +29,8 @@ from langchain_community.embeddings import DashScopeEmbeddings
 from langchain_community.document_compressors.dashscope_rerank import DashScopeRerank
 from langchain_core.documents import Document
 
+
+CONTEXT7_API_KEY = os.getenv("CONTEXT7_API_KEY", "your_apii_key_here")
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Mannual RAG Server")
@@ -128,6 +131,27 @@ async def retrieve_content_from_docs(
             retrieved_content=None
         )
 
+@mcp.tool()
+def retrieve_pyscf_doc(keywords: str) -> str:
+    """
+    Retrieve documentation for PySCF functions or classes based on keywords.
+    Args:
+        keywords (str): Keywords to search for in the PySCF documentation.
+    Returns:
+        str: The relevant documentation or an error message if not found.        
+    """
+    #replace spaces with +
+    keywords = urllib.parse.quote_plus(keywords)
+    url = f"https://context7.com/api/v1/pyscf/pyscf.github.io?type=txt&topic={keywords}&tokens=1000"
+
+    headers = {"Authorization": f"Bearer {CONTEXT7_API_KEY}"}
+
+    try:
+        result = requests.get(url, headers=headers, timeout=10)
+        return result.text
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Error retrieving PySCF documentation: {e}")
+        return f"Error retrieving PySCF documentation: {e}"
 
 if __name__ == "__main__":
     logging.info("Starting MOLPILOT MCP Server with all tools...")

@@ -16,7 +16,7 @@ import sys
 
 from dp.agent.server import CalculationMCPServer
 
-import anyio
+import nanoid   
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -24,6 +24,9 @@ import matplotlib.colors as mcolors
 
 import molviewspec as mvs
 from ase.io import read, write
+from safety_check import is_safe
+
+MCP_SCRATCH = os.getenv("MCP_SCRATCH", "/tmp")
 
 
 def parse_args():
@@ -836,6 +839,35 @@ def plot_one_ir_spectra(
         return {
             "status": "error",
             "message": str(e)
+        }
+    
+
+@mcp.tool()
+def read_xyz_file(xyz_file: str) -> str:
+    """
+    Read an XYZ file and return its content as a string. Can be used to get the coordinates and atom types for further processing and analysis.
+
+    Parameters:
+    ----------
+    xyz_file : Path
+        The path to the XYZ file.
+
+    Returns:
+    -------
+    str
+        The content of the XYZ file as a string.
+    """
+    try:
+        with open(xyz_file, "r") as f:
+            content = f.read()
+        return {
+            "status": "success",
+            "xyz_content": content
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Error reading XYZ file: {str(e)}"
         }
 
 

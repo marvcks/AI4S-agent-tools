@@ -18,6 +18,7 @@ from dp.agent.server import CalculationMCPServer
 
 import autode as ade
 import anyio
+import json
 
 
 import molviewspec as mvs
@@ -27,18 +28,6 @@ from ase.io import read, write
 os.environ["AUTODE_LOG_LEVEL"] = "INFO"
 os.environ["AUTODE_LOG_FILE"] = "autode.log"
 
-# 初始化 PATH 和 LD_LIBRARY_PATH
-os.environ["PATH"] = os.environ.get("PATH", "") + os.pathsep + "/opt/mamba/bin"
-os.environ["PATH"] += os.pathsep + "/usr/local/cuda/bin"
-os.environ["LD_LIBRARY_PATH"] = os.environ.get("LD_LIBRARY_PATH", "") + os.pathsep + "/usr/local/cuda/lib64"
-
-# OpenMPI 路径
-os.environ["PATH"] += os.pathsep + "/opt/openmpi411/bin"
-os.environ["LD_LIBRARY_PATH"] += os.pathsep + "/opt/openmpi411/lib"
-
-# ORCA 路径
-os.environ["PATH"] += os.pathsep + "/opt/orca504/orca_5_0_4_linux_x86-64_shared_openmpi411"
-os.environ["LD_LIBRARY_PATH"] += os.pathsep + "/opt/orca504/orca_5_0_4_linux_x86-64_shared_openmpi411"
 
 # packmol 路径
 os.environ["PATH"] += os.pathsep + "/root/packmol-21.1.0"
