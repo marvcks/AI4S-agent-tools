@@ -299,6 +299,11 @@ def local_file_to_r2_url(local_file: str) -> Dict[str, str]:
                 "status": "error",
                 "message": f"Local file does not exist: {local_file}"
             }
+        
+        if "file://" in local_file:
+            local_file = local_file.replace("file://", "")
+        if "local://" in local_file:
+            local_file = local_file.replace("local://", "")
 
         file_name = os.path.basename(local_file)
         s3_client.upload_file(local_file, BUCKET_NAME, file_name, ExtraArgs={'ACL': 'public-read'})

@@ -19,6 +19,8 @@ from dp.agent.server import CalculationMCPServer
 import autode as ade
 import anyio
 import json
+import boto3
+from botocore.exceptions import NoCredentialsError, ClientError
 
 
 import molviewspec as mvs
@@ -63,6 +65,26 @@ mcp = CalculationMCPServer("structure_generator_server", host=args.host, port=ar
 logging.basicConfig(
     level=args.log_level.upper(),
     format="%(asctime)s-%(levelname)s-%(message)s"
+)
+
+# --- 1. 配置您的 R2 凭证和信息 ---
+# 替换成您自己的信息
+ACCOUNT_ID = ''
+ACCESS_KEY_ID = ''
+SECRET_ACCESS_KEY = ''
+BUCKET_NAME = 'mcp'
+
+# 构建 Endpoint URL
+ENDPOINT_URL = f'https://{ACCOUNT_ID}.r2.cloudflarestorage.com'
+
+# --- 2. 创建 S3 客户端 ---
+# 我们使用 boto3 的 S3 客户端，但将其指向 R2 的 endpoint
+s3_client = boto3.client(
+    's3',
+    endpoint_url=ENDPOINT_URL,
+    aws_access_key_id=ACCESS_KEY_ID,
+    aws_secret_access_key=SECRET_ACCESS_KEY,
+    region_name='auto'  # 对于 R2，region 通常设置为 'auto'
 )
 
 
@@ -385,6 +407,50 @@ end structure
             "message": f"Error merging molecules with Packmol: {str(e)}"
         }
 
+
+
+@mcp.tool()
+def local_file_to_r2_url(local_file: str) -> Dict[str, str]:
+    """
+    Upload a local file to Cloudflare R2 and return the public URL.
+
+    Parameters:
+    ----------
+    local_file : str
+        The path to the local file to upload.
+
+    Returns:
+    -------
+    dict
+        A dictionary containing the status and the public URL of the uploaded file or an error message.
+    """
+    try:
+        if not os.path.isfile(local_file):
+            return {
+                "status": "error",
+                "message": f"Local file does not exist: {local_file}"
+            }
+        
+        if "file://" in local_file:
+            local_file = local_file.replace("file://", "")
+        if "local://" in local_file:
+            local_file = local_file.replace("local://", "")
+
+        file_name = os.path.basename(local_file)
+        s3_client.upload_file(local_file, BUCKET_NAME, file_name, ExtraArgs={'ACL': 'public-read'})
+        #https://pyscftoolmcp.cc/1-A.inp
+        public_url = f"https://pyscftoolmcp.cc/{file_name}"
+
+        return {
+            "status": "success",
+            "url": public_url
+        }
+    except (NoCredentialsError, ClientError) as e:
+        logging.error(f"Error uploading file to R2: {e}")
+        return {
+            "status": "error",
+            "message": f"Error uploading file to R2: {str(e)}"
+        }
 
 if __name__ == "__main__":
     logging.info("Starting Structure Generator Server with all tools...")
