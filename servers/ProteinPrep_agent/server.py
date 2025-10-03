@@ -8,13 +8,8 @@ load_dotenv()
 
 import os
 import argparse
-import asyncio
-import tempfile
-from pathlib import Path
 from typing import Optional, TypedDict, List, Tuple, Dict, Union, Literal, Any
 import subprocess
-import json
-import molviewspec as mvs
 import requests
 import numpy as np
 import boto3
@@ -224,6 +219,32 @@ def parametrize_ligand(pdb_path: str, ligand_resname: str = "LIG", charge: int =
     except Exception as e:
         return {"status": "error", "message": str(e)}
     
+def HMR(prmtop_path: str, inpcrd_path: str) -> dict:
+    """
+    Applies Hydrogen Mass Repartition
+    Args:
+        prmtop_path: Path to the input prmtop file.
+        inpcrd_path: Path to the input inpcrd file.
+    Returns:
+        dict: A dictionary containing the status and paths to the modified files or error message.
+    """
+    prefix = prmtop_path.replace(".prmtop", "")
+    hmr_template =f"""HMassRepartition
+    outparm {prefix}_hmr.parm7 {prefix}_hmr.rst7
+    """
+    try:
+        with open(f"{MCP_SCRATCH}/hmr.in", "w") as f:
+            f.write(hmr_template)
+        cmd = f"parmed -O -p {prmtop_path} -c {inpcrd_path} -i {MCP_SCRATCH}/hmr.in"
+        logger.info(f"Running HMR: {cmd}")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            logger.error(f"HMR failed: {result.stderr}")
+            logger.error(f"HMR failed: {result.stdout}")
+        
+        return {"status": "success", "prmtop_path": f"{prefix}_hmr.parm7", "inpcrd_path": f"{prefix}_hmr.rst7"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 @mcp.tool()
 def run_tleap(prepared_pdb_path: str, ligand_res_name: str, ligand_id: str) -> dict:
@@ -232,31 +253,52 @@ def run_tleap(prepared_pdb_path: str, ligand_res_name: str, ligand_id: str) -> d
     
     Args:
         prepared_pdb_path: Path to the prepared PDB file of the protein (output from Protein_Prep).
-        ligand_res_name: The residue name of the ligand in the PDB file.
-        ligand_id: The ligand id returned from parametrize_ligand.
+        ligand_res_name: The residue name of the ligand in the PDB file. Can be empty if no ligand.
+        ligand_id: The ligand id returned from parametrize_ligand. Can be empty if no ligand.
     Returns:
         dict: A dictionary containing the status and paths to the generated files or error message.
     """
     try:
         prefix = prepared_pdb_path.replace(".pdb", "")
-        tleap_input = f"""
-source leaprc.protein.ff14SB
-source leaprc.gaff
-source leaprc.water.tip3p
+        if ligand_res_name != "" and ligand_id == "":
+            return {"status": "error", "message": "ligand_id must be provided if ligand_res_name is provided"}
+        if ligand_res_name == "" and ligand_id != "":
+            return {"status": "error", "message": "ligand_res_name must be provided if ligand_id is provided"}
+        if ligand_res_name != "" and ligand_id != "":
+            tleap_input = f"""
+    source leaprc.protein.ff14SB
+    source leaprc.gaff
+    source leaprc.water.tip3p
 
-{ligand_res_name} = loadmol2 {MCP_SCRATCH}/{ligand_id}.mol2
-loadamberparams {MCP_SCRATCH}/{ligand_id}.frcmod
-mol = loadpdb {prepared_pdb_path}
-center mol
-alignAxes mol
-savepdb mol {MCP_SCRATCH}/{prefix}_dry.pdb
-solvateBox mol TIP3PBOX 10.0
-addions mol Na+ 0
-addions mol Cl- 0
-savepdb mol {prefix}_solv.pdb
-saveamberparm mol {prefix}_solv.prmtop {prefix}_solv.inpcrd
-quit
-"""
+    {ligand_res_name} = loadmol2 {MCP_SCRATCH}/{ligand_id}.mol2
+    loadamberparams {MCP_SCRATCH}/{ligand_id}.frcmod
+    mol = loadpdb {prepared_pdb_path}
+    center mol
+    alignAxes mol
+    savepdb mol {MCP_SCRATCH}/{prefix}_dry.pdb
+    solvateBox mol TIP3PBOX 10.0
+    addions mol Na+ 0
+    addions mol Cl- 0
+    savepdb mol {prefix}_solv.pdb
+    saveamberparm mol {prefix}_solv.prmtop {prefix}_solv.inpcrd
+    quit
+    """
+        else:
+            tleap_input = f"""
+    source leaprc.protein.ff14SB
+    source leaprc.water.tip3p
+
+    mol = loadpdb {prepared_pdb_path}
+    center mol
+    alignAxes mol
+    savepdb mol {MCP_SCRATCH}/{prefix}_dry.pdb
+    solvateBox mol TIP3PBOX 10.0
+    addions mol Na+ 0
+    addions mol Cl- 0
+    savepdb mol {prefix}_solv.pdb
+    saveamberparm mol {prefix}_solv.prmtop {prefix}_solv.inpcrd
+    quit
+    """
 
         with open(f"{MCP_SCRATCH}/tleap.in", "w") as f:
             f.write(tleap_input)
@@ -313,12 +355,15 @@ quit
                     if line.startswith("FATAL"):
                         logger.error(f"tleap error: {line}")
                         return {"status": "error", "message": f"tleap failed: {line}"}
-            # If we reach here, it means tleap succeeded
-            logger.info(f"tleap succeeded")
-            return {"status": "success", "message": "tleap succeeded", "prmtop_path": f"{prefix}_solv_test.prmtop", "inpcrd_path": f"{prefix}_solv_test.inpcrd"}
-        else:
-            logger.info(f"tleap succeeded")
-            return {"status": "success", "message": "tleap succeeded", "prmtop_path": f"{prefix}_solv_test.prmtop", "inpcrd_path": f"{prefix}_solv_test.inpcrd"}
+        # If we reach here, it means tleap succeeded
+        logger.info(f"tleap succeeded")
+        HMR_result = HMR(f"{prefix}_solv.prmtop", f"{prefix}_solv.inpcrd")
+        if HMR_result["status"] != "success":
+            return HMR_result
+        return {"status": "success", 
+                "prmtop_path": HMR_result["prmtop_path"], 
+                "inpcrd_path": HMR_result["inpcrd_path"]}
+        
     except Exception as e:
         return {"status": "error", "message": str(e)}
     
@@ -353,5 +398,9 @@ def upload_to_r2(file_path: str, object_key: str) -> dict:
 
 if __name__ == "__main__":
     logger.info("Starting ProteinPreP MCP Server with all tools...")
-    mcp.run()
+    #fetch_rcsb("3HTB")
+    #Protein_Prep("3HTB.pdb", toDeleteRes=["PO4", "BME"])
+    #parametrize_ligand("3HTB_fixer_amber.pdb", "JZ4", 0)
+    run_tleap("3HTB_fixer_amber.pdb", "JZ4", "9WvrHU")
+    #mcp.run()
     
