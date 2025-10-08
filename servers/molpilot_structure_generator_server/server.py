@@ -39,7 +39,7 @@ os.environ["OMPI_ALLOW_RUN_AS_ROOT"] = "1"
 os.environ["OMPI_ALLOW_RUN_AS_ROOT_CONFIRM"] = "1"
 
 # xtb 路径
-os.environ["PATH"] += os.pathsep + "/root/xtb-6.6.1/bin"
+#os.environ["PATH"] += os.pathsep + "/root/xtb-6.6.1/bin"
 
 
 def parse_args():
@@ -79,13 +79,13 @@ ENDPOINT_URL = f'https://{ACCOUNT_ID}.r2.cloudflarestorage.com'
 
 # --- 2. 创建 S3 客户端 ---
 # 我们使用 boto3 的 S3 客户端，但将其指向 R2 的 endpoint
-s3_client = boto3.client(
-    's3',
-    endpoint_url=ENDPOINT_URL,
-    aws_access_key_id=ACCESS_KEY_ID,
-    aws_secret_access_key=SECRET_ACCESS_KEY,
-    region_name='auto'  # 对于 R2，region 通常设置为 'auto'
-)
+#s3_client = boto3.client(
+#    's3',
+#    endpoint_url=ENDPOINT_URL,
+#    aws_access_key_id=ACCESS_KEY_ID,
+#    aws_secret_access_key=SECRET_ACCESS_KEY,
+#    region_name='auto'  # 对于 R2，region 通常设置为 'auto'
+#)
 
 
 @mcp.tool()
