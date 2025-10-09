@@ -17,7 +17,7 @@ from botocore.exceptions import NoCredentialsError, ClientError
 import loguru
 
 # 导入MCP相关
-from mcp.server.fastmcp import FastMCP
+from dp.agent.server import CalculationMCPServer
 
 import MDAnalysis as mda
 import re
@@ -45,7 +45,7 @@ def parse_args():
 
 
 args = parse_args()
-mcp = FastMCP("ud2_server", host=args.host, port=args.port)
+mcp = CalculationMCPServer("ud2_server", host=args.host, port=args.port)
 
 logger = loguru.logger
 logger.add("logs/mcp_ud2_{time}.log", level="DEBUG", retention="1 days")
