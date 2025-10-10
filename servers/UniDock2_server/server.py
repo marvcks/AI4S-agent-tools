@@ -51,7 +51,9 @@ logger = loguru.logger
 logger.add("logs/mcp_ud2_{time}.log", level="DEBUG", retention="1 days")
 logger.info(f"Uni-Dock2 MCP Server initialized on {args.host}:{args.port} with log level {args.log_level}")
 
+
 MCP_SCRATCH = os.getenv("MCP_SCRATCH", "/tmp")
+
 
 @mcp.tool()
 def extract_template_ligand(holo_pdb: str, ligand_resname: str="LIG") -> Dict[str, Any]:
@@ -227,6 +229,48 @@ def run_unidock2(
     logger.info(f"Uni-Dock2 completed. Results saved to {output_file}")
     return {"status": "success", "results_sdf": output_file, "affinity": affinity if 'affinity' in locals() else None}
 
+@mcp.tool()
+def local_file_to_r2_url(local_file: str) -> Dict[str, str]:
+    """
+    Upload a local file to Cloudflare R2 and return the public URL.
+
+    Parameters:
+    ----------
+    local_file : str
+        The path to the local file to upload.
+
+    Returns:
+    -------
+    dict
+        A dictionary containing the status and the public URL of the uploaded file or an error message.
+    """
+    try:
+        if not os.path.isfile(local_file):
+            return {
+                "status": "error",
+                "message": f"Local file does not exist: {local_file}"
+            }
+        
+        if "file://" in local_file:
+            local_file = local_file.replace("file://", "")
+        if "local://" in local_file:
+            local_file = local_file.replace("local://", "")
+
+        file_name = os.path.basename(local_file)
+        s3_client.upload_file(local_file, BUCKET_NAME, file_name, ExtraArgs={'ACL': 'public-read'})
+        #https://pyscftoolmcp.cc/1-A.inp
+        public_url = f"https://pyscftoolmcp.cc/{file_name}"
+
+        return {
+            "status": "success",
+            "url": public_url
+        }
+    except (NoCredentialsError, ClientError) as e:
+        logger.error(f"Error uploading file to R2: {e}")
+        return {
+            "status": "error",
+            "message": f"Error uploading file to R2: {str(e)}"
+        }
         
 
 if __name__ == "__main__":

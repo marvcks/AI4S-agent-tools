@@ -25,6 +25,7 @@ import MDAnalysis as mda
 from MDAnalysis.analysis import align
 from MDAnalysis.analysis import rms
 import MDAnalysis.transformations as trans
+import boto3
 
 import molviewspec as mvs
 
@@ -57,7 +58,9 @@ logger = loguru.logger
 logger.add("logs/mcp_mdanalysis_{time}.log", level="DEBUG", retention="1 days")
 logger.info(f"MDAnalysis MCP Server initialized on {args.host}:{args.port} with log level {args.log_level}")
 
+
 MCP_SCRATCH = os.getenv("MCP_SCRATCH", "/tmp")
+
 
 # Define tools at module level
 @mcp.tool()
@@ -536,6 +539,8 @@ def execute_python(code: str) -> Dict[str, Any]:
             "status": "error",
             "message": f"Error executing code: {str(e)}"
         }
+
+
 
 if __name__ == "__main__":
     logger.info("Starting OpenMM MCP Server with all tools...")
