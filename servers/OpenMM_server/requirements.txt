@@ -1,0 +1,8 @@
+bohr_agent_sdk==0.1.101
+dp==1.0
+loguru==0.7.3
+nanoid==2.0.0
+numpy==2.3.3
+OpenMM==8.3.1
+python-dotenv==1.1.1
+Requests==2.32.5
