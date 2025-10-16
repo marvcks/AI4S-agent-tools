@@ -15,6 +15,7 @@ import numpy as np
 import boto3
 from botocore.exceptions import NoCredentialsError, ClientError
 import loguru
+from pathlib import Path
 
 # 导入MCP相关
 from dp.agent.server import CalculationMCPServer
@@ -53,15 +54,16 @@ logger.info(f"Uni-Dock2 MCP Server initialized on {args.host}:{args.port} with l
 
 
 MCP_SCRATCH = os.getenv("MCP_SCRATCH", "/tmp")
+MCP_SCRATCH_PATH = Path(MCP_SCRATCH)
 
 
 @mcp.tool()
-def extract_template_ligand(holo_pdb: str, ligand_resname: str="LIG") -> Dict[str, Any]:
+def extract_template_ligand(holo_pdb: Path, ligand_resname: str="LIG") -> TypedDict("results",{"status": str, "receptor_pdb": Path, "ligand_sdf": Path}): 
     """
     Extract the native ligand from a receptor-ligand complex pdb file.
     Will save a protein-only pdb file and a ligand-only sdf file.
     Args:
-        holo_pdb (str): Path to the holo PDB file containing both receptor and ligand.
+        holo_pdb (Path): Path to the holo PDB file containing both receptor and ligand.
         ligand_resname (str): Residue name of the ligand in the PDB file. Default is "LIG".
     Returns:
         Dict[str, Any]: Dictionary containing status, paths to the receptor PDB file and ligand SDF file.
@@ -78,8 +80,8 @@ def extract_template_ligand(holo_pdb: str, ligand_resname: str="LIG") -> Dict[st
         return {"status": "error", "message": f"No ligand found with residue name '{ligand_resname}'"}
     
     id = nanoid.generate(size=6)
-    receptor_pdb_path = os.path.join(MCP_SCRATCH, f"receptor_{id}.pdb")
-    ligand_pdb_path = os.path.join(MCP_SCRATCH, f"ligand_{id}.pdb")
+    receptor_pdb_path = MCP_SCRATCH_PATH / f"receptor_{id}.pdb"
+    ligand_pdb_path = MCP_SCRATCH_PATH / f"ligand_{id}.pdb"
     try:
         protein.write(receptor_pdb_path)
         ligand.write(ligand_pdb_path)
@@ -87,7 +89,7 @@ def extract_template_ligand(holo_pdb: str, ligand_resname: str="LIG") -> Dict[st
         logger.error(f"Error writing output files: {e}")
         return {"status": "error", "message": f"Error writing output files: {e}"}
     # Convert ligand PDB to SDF using Open Babel
-    ligand_sdf_path = os.path.join(MCP_SCRATCH, f"ligand_{id}.sdf")
+    ligand_sdf_path = MCP_SCRATCH_PATH / f"ligand_{id}.sdf"
     try:
         subprocess.run(["obabel", "-ipdb", ligand_pdb_path, "-osdf", "-O", ligand_sdf_path], check=True)
     except subprocess.CalledProcessError as e:
@@ -98,20 +100,20 @@ def extract_template_ligand(holo_pdb: str, ligand_resname: str="LIG") -> Dict[st
 
     
 @mcp.tool()
-def convert_file_to_sdf(input_file: str) -> Dict[str, Any]:
+def convert_file_to_sdf(input_file: Path) -> TypedDict("results",{"status": str, "sdf_file": Path}):
     """
     Convert a molecular structure file (PDB, MOL2, SDF) to SDF format using Open Babel.
     Args:
-        input_file (str): Path to the input structure file.
+        input_file (Path): Path to the input structure file.
     Returns:
         Dict[str, Any]: Dictionary containing status and path to the converted SDF file.
     """
-    if not os.path.isfile(input_file):
+    if not input_file.is_file():
         logger.error(f"Input file {input_file} does not exist.")
         return {"status": "error", "message": f"Input file {input_file} does not exist."}
     
     id = nanoid.generate(size=6)
-    sdf_path = os.path.join(MCP_SCRATCH, f"converted_{id}.sdf")
+    sdf_path = MCP_SCRATCH_PATH / f"converted_{id}.sdf"
     try:
         subprocess.run(["obabel", "-i", input_file.split('.')[-1], input_file, "-osdf", "-O", sdf_path], check=True)
     except subprocess.CalledProcessError as e:
@@ -121,33 +123,63 @@ def convert_file_to_sdf(input_file: str) -> Dict[str, Any]:
     logger.info(f"Converted {input_file} to {sdf_path}")
     return {"status": "success", "sdf_file": sdf_path}
 
+
 @mcp.tool()
-def combine_protein_ligand(receptor_pdb: str, ligand_sdf: str, ligand_resname: str="LIG") -> Dict[str, Any]:
+def calculate_box_center(receptor_pdb: Path, selection: str) -> TypedDict("results",{"status": str, "center": Tuple[float, float, float]}):
+    """
+    Calculate the geometric center of a selection in a PDB file.
+    Args:
+        receptor_pdb (Path): Path to the receptor PDB file.
+        selection (str): MDAnalysis selection string to define the region of interest. e.g. resid 100 
+    Returns:
+        Dict[str, Any]: Dictionary containing status and the (x, y, z) coordinates of the center.
+    """
+    if not receptor_pdb.is_file():
+        logger.error(f"Receptor PDB file {receptor_pdb} does not exist.")
+        return {"status": "error", "message": f"Receptor PDB file {receptor_pdb} does not exist."}
+    
+    try:
+        u = mda.Universe(receptor_pdb)
+        selected_atoms = u.select_atoms(selection)
+        if len(selected_atoms) == 0:
+            logger.error(f"No atoms found for selection '{selection}' in {receptor_pdb}")
+            return {"status": "error", "message": f"No atoms found for selection '{selection}'"}
+        center = selected_atoms.center_of_geometry()
+    except Exception as e:
+        logger.error(f"Error processing PDB file {receptor_pdb}: {e}")
+        return {"status": "error", "message": f"Error processing PDB file: {e}"}
+    
+    logger.info(f"Calculated center for selection '{selection}' in {receptor_pdb}: {center}")
+    return {"status": "success", "center": (float(center[0]), float(center[1]), float(center[2]))}
+
+@mcp.tool()
+def combine_protein_ligand(receptor_pdb: Path, ligand_sdf: Path, ligand_resname: str="LIG") -> TypedDict("results",{"status": str, "complex_pdb": Path}):
     """
     Combine a receptor PDB file and a ligand SDF file into a single PDB file for further MD.
     Args:
-        receptor_pdb (str): Path to the receptor PDB file.
-        ligand_sdf (str): Path to the ligand SDF file.
+        receptor_pdb (Path): Path to the receptor PDB file.
+        ligand_sdf (Path): Path to the ligand SDF file.
         ligand_resname (str): Residue name to assign to the ligand in the combined PDB. Default is "LIG".
     Returns:
         Dict[str, Any]: Dictionary containing status and path to the combined PDB file.
     """
-    if not os.path.isfile(receptor_pdb):
+    if not receptor_pdb.is_file():
         logger.error(f"Receptor PDB file {receptor_pdb} does not exist.")
         return {"status": "error", "message": f"Receptor PDB file {receptor_pdb} does not exist."}
-    if not os.path.isfile(ligand_sdf):
+    if not ligand_sdf.is_file():
         logger.error(f"Ligand SDF file {ligand_sdf} does not exist.")
         return {"status": "error", "message": f"Ligand SDF file {ligand_sdf} does not exist."}
     
     id = nanoid.generate(size=6)
-    combined_pdb_path = os.path.join(MCP_SCRATCH, f"complex_{id}.pdb")
+    combined_pdb_path = MCP_SCRATCH_PATH / f"complex_{id}.pdb"
+    ligand_path = MCP_SCRATCH_PATH / f"ligand_{id}.pdb"
     try:
-        subprocess.run(["obabel", "-isdf", ligand_sdf, "-opdb", "-O", f"{MCP_SCRATCH}/ligand_{id}.pdb"], check=True)
+        subprocess.run(["obabel", "-isdf", ligand_sdf, "-opdb", "-O", ligand_path], check=True)
     except subprocess.CalledProcessError as e:
         logger.error(f"Error converting ligand SDF to PDB: {e}")
         return {"status": "error", "message": f"Error converting ligand SDF to PDB: {e}"}
     u_receptor = mda.Universe(receptor_pdb)
-    u_ligand = mda.Universe(f"{MCP_SCRATCH}/ligand_{id}.pdb")
+    u_ligand = mda.Universe(ligand_path)
     u_ligand.trajectory[0]
     #rename ligand residue to LIG
     for res in u_ligand.residues:
@@ -166,29 +198,29 @@ def combine_protein_ligand(receptor_pdb: str, ligand_sdf: str, ligand_resname: s
 # Define tools at module level
 @mcp.tool()
 def run_unidock2(
-    receptor_pdb: str,
-    ligand_sdf: str,
+    receptor_pdb: Path,
+    ligand_sdf: Path,
     center_x: float,
-    center_y:float,
-    center_z:float,
+    center_y: float,
+    center_z: float,
     box_size_x: float = 30.0,
     box_size_y: float = 30.0,
     box_size_z: float = 30.0,
-    template_sdf: Optional[str] = None,
-) -> Dict[str, Any]:
+    template_sdf: Optional[Path] = None,
+) -> TypedDict("results",{"status": str, "results_sdf": Path, "affinity": Optional[List[float]]}):
     """
     Run Uni-Dock2 docking simulation.
 
     Args:
-        receptor_pdb (str): Path to the receptor PDB file.
-        ligand_sdf (str): Path to the ligand SDF file.
+        receptor_pdb (Path): Path to the receptor PDB file.
+        ligand_sdf (Path): Path to the ligand SDF file.
         center_x (float): X coordinate of the box center.
         center_y (float): Y coordinate of the box center.
         center_z (float): Z coordinate of the box center.
         box_size_x (float): Size of the box in X dimension. Default is 30.0.
         box_size_y (float): Size of the box in Y dimension. Default is 30.0.
         box_size_z (float): Size of the box in Z dimension. Default is 30.0.
-        template_sdf (Optional[str]): Path to a template ligand SDF file for guided docking. Default is None.
+        template_sdf (Optional[Path]): Path to a template ligand SDF file for guided docking. Default is None.
 
     Returns:
         Dict[str, Any]: Dictionary containing status and path to the docking results file.
@@ -208,7 +240,7 @@ def run_unidock2(
             f.write(f"  template_docking: true\n")
             f.write(f"  reference_sdf_file_name: {template_sdf}\n")
     
-    output_file = os.path.join(MCP_SCRATCH, f"ud2_results_{id}.sdf")
+    output_file = MCP_SCRATCH_PATH / f"ud2_results_{id}.sdf"
     try:
         result = subprocess.run(["unidock2", "docking" , "-cf", input_file, "-o", output_file], check=True, capture_output=True, text=True)
     except subprocess.CalledProcessError as e:
@@ -216,62 +248,17 @@ def run_unidock2(
         return {"status": "error", "message": f"Error running Uni-Dock2: {e}"}
     #check every line in result.stdout for affinity
     regex = r"1\s+(-?\d+\.\d+)"
-    for line in result.stdout.splitlines():
-        #[2025-10-04 17:13:56.868] [info] 1         -7.2813826 
-        match = re.search(regex, line)
-        if match:
-            affinity = float(match.group(1))
-            logger.info(f"Docking completed with best affinity: {affinity} kcal/mol")
-            break
+    match_all = re.findall(regex, result.stdout)
+    if match_all:
+        affinity = [float(x) for x in match_all]
+        logger.info(f"Uni-Dock2 completed. Best affinity: {affinity} kcal/mol. Results saved to {output_file}")
     else:
-        logger.warning("No affinity found in Uni-Dock2 output.")
+        logger.warning(f"Uni-Dock2 completed but no affinity found in output. Results saved to {output_file}")
 
     logger.info(f"Uni-Dock2 completed. Results saved to {output_file}")
     return {"status": "success", "results_sdf": output_file, "affinity": affinity if 'affinity' in locals() else None}
 
-@mcp.tool()
-def local_file_to_r2_url(local_file: str) -> Dict[str, str]:
-    """
-    Upload a local file to Cloudflare R2 and return the public URL.
 
-    Parameters:
-    ----------
-    local_file : str
-        The path to the local file to upload.
-
-    Returns:
-    -------
-    dict
-        A dictionary containing the status and the public URL of the uploaded file or an error message.
-    """
-    try:
-        if not os.path.isfile(local_file):
-            return {
-                "status": "error",
-                "message": f"Local file does not exist: {local_file}"
-            }
-        
-        if "file://" in local_file:
-            local_file = local_file.replace("file://", "")
-        if "local://" in local_file:
-            local_file = local_file.replace("local://", "")
-
-        file_name = os.path.basename(local_file)
-        s3_client.upload_file(local_file, BUCKET_NAME, file_name, ExtraArgs={'ACL': 'public-read'})
-        #https://pyscftoolmcp.cc/1-A.inp
-        public_url = f"https://pyscftoolmcp.cc/{file_name}"
-
-        return {
-            "status": "success",
-            "url": public_url
-        }
-    except (NoCredentialsError, ClientError) as e:
-        logger.error(f"Error uploading file to R2: {e}")
-        return {
-            "status": "error",
-            "message": f"Error uploading file to R2: {str(e)}"
-        }
-        
 
 if __name__ == "__main__":
     logger.info("Starting ProteinPreP MCP Server with all tools...")

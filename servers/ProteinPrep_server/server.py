@@ -23,6 +23,7 @@ import pdbfixer
 from openmm.app import PDBFile, Modeller
 import re
 import nanoid
+from pathlib import Path
 
 
 
@@ -83,12 +84,12 @@ def fetch_rcsb(pdb_id: str) -> dict:
     if response.status_code == 200:
         with open(f"{MCP_SCRATCH}/{pdb_id}.pdb", "w") as f:
             f.write(response.text)
-        return {"status": "success", "pdb_path": f"{MCP_SCRATCH}/{pdb_id}.pdb"}
+        return {"status": "success", "pdb_path": Path(f"{MCP_SCRATCH}/{pdb_id}.pdb")}
     else:
         return {"status": "error", "message": f"Failed to fetch PDB ID {pdb_id}. HTTP Status: {response.status_code}"}
 
 @mcp.tool()
-def Protein_Prep(pdb_path: str, ph: float = 7.0, toDeleteRes: Optional[List[str]] = None) -> dict:
+def Protein_Prep(pdb_path: Path, ph: float = 7.0, toDeleteRes: Optional[List[str]] = None) -> dict:
     """
     Prepares a protein structure for molecular dynamics simulations.
     Will add the missing residues, add hydrogens, and adjust protonation states.
@@ -152,13 +153,13 @@ def Protein_Prep(pdb_path: str, ph: float = 7.0, toDeleteRes: Optional[List[str]
             logger.error(f"pdb4amber failed: {result.stderr}")
             return {"status": "error", "message": f"pdb4amber failed: {result.stderr}"}
 
-        return {"status": "success", "prepared_pdb_path": output_path}
+        return {"status": "success", "prepared_pdb_path": Path(output_path)}
     except Exception as e:
         return {"status": "error", "message": str(e)}
     
 
 @mcp.tool()
-def get_protein_sequence(pdb_path: str) -> dict:
+def get_protein_sequence(pdb_path: Path) -> dict:
     """
     Extracts the amino acid sequence from a PDB file.
     
@@ -182,7 +183,7 @@ def get_protein_sequence(pdb_path: str) -> dict:
     
 
 @mcp.tool()
-def parametrize_ligand(pdb_path: str, ligand_resname: str = "LIG", charge: int = 0) -> dict:
+def parametrize_ligand(pdb_path: Path, ligand_resname: str = "LIG", charge: int = 0) -> dict:
     """
     Parametrizes a ligand using antechamber and parmchk2 from AmberTools.
     
@@ -248,13 +249,13 @@ def HMR(prmtop_path: str, inpcrd_path: str) -> dict:
         if result.returncode != 0:
             logger.error(f"HMR failed: {result.stderr}")
             logger.error(f"HMR failed: {result.stdout}")
-        
-        return {"status": "success", "prmtop_path": f"{prefix}_hmr.parm7", "inpcrd_path": f"{prefix}_hmr.rst7"}
+
+        return {"status": "success", "prmtop_path": Path(f"{prefix}_hmr.parm7"), "inpcrd_path": Path(f"{prefix}_hmr.rst7")}
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
 @mcp.tool()
-def run_tleap(prepared_pdb_path: str, ligand_res_name: str, ligand_id: str) -> dict:
+def run_tleap(prepared_pdb_path: Path, ligand_res_name: Path, ligand_id: str) -> dict:
     """
     Runs tleap to generate topology and coordinate files for the protein-ligand complex.
     
@@ -266,7 +267,7 @@ def run_tleap(prepared_pdb_path: str, ligand_res_name: str, ligand_id: str) -> d
         dict: A dictionary containing the status and paths to the generated files or error message.
     """
     try:
-        prefix = prepared_pdb_path.replace(".pdb", "")
+        prefix = prepared_pdb_path.stem
         if ligand_res_name != "" and ligand_id == "":
             return {"status": "error", "message": "ligand_id must be provided if ligand_res_name is provided"}
         if ligand_res_name == "" and ligand_id != "":
@@ -374,48 +375,6 @@ def run_tleap(prepared_pdb_path: str, ligand_res_name: str, ligand_id: str) -> d
     except Exception as e:
         return {"status": "error", "message": str(e)}
     
-@mcp.tool()
-def local_file_to_r2_url(local_file: str) -> Dict[str, str]:
-    """
-    Upload a local file to Cloudflare R2 and return the public URL.
-
-    Parameters:
-    ----------
-    local_file : str
-        The path to the local file to upload.
-
-    Returns:
-    -------
-    dict
-        A dictionary containing the status and the public URL of the uploaded file or an error message.
-    """
-    try:
-        if not os.path.isfile(local_file):
-            return {
-                "status": "error",
-                "message": f"Local file does not exist: {local_file}"
-            }
-        
-        if "file://" in local_file:
-            local_file = local_file.replace("file://", "")
-        if "local://" in local_file:
-            local_file = local_file.replace("local://", "")
-
-        file_name = os.path.basename(local_file)
-        s3_client.upload_file(local_file, BUCKET_NAME, file_name, ExtraArgs={'ACL': 'public-read'})
-        #https://pyscftoolmcp.cc/1-A.inp
-        public_url = f"https://pyscftoolmcp.cc/{file_name}"
-
-        return {
-            "status": "success",
-            "url": public_url
-        }
-    except (NoCredentialsError, ClientError) as e:
-        logger.error(f"Error uploading file to R2: {e}")
-        return {
-            "status": "error",
-            "message": f"Error uploading file to R2: {str(e)}"
-        }
 
 
 if __name__ == "__main__":
