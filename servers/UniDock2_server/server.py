@@ -58,7 +58,7 @@ MCP_SCRATCH_PATH = Path(MCP_SCRATCH)
 
 
 @mcp.tool()
-def extract_template_ligand(holo_pdb: Path, ligand_resname: str="LIG") -> TypedDict("results",{"status": str, "receptor_pdb": Path, "ligand_sdf": Path}): 
+def extract_template_ligand_from_holo_pdb(holo_pdb: Path, ligand_resname: str="LIG") -> TypedDict("results",{"status": str, "receptor_pdb": Path, "ligand_sdf": Path}): 
     """
     Extract the native ligand from a receptor-ligand complex pdb file.
     Will save a protein-only pdb file and a ligand-only sdf file.
@@ -67,6 +67,17 @@ def extract_template_ligand(holo_pdb: Path, ligand_resname: str="LIG") -> TypedD
         ligand_resname (str): Residue name of the ligand in the PDB file. Default is "LIG".
     Returns:
         Dict[str, Any]: Dictionary containing status, paths to the receptor PDB file and ligand SDF file.
+    Example Input/Output:
+        Input:
+            holo_pdb: https://XXX/3HTB.pdb
+            ligand_resname: "JZ4"
+        Output:
+        {
+            "status": "success",
+            "receptor_pdb": Path("/path/to/receptor_XXXXXX.pdb"),
+            "ligand_sdf": Path("/path/to/ligand_XXXXXX.sdf")
+        }
+        
     """
     try:
         u = mda.Universe(holo_pdb)
@@ -100,13 +111,21 @@ def extract_template_ligand(holo_pdb: Path, ligand_resname: str="LIG") -> TypedD
 
     
 @mcp.tool()
-def convert_file_to_sdf(input_file: Path) -> TypedDict("results",{"status": str, "sdf_file": Path}):
+def convert_ligand_file_to_sdf(input_file: Path) -> TypedDict("results",{"status": str, "sdf_file": Path}):
     """
     Convert a molecular structure file (PDB, MOL2, SDF) to SDF format using Open Babel.
     Args:
         input_file (Path): Path to the input structure file.
     Returns:
         Dict[str, Any]: Dictionary containing status and path to the converted SDF file.
+    Example Input/Output:
+        Input:
+            input_file: https://XXX/molecule.pdb
+        Output:
+        {
+            "status": "success",
+            "sdf_file": Path("/path/to/converted_XXXXXX.sdf")
+        }
     """
     if not input_file.is_file():
         logger.error(f"Input file {input_file} does not exist.")
@@ -125,7 +144,7 @@ def convert_file_to_sdf(input_file: Path) -> TypedDict("results",{"status": str,
 
 
 @mcp.tool()
-def calculate_box_center(receptor_pdb: Path, selection: str) -> TypedDict("results",{"status": str, "center": Tuple[float, float, float]}):
+def calculate_docking_box_center(receptor_pdb: Path, selection: str) -> TypedDict("results",{"status": str, "center": Tuple[float, float, float]}):
     """
     Calculate the geometric center of a selection in a PDB file.
     Args:
@@ -133,6 +152,15 @@ def calculate_box_center(receptor_pdb: Path, selection: str) -> TypedDict("resul
         selection (str): MDAnalysis selection string to define the region of interest. e.g. resid 100 
     Returns:
         Dict[str, Any]: Dictionary containing status and the (x, y, z) coordinates of the center.
+    Example Input/Output:
+        Input:
+            receptor_pdb: https://XXX/receptor.pdb
+            selection: "resid 100"
+        Output:
+        {
+            "status": "success",
+            "center": (12.345, -6.789, 0.123)
+        }
     """
     if not receptor_pdb.is_file():
         logger.error(f"Receptor PDB file {receptor_pdb} does not exist.")
@@ -162,6 +190,17 @@ def combine_protein_ligand(receptor_pdb: Path, ligand_sdf: Path, ligand_resname:
         ligand_resname (str): Residue name to assign to the ligand in the combined PDB. Default is "LIG".
     Returns:
         Dict[str, Any]: Dictionary containing status and path to the combined PDB file.
+
+    Example Input/Output:
+        Input:
+            receptor_pdb: https://XXX/receptor.pdb
+            ligand_sdf: https://XXX/ligand.sdf
+            ligand_resname: "LIG"
+        Output:
+        {
+            "status": "success",
+            "complex_pdb": Path("/path/to/complex_XXXXXX.pdb")
+        }
     """
     if not receptor_pdb.is_file():
         logger.error(f"Receptor PDB file {receptor_pdb} does not exist.")
@@ -224,6 +263,24 @@ def run_unidock2(
 
     Returns:
         Dict[str, Any]: Dictionary containing status and path to the docking results file.
+
+    Example Input/Output:
+        Input:
+            receptor_pdb: https://XXX/receptor.pdb
+            ligand_sdf: https://XXX/ligand.sdf
+            center_x: 0.0
+            center_y: 0.0
+            center_z: 0.0
+            box_size_x: 30.0
+            box_size_y: 30.0
+            box_size_z: 30.0
+            template_sdf: https://XXX/template.sdf
+        Output:
+        {
+            "status": "success",
+            "results_sdf": Path("/path/to/ud2_results_XXXXXX.sdf"),
+            "affinity": [-7.5, -6.8, -6.2]  # List of docking affinities in kcal/mol
+        }
     """
     logger.info(f"Running Uni-Dock2 with receptor: {receptor_pdb}, ligand: {ligand_sdf}, center: ({center_x}, {center_y}, {center_z}), box size: ({box_size_x}, {box_size_y}, {box_size_z}), template: {template_sdf}")
     id = nanoid.generate(size=6)
