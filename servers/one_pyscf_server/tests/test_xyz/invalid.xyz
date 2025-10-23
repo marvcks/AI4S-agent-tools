@@ -1,0 +1,5 @@
+This is not a valid XYZ file
+It should have number of atoms on first line
+Then a comment line
+Then atom coordinates
+But this file has none of that
