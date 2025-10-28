@@ -1,0 +1,17 @@
+# MCP Server for Dify Knowledge Base
+# Core MCP dependencies
+mcp>=1.0.0
+
+# HTTP client for API requests
+aiohttp>=3.8.0
+
+# Data validation and serialization
+pydantic>=2.0.0
+
+# Optional: For development and testing
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+langchain==0.3.26
+langchain-community==0.3.27
+langchain_chroma
+dashscope
