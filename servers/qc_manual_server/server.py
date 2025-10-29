@@ -28,7 +28,7 @@ vector_store = Chroma(
     embedding_function=embedding
 )
 
-sob_blobs_dir = Path("/Users/xhxu/Documents/AI4S-agent-tools/servers/qc_manual_server/sobereva_blogs_text")
+sob_blobs_dir = Path("/root/AI4S-agent-tools/servers/qc_manual_server/sobereva_blogs_text")
 
 mcp = FastMCP(
     "multiwfn_server",
