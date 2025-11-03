@@ -91,8 +91,8 @@ def extract_template_ligand_from_holo_pdb(holo_pdb: Path, ligand_resname: str="L
         return {"status": "error", "message": f"No ligand found with residue name '{ligand_resname}'"}
     
     id = nanoid.generate(size=6)
-    receptor_pdb_path = MCP_SCRATCH_PATH / f"receptor_{id}.pdb"
-    ligand_pdb_path = MCP_SCRATCH_PATH / f"ligand_{id}.pdb"
+    receptor_pdb_path = Path(f"receptor_{id}.pdb")
+    ligand_pdb_path = Path(f"ligand_{id}.pdb")
     try:
         protein.write(receptor_pdb_path)
         ligand.write(ligand_pdb_path)
@@ -100,7 +100,7 @@ def extract_template_ligand_from_holo_pdb(holo_pdb: Path, ligand_resname: str="L
         logger.error(f"Error writing output files: {e}")
         return {"status": "error", "message": f"Error writing output files: {e}"}
     # Convert ligand PDB to SDF using Open Babel
-    ligand_sdf_path = MCP_SCRATCH_PATH / f"ligand_{id}.sdf"
+    ligand_sdf_path = Path(f"ligand_{id}.sdf")
     try:
         subprocess.run(["obabel", "-ipdb", ligand_pdb_path, "-osdf", "-O", ligand_sdf_path], check=True)
     except subprocess.CalledProcessError as e:
@@ -132,9 +132,9 @@ def convert_ligand_file_to_sdf(input_file: Path) -> TypedDict("results",{"status
         return {"status": "error", "message": f"Input file {input_file} does not exist."}
     
     id = nanoid.generate(size=6)
-    sdf_path = MCP_SCRATCH_PATH / f"converted_{id}.sdf"
+    sdf_path = Path(f"converted_{id}.sdf")
     try:
-        subprocess.run(["obabel", "-i", input_file.split('.')[-1], input_file, "-osdf", "-O", sdf_path], check=True)
+        subprocess.run(["obabel", "-i", input_file.suffix[1:], input_file, "-osdf", "-O", sdf_path], check=True)
     except subprocess.CalledProcessError as e:
         logger.error(f"Error converting file to SDF: {e}")
         return {"status": "error", "message": f"Error converting file to SDF: {e}"}
@@ -210,8 +210,8 @@ def combine_protein_ligand(receptor_pdb: Path, ligand_sdf: Path, ligand_resname:
         return {"status": "error", "message": f"Ligand SDF file {ligand_sdf} does not exist."}
     
     id = nanoid.generate(size=6)
-    combined_pdb_path = MCP_SCRATCH_PATH / f"complex_{id}.pdb"
-    ligand_path = MCP_SCRATCH_PATH / f"ligand_{id}.pdb"
+    combined_pdb_path = Path(f"complex_{id}.pdb")
+    ligand_path = Path(f"ligand_{id}.pdb")
     try:
         subprocess.run(["obabel", "-isdf", ligand_sdf, "-opdb", "-O", ligand_path], check=True)
     except subprocess.CalledProcessError as e:
@@ -296,8 +296,8 @@ def run_unidock2(
             f.write("Preprocessing:\n")
             f.write(f"  template_docking: true\n")
             f.write(f"  reference_sdf_file_name: {template_sdf}\n")
-    
-    output_file = MCP_SCRATCH_PATH / f"ud2_results_{id}.sdf"
+
+    output_file = Path(f"ud2_results_{id}.sdf")
     try:
         result = subprocess.run(["unidock2", "docking" , "-cf", input_file, "-o", output_file], check=True, capture_output=True, text=True)
     except subprocess.CalledProcessError as e:
@@ -315,6 +315,37 @@ def run_unidock2(
     logger.info(f"Uni-Dock2 completed. Results saved to {output_file}")
     return {"status": "success", "results_sdf": output_file, "affinity": affinity if 'affinity' in locals() else None}
 
+
+@mcp.tool()
+def get_unidock2_workflow_instructions() -> str:  
+    """Provides instructions for the agent on how to use the Uni-Dock2 tools effectively.
+    Please refer to the detailed guidelines below before performing Uni-Dock molecular docking tasks.
+    Returns:
+        str: Instructions for the agent.
+    """
+    instruction="""
+    # Role: Molecular Docking Specialist
+
+    ## Primary Objective:
+    To perform molecular docking of small molecule ligands with protein receptors, predicting binding modes and affinities.
+
+    ## Core Protocol for docking:
+    1. **Docking**: You can use `run_unidock2` tool to perform molecular docking if needed. 
+    2. Note that you need to call `convert_file_to_sdf` to convert ligand file to sdf format before docking 
+    3. You can use `calculate_box_center` to determine the center of the docking box based on the receptor structure and key binding site residues.
+    3. You can use `combine_protein_ligand` to combine the receptor and ligand into a single pdb file for further preparation and MD simulation.
+    4. Always ensure the input files are in the correct format and paths are valid.
+
+    ## Additional Guidelines for Templated Docking:
+    - If a template ligand is provided, utilize it to guide the docking process.
+    - If user provides a protein-ligand complex structure, use it to identify the binding site and set up the docking box accordingly.
+    - You can use `extract_template_ligand` to extract the ligand from the provided complex structure for use as a template and get a empty receptor pdb for docking.
+    - Ensure that the docking box is appropriately sized. You can use `calculate_box_center` to determine optimal box center based on the template ligand.
+
+    ## Important Notes:
+    All the file paths input to the tools should be a url like `https://...` or a local path like `local://<path>`.
+    """
+    return instruction
 
 
 if __name__ == "__main__":
