@@ -17,7 +17,7 @@ from botocore.exceptions import NoCredentialsError, ClientError
 import loguru
 
 # 导入MCP相关
-from mcp.server.fastmcp import FastMCP
+from dp.agent.server import CalculationMCPServer
 
 import pdbfixer
 from openmm.app import PDBFile, Modeller
@@ -47,7 +47,7 @@ def parse_args():
 
 
 args = parse_args()
-mcp = FastMCP("proteinprep_server", host=args.host, port=args.port)
+mcp = CalculationMCPServer("proteinprep_server", host=args.host, port=args.port)
 
 logger = loguru.logger
 logger.add("logs/mcp_pyscf_{time}.log", level="DEBUG", retention="1 days")
@@ -103,6 +103,7 @@ def Protein_Prep(pdb_path: Path, ph: float = 7.0, toDeleteRes: Optional[List[str
         dict: A dictionary containing the status and path to the prepared PDB file or error message
     """
     try:
+        pdb_path = str(pdb_path)
         fixer = pdbfixer.PDBFixer(filename=pdb_path)
         #remove all hydrogens first
         for atom in list(fixer.topology.atoms()):
@@ -169,6 +170,7 @@ def get_protein_sequence(pdb_path: Path) -> dict:
         dict: A dictionary containing the status and the amino acid sequence or error message.
     """
     try:
+        pdb_path = str(pdb_path)
         fixer = pdbfixer.PDBFixer(filename=pdb_path)
         sequence = ""
         for chain in fixer.topology.chains():
@@ -223,11 +225,11 @@ def parametrize_ligand(pdb_path: Path, ligand_resname: str = "LIG", charge: int 
             logger.error(f"Parmchk2 failed: {result.stderr}")
             return {"status": "error", "message": f"Parmchk2 failed: {result.stderr}"}
 
-        return {"status": "success", "ligand_id": ligand_id, "mol2_path": mol2_path, "frcmod_path": frcmod_path}
+        return {"status": "success", "ligand_id": ligand_id, "mol2_path": Path(mol2_path), "frcmod_path": Path(frcmod_path)}
     except Exception as e:
         return {"status": "error", "message": str(e)}
     
-def HMR(prmtop_path: str, inpcrd_path: str) -> dict:
+def HMR(prmtop_path:str, inpcrd_path: str) -> dict:
     """
     Applies Hydrogen Mass Repartition
     Args:
@@ -379,9 +381,9 @@ def run_tleap(prepared_pdb_path: Path, ligand_res_name: Path, ligand_id: str) ->
 
 if __name__ == "__main__":
     logger.info("Starting ProteinPreP MCP Server with all tools...")
-    #fetch_rcsb("3HTB")
-    #Protein_Prep("3HTB.pdb", toDeleteRes=["PO4", "BME"])
-    #parametrize_ligand("3HTB_fixer_amber.pdb", "JZ4", 0)
-    #run_tleap("3HTB_fixer_amber.pdb", "JZ4", "9WvrHU")
-    mcp.run(transport="sse")
+    fetch_rcsb("3HTB")
+    Protein_Prep("3HTB.pdb", toDeleteRes=["PO4", "BME"])
+    parametrize_ligand("3HTB_fixer_amber.pdb", "JZ4", 0)
+    run_tleap("3HTB_fixer_amber.pdb", "JZ4", "9WvrHU")
+    #mcp.run(transport="sse")
     
