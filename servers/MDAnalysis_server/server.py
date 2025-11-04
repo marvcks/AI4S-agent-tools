@@ -9,13 +9,14 @@ load_dotenv()
 import os
 import argparse
 from typing import Optional, TypedDict, List, Tuple, Dict, Union, Literal, Any
+from pathlib import Path
 import subprocess
 import numpy as np
 import loguru
 import matplotlib.pyplot as plt
 
 # 导入MCP相关
-from mcp.server.fastmcp import FastMCP
+from dp.agent.server import CalculationMCPServer
 
 from openmm.app import *
 from openmm import *
@@ -52,7 +53,7 @@ def parse_args():
 
 
 args = parse_args()
-mcp = FastMCP("md_analysis_server", host=args.host, port=args.port)
+mcp = CalculationMCPServer("md_analysis_server", host=args.host, port=args.port)
 
 logger = loguru.logger
 logger.add("logs/mcp_mdanalysis_{time}.log", level="DEBUG", retention="1 days")
@@ -65,16 +66,16 @@ MCP_SCRATCH = os.getenv("MCP_SCRATCH", "/tmp")
 # Define tools at module level
 @mcp.tool()
 def prepare_trajectories(
-    prmtop_path: str,   
-    trajectory_path: str,
+    prmtop_path: Path,   
+    trajectory_path: Path,
     selection: str = "backbone") -> Dict[str, Any]:
     """
     Prepare and align trajectories using MDAnalysis.
     It will unwrap and align the trajectory to the first frame based on the given selection.
 
     Args:
-        prmtop_path (str): Path to the topology file (e.g., Amber prmtop).
-        trajectory_path (str): Path to the trajectory file (e.g., DCD, XTC).
+        prmtop_path (Path): Path to the topology file (e.g., Amber prmtop).
+        trajectory_path (Path): Path to the trajectory file (e.g., DCD, XTC).
         selection (str): Atom selection string for alignment using MDAnalysis syntax. Default is "backbone".
 
     Returns:
@@ -101,28 +102,28 @@ def prepare_trajectories(
 
     # Prepare output path
     id = nanoid.generate(size=6)
-    aligned_trajectory_path = os.path.join(MCP_SCRATCH, f"aligned_trajectory_{id}.xtc")
+    aligned_trajectory_path = Path(MCP_SCRATCH) / f"aligned_trajectory_{id}.xtc"
     logger.info(f"Saving aligned trajectory to '{aligned_trajectory_path}'")
     try:
         align.AlignTraj(u, u_ref, select=selection, filename=aligned_trajectory_path).run()
     except Exception as e:
         logger.error(f"Alignment failed: {e}")
         return {"status": "error", "message": str(e)}
-    
-    return ("status", "success", "aligned_trajectory_path", aligned_trajectory_path)
+
+    return {"status": "success", "aligned_trajectory_path": aligned_trajectory_path}
 
 
 @mcp.tool()
 def calculate_rmsd(
-    prmtop_path: str,   
-    trajectory_path: str,
+    prmtop_path: Path,   
+    trajectory_path: Path,
     selection: str = "backbone") -> Dict[str, Any]:
     """
     Calculate RMSD of a selection over a trajectory to the first frame using MDAnalysis.
 
     Args:
-        prmtop_path (str): Path to the topology file (e.g., Amber prmtop).
-        trajectory_path (str): Path to the trajectory file (e.g., DCD, XTC).
+        prmtop_path (Path): Path to the topology file (e.g., Amber prmtop).
+        trajectory_path (Path): Path to the trajectory file (e.g., DCD, XTC).
         selection (str): Atom selection string for RMSD calculation using MDAnalysis syntax. Default is "backbone".
 
     Returns:
@@ -144,7 +145,7 @@ def calculate_rmsd(
         rmsd_values = rmsd[2]
         logger.info(f"Calculated RMSD for {len(rmsd_values)} frames")
         id = nanoid.generate(size=6)
-        rmsd_output_path = os.path.join(MCP_SCRATCH, f"rmsd_{id}.npz")
+        rmsd_output_path = Path(MCP_SCRATCH) / f"rmsd_{id}.npz"
         logger.debug(rmsd_values)
         np.savez(rmsd_output_path, x=time, y=rmsd_values)
         logger.info(f"Saved RMSD data to '{rmsd_output_path}'")
@@ -156,14 +157,14 @@ def calculate_rmsd(
     
 @mcp.tool()
 def calculate_rmsf(
-    prmtop_path: str,   
-    trajectory_path: str) -> Dict[str, Any]:
+    prmtop_path: Path,   
+    trajectory_path: Path) -> Dict[str, Any]:
     """
     Calculate RMSF of protein over a trajectory using MDAnalysis.
 
     Args:
-        prmtop_path (str): Path to the topology file (e.g., Amber prmtop).
-        trajectory_path (str): Path to the trajectory file (e.g., DCD, XTC).
+        prmtop_path (Path): Path to the topology file (e.g., Amber prmtop).
+        trajectory_path (Path): Path to the trajectory file (e.g., DCD, XTC).
 
     Returns:
         Dict[str, Any]: Dictionary containing atom indices and the path of a npz file with x: residue indices and y: RMSF values in Angstrom.
@@ -192,7 +193,7 @@ def calculate_rmsf(
         rmsf_values = R.results.rmsf
         logger.info(f"Calculated RMSF for {len(rmsf_values)} atoms")
         id = nanoid.generate(size=6)
-        rmsf_output_path = os.path.join(MCP_SCRATCH, f"rmsf_{id}.npz")
+        rmsf_output_path = Path(MCP_SCRATCH) / f"rmsf_{id}.npz"
         logger.debug(rmsf_values)
         np.savez(rmsf_output_path, x=resume, y=rmsf_values)
         logger.info(f"Saved RMSF data to '{rmsf_output_path}'")
@@ -203,15 +204,15 @@ def calculate_rmsf(
 
 @mcp.tool()
 def calculate_Rg(
-    prmtop_path: str,   
-    trajectory_path: str,
+    prmtop_path: Path,
+    trajectory_path: Path,
     selection: str = "protein") -> Dict[str, Any]:
     """
     Calculate Radius of Gyration (Rg) of a selection over a trajectory using MDAnalysis.
 
     Args:
-        prmtop_path (str): Path to the topology file (e.g., Amber prmtop).
-        trajectory_path (str): Path to the trajectory file (e.g., DCD, XTC).
+        prmtop_path (Path): Path to the topology file (e.g., Amber prmtop).
+        trajectory_path (Path): Path to the trajectory file (e.g., DCD, XTC).
         selection (str): Atom selection string for Rg calculation using MDAnalysis syntax. Default is "backbone".
 
     Returns:
@@ -237,7 +238,7 @@ def calculate_Rg(
         times = np.array(times)
         logger.info(f"Calculated Rg for {len(Rg_values)} frames")
         id = nanoid.generate(size=6)
-        rg_output_path = os.path.join(MCP_SCRATCH, f"rg_{id}.npz")
+        rg_output_path = Path(MCP_SCRATCH) / f"rg_{id}.npz"
         logger.debug(Rg_values)
         np.savez(rg_output_path, x=times, y=Rg_values)
         logger.info(f"Saved Rg data to '{rg_output_path}'")
@@ -249,16 +250,16 @@ def calculate_Rg(
 
 @mcp.tool()
 def calculate_distance(
-    prmtop_path: str,   
-    trajectory_path: str,
+    prmtop_path: Path,
+    trajectory_path: Path,
     selection1: str,
     selection2: str) -> Dict[str, Any]:
     """
     Calculate distance between two selections over a trajectory using MDAnalysis.
 
     Args:
-        prmtop_path (str): Path to the topology file (e.g., Amber prmtop).
-        trajectory_path (str): Path to the trajectory file (e.g., DCD, XTC).
+        prmtop_path (Path): Path to the topology file (e.g., Amber prmtop).
+        trajectory_path (Path): Path to the trajectory file (e.g., DCD, XTC).
         selection1 (str): Atom selection string for the first group using MDAnalysis syntax.
         selection2 (str): Atom selection string for the second group using MDAnalysis syntax.
 
@@ -286,7 +287,7 @@ def calculate_distance(
         times = np.array(times)
         logger.info(f"Calculated distances for {len(distances)} frames")
         id = nanoid.generate(size=6)
-        distance_output_path = os.path.join(MCP_SCRATCH, f"distance_{id}.npz")
+        distance_output_path = Path(MCP_SCRATCH) / f"distance_{id}.npz"
         logger.debug(distances)
         np.savez(distance_output_path, x=times, y=distances)
         logger.info(f"Saved distance data to '{distance_output_path}'")
@@ -299,8 +300,8 @@ def calculate_distance(
 
 @mcp.tool()
 def calculate_mm_gbsa(
-    prmtop_path: str,
-    trajectory_path: str,
+    prmtop_path: Path,
+    trajectory_path: Path,
     ligand_resname: str = "LIG",
     interval: int = 1,
     igb: int = 5,
@@ -309,8 +310,8 @@ def calculate_mm_gbsa(
     Calculate MM-GBSA free energy over a trajectory using MMPBSA.py
 
     Args:
-        prmtop_path (str): Path to the topology file (e.g., Amber prmtop).
-        trajectory_path (str): Path to the trajectory file (e.g., DCD, XTC).
+        prmtop_path (Path): Path to the topology file (e.g., Amber prmtop).
+        trajectory_path (Path): Path to the trajectory file (e.g., DCD, XTC).
         ligand_resname (str): Residue name of the ligand in the topology. Default is "LIG".
         interval (int): Interval to sample frames from the trajectory. Default is 1 (use all frames). Please make sure the trajectory is not too large to avoid long computation time.
         igb (int): GB model to use. Default is 5.
@@ -388,12 +389,19 @@ igb={igb}, saltcon={salt_conc},
         
 @mcp.tool()
 def export_molstar_html(
-    prmtop_path: str,
-    trajectory_path: str,
+    prmtop_path: Path,
+    trajectory_path: Path,
     time: float,
     selection: str = "not (resname HOH or resname WAT)",) -> Dict[str, Any]:
     """
     Export an interactive Mol* HTML visualization of a trajectory using molviewspec.
+    Args:
+        prmtop_path (Path): Path to the topology file (e.g., Amber prmtop).
+        trajectory_path (Path): Path to the trajectory file (e.g., DCD, XTC).
+        time (float): Time in picoseconds to extract the frame for visualization.
+        selection (str): Atom selection string for visualization using MDAnalysis syntax. Default is "not (resname HOH or resname WAT)".
+    Returns:
+        Dict[str, Any]: Dictionary containing status and path to the generated Mol* HTML file.
     """
     logger.info(f"Exporting Mol* HTML visualization for selection '{selection}'...")
     
@@ -420,7 +428,7 @@ def export_molstar_html(
         html_content = builder.molstar_html(data={"temp.pdb": pdb_content})
         
         id = nanoid.generate(size=6)
-        html_output_path = os.path.join(MCP_SCRATCH, f"molstar_{id}.html")
+        html_output_path = Path(MCP_SCRATCH) / f"molstar_{id}.html"
         with open(html_output_path, 'w') as f:
             f.write(html_content)
         logger.info(f"Saved Mol* HTML visualization to '{html_output_path}'")
@@ -434,7 +442,7 @@ def export_molstar_html(
 
 @mcp.tool()
 def plot_picture(
-    npz_path: List[str],
+    npz_path: List[Path],
     Legend: List[str] = [],
     x_label: str = "Time (ps)",
     y_label: str = "Value",
@@ -444,7 +452,7 @@ def plot_picture(
     Generate a plot from one or more npz files containing x and y data arrays.
 
     Args:
-        npz_path (List[str]): List of paths to npz files. Each file should contain 'x' and 'y' arrays.
+        npz_path (List[Path]): List of paths to npz files. Each file should contain 'x' and 'y' arrays.
         Legend (List[str]): List of legend labels for each dataset. If None, legends will not be shown.
         x_label (str): Label for the x-axis. Default is "Time (ps)".
         y_label (str): Label for the y-axis. Default is "Value".
@@ -475,7 +483,7 @@ def plot_picture(
         plt.grid(True)
 
         id = nanoid.generate(size=6)
-        plot_output_path = os.path.join(MCP_SCRATCH, f"plot_{id}.png")
+        plot_output_path = Path(MCP_SCRATCH) / f"plot_{id}.png"
         plt.savefig(plot_output_path, dpi=200)
         plt.close()
         logger.info(f"Saved plot to '{plot_output_path}'")

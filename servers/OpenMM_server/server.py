@@ -13,6 +13,7 @@ import subprocess
 import requests
 import numpy as np
 import loguru
+from pathlib import Path
 
 # 导入MCP相关
 from dp.agent.server import CalculationMCPServer
@@ -55,7 +56,7 @@ MCP_SCRATCH = os.getenv("MCP_SCRATCH", "/tmp")
 
     
 @mcp.tool()
-def Create_system(prmtop_path:str, inpcrd_path:str, temperature:float=300.0, step_size:float=0.004) -> dict:
+def Create_system(prmtop_path:Path, inpcrd_path:Path, temperature:float=300.0, step_size:float=0.004) -> dict:
     """
     Create OpenMM System Chk from AMBER prmtop and inpcrd files.
     Will do energy minimization and save the state to a chk file as well as a pdb file.
@@ -93,7 +94,7 @@ def Create_system(prmtop_path:str, inpcrd_path:str, temperature:float=300.0, ste
         return {"status": "error", "message": f"Energy minimization failed: {str(e)}"}
     # Save state
     unique_id = nanoid.generate(size=6)
-    state_file = f"{MCP_SCRATCH}/system_{unique_id}.xml"
+    state_file = Path(MCP_SCRATCH) / f"system_{unique_id}.xml"
 
     simulation.saveState(state_file)
 
@@ -102,9 +103,9 @@ def Create_system(prmtop_path:str, inpcrd_path:str, temperature:float=300.0, ste
     PDBFile.writeFile(simulation.topology, positions, open(f"{MCP_SCRATCH}/system_{unique_id}.pdb", 'w'))
     logger.info(f"System created and saved to {state_file} and {MCP_SCRATCH}/system_{unique_id}.pdb")
 
-    return {"status": "success", "state_file": state_file, "pdb_file": f"{MCP_SCRATCH}/system_{unique_id}.pdb"}
+    return {"status": "success", "state_file": state_file, "pdb_file": Path(f"{MCP_SCRATCH}/system_{unique_id}.pdb")}
 
-def load_coords_vel(simulation: simulation, state_file: str):
+def load_coords_vel(simulation: simulation, state_file: Path):
     """Load coordinates and velocities from an OpenMM state XML file."""
     with open(state_file, 'r') as f:
         state = XmlSerializer.deserialize(f.read())
@@ -117,7 +118,7 @@ def load_coords_vel(simulation: simulation, state_file: str):
     return positions, velocities
 
 @mcp.tool()
-def heating_equilibration(prmtop_path: str, state_file:str, temperature:float=300.0, pressure=1.0, step_size:float=0.004, heating_time:float=0.5, eq_time:float=1.0) -> dict:
+def heating_equilibration(prmtop_path: Path, state_file:Path, temperature:float=300.0, pressure=1.0, step_size:float=0.004, heating_time:float=0.5, eq_time:float=1.0) -> dict:
     """
     Perform heating and equilibration on an OpenMM System from a xml file and AMBER prmtop file.
     All the CA atoms will be restrained during the simulation.
@@ -198,16 +199,16 @@ def heating_equilibration(prmtop_path: str, state_file:str, temperature:float=30
     
     # Save xml state and pdb
     unique_id = nanoid.generate(size=6)
-    final_state_file = f"{MCP_SCRATCH}/equilibrated_{unique_id}.xml"
+    final_state_file = Path(MCP_SCRATCH) / f"equilibrated_{unique_id}.xml"
     simulation.saveState(final_state_file)
     positions = simulation.context.getState(getPositions=True, enforcePeriodicBox=True).getPositions()
     PDBFile.writeFile(simulation.topology, positions, open(f"{MCP_SCRATCH}/equilibrated_{unique_id}.pdb", 'w'))
     logger.info(f"Equilibration completed and saved to {final_state_file} and {MCP_SCRATCH}/equilibrated_{unique_id}.pdb")
-    return {"status": "success", "state_file": final_state_file, "pdb_file": f"{MCP_SCRATCH}/equilibrated_{unique_id}.pdb"}
+    return {"status": "success", "state_file": final_state_file, "pdb_file": Path(f"{MCP_SCRATCH}/equilibrated_{unique_id}.pdb")}
 
 
 @mcp.tool()
-def run_production_md(prmtop_path: str, state_file:str, temperature:float=300.0, pressure:float=1.0, step_size:float=0.004, md_time:float=10.0, report_interval:float=2) -> dict:
+def run_production_md(prmtop_path: Path, state_file:Path, temperature:float=300.0, pressure:float=1.0, step_size:float=0.004, md_time:float=10.0, report_interval:float=2) -> dict:
     """
     Run production MD on an OpenMM System from a xml file and AMBER prmtop file.
     
@@ -259,10 +260,10 @@ def run_production_md(prmtop_path: str, state_file:str, temperature:float=300.0,
         logger.error(f"Production MD failed: {str(e)}")
         return {"status": "error", "message": f"Production MD failed: {str(e)}"}
     
-    chk_file = f"{MCP_SCRATCH}/md_final_state_{unique_id}.xml"
+    chk_file = Path(MCP_SCRATCH) / f"md_final_state_{unique_id}.xml"
     simulation.saveState(chk_file)
     logger.info(f"Final state saved to {chk_file}")
-    pdb_file = f"{MCP_SCRATCH}/md_final_structure_{unique_id}.pdb"
+    pdb_file = Path(MCP_SCRATCH) / f"md_final_structure_{unique_id}.pdb"
     positions = simulation.context.getState(getPositions=True, enforcePeriodicBox=True).getPositions()
     PDBFile.writeFile(simulation.topology, positions, open(pdb_file, 'w'))
     logger.info(f"Final structure saved to {pdb_file}")
