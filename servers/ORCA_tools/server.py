@@ -13,7 +13,8 @@ from pathlib import Path
 from typing import Optional, TypedDict, List, Tuple, Dict, Union, Literal, Any
 import subprocess
 import sys
-
+import requests
+import urllib
 # 导入MCP相关
 from dp.agent.server import CalculationMCPServer
 
@@ -47,27 +48,37 @@ os.environ["OMPI_ALLOW_RUN_AS_ROOT"] = "1"
 os.environ["OMPI_ALLOW_RUN_AS_ROOT_CONFIRM"] = "1"
 
 
-# 下面的内容注释掉了，因为如果不把任务提到Bohr上,就不需要显示的设置环境变量。
-# # 初始化 PATH 和 LD_LIBRARY_PATH
-# os.environ["PATH"] = os.environ.get("PATH", "") + os.pathsep + "/opt/mamba/bin"
-# os.environ["PATH"] += os.pathsep + "/usr/local/cuda/bin"
-# os.environ["LD_LIBRARY_PATH"] = os.environ.get("LD_LIBRARY_PATH", "") + os.pathsep + "/usr/local/cuda/lib64"
-# # OpenMPI 路径
-# os.environ["PATH"] += os.pathsep + "/opt/openmpi411/bin"
-# os.environ["LD_LIBRARY_PATH"] += os.pathsep + "/opt/openmpi411/lib"
-# # ORCA 路径
-# os.environ["PATH"] += os.pathsep + "/opt/orca504/orca_5_0_4_linux_x86-64_shared_openmpi411"
-# os.environ["LD_LIBRARY_PATH"] += os.pathsep + "/opt/orca504/orca_5_0_4_linux_x86-64_shared_openmpi411"
-# # packmol 路径
-# os.environ["PATH"] += os.pathsep + "/root/packmol-21.1.0"
-# # xtb 路径
-# os.environ["PATH"] += os.pathsep + "/root/xtb-6.6.1/bin"
+# 初始化 PATH 和 LD_LIBRARY_PATH
+os.environ["PATH"] = os.environ.get("PATH", "") + os.pathsep + "/opt/mamba/bin"
+os.environ["PATH"] += os.pathsep + "/usr/local/cuda/bin"
+os.environ["LD_LIBRARY_PATH"] = os.environ.get("LD_LIBRARY_PATH", "") + os.pathsep + "/usr/local/cuda/lib64"
+# OpenMPI 路径
+os.environ["PATH"] += os.pathsep + "/opt/openmpi411/bin"
+os.environ["LD_LIBRARY_PATH"] += os.pathsep + "/opt/openmpi411/lib"
+# ORCA 路径
+os.environ["PATH"] += os.pathsep + "/opt/orca504/orca_5_0_4_linux_x86-64_shared_openmpi411"
+os.environ["LD_LIBRARY_PATH"] += os.pathsep + "/opt/orca504/orca_5_0_4_linux_x86-64_shared_openmpi411"
+# packmol 路径
+os.environ["PATH"] += os.pathsep + "/root/packmol-21.1.0"
+# xtb 路径
+os.environ["PATH"] += os.pathsep + "/root/xtb-6.6.1/bin"
+
+top_n = 3
+max_assembly_length = 2000
+vector_stores = ["orca_manual"]
+
+embeddings = DashScopeEmbeddings(model="text-embedding-v4", dashscope_api_key="sk-f22c4fa77bab4a42a47486922c84a467")
+
+orca_vector_store = Chroma(
+    persist_directory="/root/AI4S-agent-tools/servers/ORCA_tools/vector_db_orca_manual_qwen",
+    embedding_function=embeddings
+)
 
 
 def parse_args():
     """解析命令行参数"""
     parser = argparse.ArgumentParser(description="MOLPILOT MCP服务器")
-    parser.add_argument('--port', type=int, default=50005, help='服务器端口 (默认: 50005)')
+    parser.add_argument('--port', type=int, default=50001, help='服务器端口 (默认: 50001)')
     parser.add_argument('--host', default='0.0.0.0', help='服务器主机 (默认: 0.0.0.0)')
     parser.add_argument('--log-level', default='INFO', 
                        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
@@ -1045,7 +1056,7 @@ async def run_orca_calculation(
     charge: int = 0,
     multiplicity: int = 1,
     memory: int = 4000,
-    nprocs: int = 4
+    nprocs: int = 16
 ) -> OrcaResult:
     """
     Run an ORCA calculation.
@@ -1095,8 +1106,8 @@ async def run_orca_calculation(
 
         charge (int): The charge of the molecule, default is 0.
         multiplicity (int): The multiplicity of the molecule, default is 1.
-        memory (int): The amount of memory (in MB) allocated for ORCA, default is 1000 MB.
-        nprocs (int): The number of processors to be used by ORCA, default is 4.
+        memory (int): The amount of memory (in MB) allocated for ORCA, default is 4000 MB.
+        nprocs (int): The number of processors to be used by ORCA, default is 16.
                      **注意**: 计算单原子时必须设置为1.
 
     Returns:
@@ -1109,9 +1120,12 @@ async def run_orca_calculation(
             - message (str): Success or error message.
     """
     try:
-        work_dir = Path(f"orca_calc_{int(os.path.getctime('.'))}")
+        ct = int(os.path.getctime('.'))
+        work_dir = Path(f"/tmp/orca_calc_{ct}")
         if not work_dir.exists():
             work_dir.mkdir(parents=True, exist_ok=True)
+
+        os.system(f"cp {mol_xyz} {work_dir / 'mol.xyz'}")
 
         orca_input = work_dir / "calc.inp"
         with open(orca_input, "w") as f:
@@ -1120,7 +1134,7 @@ async def run_orca_calculation(
             f.write(f"%pal nprocs {nprocs} end\n")
             f.write(additional_keywords)
             # f.write(add_keywords)
-            f.write(f"* XYZFILE {charge} {multiplicity} ../{mol_xyz}\n")
+            f.write(f"* XYZFILE {charge} {multiplicity} mol.xyz\n")
 
         cmd = "/opt/orca504/orca_5_0_4_linux_x86-64_shared_openmpi411/orca calc.inp > calc.out"
         logging.info(f"Running ORCA: {cmd} (cwd={work_dir})")
@@ -1131,19 +1145,21 @@ async def run_orca_calculation(
             cwd=work_dir,
             capture_output=True,
             text=True,
-            env=os.environ.copy(),  # 显式传递当前环境变量
+            env=os.environ.copy(),
         )
 
         if process.returncode != 0:
             raise RuntimeError(f"ORCA calculation failed: {process.stderr}")
+        
+        os.system(f"mv {work_dir} .")
 
-
+        new_dir = Path(f"orca_calc_{ct}")
 
         return OrcaResult(
-            output_dir=work_dir,
-            output_file=work_dir / "calc.out",
-            gbw_file=work_dir / "calc.gbw",
-            mol_file=work_dir / "mol.xyz",
+            output_dir=new_dir,
+            output_file=new_dir / "calc.out",
+            gbw_file=new_dir / "calc.gbw",
+            mol_file=new_dir / "mol.xyz",
             message="ORCA calculation completed successfully."
         )
         
@@ -1153,7 +1169,7 @@ async def run_orca_calculation(
             output_file="",
             gbw_file="",
             mol_file="",
-            output_dir=work_dir,
+            output_dir=new_dir,
             message=f"ORCA calculation failed: {e}"
         )
 
@@ -1389,7 +1405,7 @@ async def calculate_reaction_profile(
     reactant_smiles: list[str] = ["C=CC=C", "C=C"], 
     product_smiles: list[str] = ["C1=CCCCC1"],
     solvent_name: Optional[str] = None,
-    n_cores: int = 2,
+    n_cores: int = 4,
     energy_type: Literal["potential", "enthalpy", "free_energy"] = "free_energy",
     calculation_level: Literal["low", "medium", "high"] = "medium",
     single_point_refinement: bool = True,
@@ -1462,17 +1478,6 @@ async def calculate_reaction_profile(
         }
 
 
-top_n = 3
-max_assembly_length = 2000
-vector_stores = ["orca_manual"]
-
-embeddings = DashScopeEmbeddings(model="text-embedding-v4")
-
-orca_vector_store = Chroma(
-    persist_directory="./vector_db_orca_manual_qwen",
-    embedding_function=embeddings
-)
-
 
 class RetrieveContentResult(TypedDict):
     """Retrieve content result."""
@@ -1534,6 +1539,290 @@ async def retrieve_content_from_docs(
             retrieved_content=None
         )
 
+
+@mcp.tool()
+def retrieve_pyscf_doc(keywords: str) -> str:
+    """
+    Retrieve documentation for PySCF functions or classes based on keywords.
+    Args:
+        keywords (str): Keywords to search for in the PySCF documentation.
+    Returns:
+        str: The relevant documentation or an error message if not found.        
+    """
+    #replace spaces with +
+    CONTEXT7_API_KEY = "ctx7sk-21b8931d-2a53-4928-a8da-6bd2f7629979"
+    keywords = urllib.parse.quote_plus(keywords)
+    url = f"https://context7.com/api/v1/pyscf/pyscf.github.io?type=txt&topic={keywords}&tokens=1000"
+
+    headers = {"Authorization": f"Bearer {CONTEXT7_API_KEY}"}
+
+    try:
+        result = requests.get(url, headers=headers, timeout=10)
+        return result.text
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Error retrieving PySCF documentation: {e}")
+        return f"Error retrieving PySCF documentation: {e}"
+
+
+@mcp.tool()
+async def read_pyscf_output(pyscf_output: Path):
+    """
+    读取`run_pyscf_code`函数的输出文件.
+    参数:
+    - pyscf_output: 输出文件路径
+    
+    返回:
+    - Dict[str, Any]: 包含计算结果的字典，包含以下字段：
+        - success: bool - 计算是否成功
+        - output: str - 计算的标准输出
+        - error: str - 错误信息（如果有）
+    """
+    try:
+        with open(pyscf_output, 'r') as f:
+            content = f.read()
+        return {
+            "success": True,
+            "output": content
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+    
+
+@mcp.tool()
+async def run_pyscf_code(xyz_path: Path, pyscf_code: str) -> Dict[str, Any]:
+    """
+    执行用户提供的PySCF代码进行量子化学计算
+    
+    参数:
+    - xyz_path: 分子几何结构的XYZ文件路径
+    - pyscf_code: 要执行的PySCF Python代码字符串
+    
+    返回:
+    - Dict[str, Any]: 包含计算结果的字典，包含以下字段：
+        - success: bool - 计算是否成功
+        - output: str - 计算的标准输出
+        - error: str - 错误信息（如果有）
+        - exit_code: int - 程序退出码
+    
+    重要说明 - 如何编写pyscf_code:
+    1. 命令行参数接收:
+       您的pyscf_code必须能够从命令行接收xyz_path参数.请在代码开头添加:
+       ```python
+       import sys
+       xyz_path = sys.argv[1]  # 获取XYZ文件路径
+       ```python
+    2. 读取分子结构:
+       使用xyz_path读取分子几何结构,例如:
+       ```python
+       from pyscf import gto
+       mol = gto.Mole()
+       mol.atom = xyz_path  # 直接使用XYZ文件路径
+       mol.basis = 'sto-3g'
+       mol.build()
+       ```
+    3. 完整示例代码结构:
+        ```python       
+       import sys
+       from pyscf import gto, scf
+       # 获取命令行参数
+       xyz_path = sys.argv[1]
+       # 构建分子
+       mol = gto.Mole()
+       mol.atom = xyz_path
+       mol.basis = 'sto-3g'
+       mol.charge = 0
+       mol.spin = 0
+       mol.build()
+       # 进行SCF计算
+       mf = scf.RHF(mol)
+       energy = mf.scf()
+       # 输出结果
+       print(f"SCF Energy: {energy}")
+       ```
+    4. 输出结果:
+       请使用print()函数输出您想要返回的计算结果。所有print输出都会被捕获并返回。
+    5. 错误处理:
+       如果计算过程中出现错误，程序会自动捕获并在返回结果中包含错误信息。
+       
+    注意事项:
+    - 代码将在临时环境中执行，请确保所有必要的导入都包含在代码中
+    - 避免使用可能造成安全风险的操作（如文件系统操作、网络访问等）
+
+    ## 针对Skala泛函的补充
+    
+    Skala是一个基于神经网络的高精度交换相关泛函，专门设计用于提高DFT计算的精度。
+    要使用Skala泛函，您需要在pyscf_code中按照以下方式编写：
+    
+    ### 基本Skala计算示例：
+    ```python
+    import sys
+    from pyscf import gto
+    from skala.pyscf import SkalaKS
+    
+    # 获取XYZ文件路径
+    xyz_path = sys.argv[1]
+    
+    # 构建分子
+    mol = gto.Mole()
+    mol.atom = xyz_path
+    mol.basis = "def2-tzvp"  # 推荐使用def2-tzvp基组
+    mol.charge = 0
+    mol.spin = 0
+    mol.build()
+    
+    # 创建SkalaKS计算器
+    ks = SkalaKS(mol, xc="skala")
+    
+    # 执行SCF计算
+    energy = ks.kernel()
+    
+    # 输出结果
+    print(f"Skala SCF Energy: {energy:.8f} Hartree")
+    print(ks.dump_scf_summary())
+    ```
+    
+    ### 高级Skala计算选项：
+    
+    1. **使用密度拟合加速计算**：
+    ```python
+    ks = SkalaKS(mol, xc="skala", with_density_fit=True)
+    ```
+    
+    2. **使用Newton方法提高收敛性**：
+    ```python
+    ks = SkalaKS(mol, xc="skala", with_density_fit=True, with_newton=True)
+    ```
+    
+    3. **禁用DFT-D3色散校正**（默认启用）：
+    ```python
+    ks = SkalaKS(mol, xc="skala", with_dftd3=False)
+    ```
+    
+    4. **完整的高级配置示例**：
+    ```python
+    import sys
+    from pyscf import gto
+    from skala.pyscf import SkalaKS
+    
+    xyz_path = sys.argv[1]
+    
+    mol = gto.Mole()
+    mol.atom = xyz_path
+    mol.basis = "def2-tzvp"
+    mol.charge = 0
+    mol.spin = 0
+    mol.build()
+    
+    # 创建高级配置的SkalaKS计算器
+    ks = SkalaKS(
+        mol, 
+        xc="skala",
+        with_density_fit=True,    # 启用密度拟合
+        with_newton=True,         # 启用Newton方法
+        with_dftd3=True          # 启用DFT-D3色散校正
+    )
+    
+    energy = ks.kernel()
+    
+    if ks.converged:
+        print(f"Skala calculation converged!")
+        print(f"Total energy: {energy:.8f} Hartree")
+        
+        # 可以进行后续分析
+        dipole = ks.dip_moment()
+        print(f"Dipole moment: {dipole}")
+        
+        # 输出详细摘要
+        print("\nDetailed SCF Summary:")
+        print(ks.dump_scf_summary())
+    else:
+        print("WARNING: Skala calculation did not converge!")
+    ```
+    
+    ### Skala泛函的特点：
+    - **高精度**：基于神经网络训练，提供比传统泛函更高的精度
+    - **自动色散校正**：默认包含DFT-D3色散校正
+    - **兼容性**：完全兼容PySCF的所有功能和方法
+    - **推荐基组**：建议使用def2-tzvp或更大的基组以获得最佳精度
+    
+    ### 注意事项：
+    - Skala计算通常比传统DFT泛函需要更多计算时间
+    - 对于大分子系统，强烈建议使用密度拟合（with_density_fit=True）
+    - 如果遇到收敛问题，可以尝试启用Newton方法（with_newton=True）
+
+    """
+    
+    logging.info(f"Starting PySCF calculation with XYZ file: {xyz_path}")
+    
+    try:
+        # 验证XYZ文件是否存在
+        if not xyz_path.exists():
+            return {
+                "success": False,
+                "output": "",
+                "error": f"XYZ file not found: {xyz_path}",
+                "exit_code": 1
+            }
+        
+        # 将PySCF代码写入临时文件
+        pyscf_script_path = "run_pyscf.py"
+        with open(pyscf_script_path, 'w', encoding='utf-8') as f:
+            f.write(pyscf_code)
+        
+        logging.info(f"PySCF script written to: {pyscf_script_path}")
+        logging.info(f"{str(xyz_path)}")
+        # 执行PySCF脚本
+        try:
+            # 创建输出文件
+            output_file = "pyscf_output.txt"
+            with open(output_file, "w", encoding="utf-8") as out_f:
+                result = subprocess.run(
+                    # python xx.py xx.xyz > out.txt
+                    [sys.executable, str(pyscf_script_path), str(xyz_path)],
+                    stdout=out_f,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    # timeout=300  # 5分钟超时
+                )
+            
+            logging.info(f"PySCF calculation completed with exit code: {result.returncode}")
+            
+            return {
+                "success": result.returncode == 0,
+                "output": Path(output_file),
+                "error": result.stderr,
+                "exit_code": result.returncode
+            }
+            
+        except subprocess.TimeoutExpired:
+            logging.error("PySCF calculation timed out")
+            return {
+                "success": False,
+                "output": "",
+                "error": "Calculation timed out after 5 minutes",
+                "exit_code": 124
+            }
+        
+        except Exception as e:
+                logging.error(f"Error executing PySCF script: {str(e)}")
+                return {
+                    "success": False,
+                    "output": "",
+                    "error": f"Error executing PySCF script: {str(e)}",
+                    "exit_code": 1
+                }
+                
+    except Exception as e:
+        logging.error(f"Unexpected error in run_pyscf_code: {str(e)}")
+        return {
+            "success": False,
+            "output": "",
+            "error": f"Unexpected error: {str(e)}",
+            "exit_code": 1
+        }
 
 if __name__ == "__main__":
     logging.info("Starting MOLPILOT MCP Server with all tools...")
